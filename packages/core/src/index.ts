@@ -27,6 +27,7 @@ export {
 
 export {
   hashText,
+  languageForPath,
   readSourceRange,
   resolveContainedPath,
   type SourceRange,

@@ -1,6 +1,7 @@
 # Phase 2 — Repository Intelligence
 
-**Status: planned.** Depends on: Phase 1 (schema, source access, golden tour).
+**Status: complete (2026-10-17).** Depends on: Phase 1 (schema, source access,
+golden tour).
 
 **Deliverable:** a read-only project registration and snapshot system, a
 TypeScript/JavaScript symbol graph built on `oxc-parser`, a deterministic project
@@ -304,3 +305,61 @@ What they cover and miss:
   boundaries.
 - Benchmark the Bunbun run before and after the cache lands; record the numbers.
 - Keep every artifact outside the Bunbun tree.
+
+## Shipped (closure, 2026-10-17)
+
+- **Read-only project source** — `.gitignore` files are applied relative to
+  their directory, build/vendor/test-report/worktree directories are denied,
+  paths are contained by `realpath`, and a symlink escape is refused. Binary and
+  large files are recorded and skipped. Secret-like files are hashed, marked
+  `redacted`, parsed for symbol names only, and have their signatures,
+  decorators, and documentation stripped before the snapshot.
+- **Snapshot** — deterministic ID from analyzer/ignore versions, root
+  fingerprint, revision, and file manifest. It stores no absolute root and no
+  raw source. `--save` writes atomically under
+  `$SOTHSPELL_HOME/projects/<slug>/snapshot.json`; `--out` writes outside the
+  project; both are covered by tests.
+- **Symbols and graph** — `oxc-parser` + `oxc-walker` extract modules, classes,
+  methods, properties, functions, variables, interfaces, types, enums,
+  namespaces, and objects with stable IDs, decorators, export flags, and parent
+  links. The graph resolves TypeScript ESM `.js` specifiers to `.ts` sources,
+  records file and package imports, and adds approximate import-based reference
+  edges. Prisma models are read from `contract.prisma`/`schema.prisma`.
+- **Brief and cache** — `buildProjectBrief` identifies the pnpm workspace,
+  applications and entry points, all 21 `apps/api/src` modules, docs, plans,
+  Prisma models, and graph statistics. A per-file cache keyed by analyzer
+  version, path, language, content hash, and redaction state makes warm runs
+  cheap.
+- **CLI** — `sothspell analyze <path>` with `--json`, `--brief`, `--out`,
+  `--save`, `--no-cache`, and `--help`; exit codes distinguish usage, analysis,
+  and write failures. The root `pnpm sothspell` script runs it.
+- **Bunbun acceptance** — 642 files, 10,040 symbols, 1,588 file imports, 822
+  package imports, 2,178 reference edges, 21 feature modules, 25 Prisma models.
+  All ten key symbols resolve; all 20 golden-tour anchors resolve with matching
+  hashes; the Bunbun worktree is unchanged.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- Cold Bunbun analysis: **821 ms**, peak RSS **386 MB** (budgets: 60 s, 1 GB).
+- Warm Bunbun analysis: **172 ms**, **478 cache hits / 0 misses**, same snapshot
+  ID `snapshot_11b87afed2af615b`.
+- Golden tour anchors: **20/20** resolve with matching content hashes.
+- `pnpm typecheck` → 0 errors.
+- `pnpm lint` → 0 errors, 0 warnings.
+- `pnpm test` → 15 files / 52 tests passed, including the Bunbun acceptance
+  test and the golden tour read-only test.
+- `pnpm build` → web build succeeds (161.25 kB gzip).
+- `pnpm check:toolchain` → TypeScript 7.0.2, no classic compiler API packages.
+- `git -C /Users/ajc/Projects/codegens/bunbun status --porcelain` → empty.
+
+### Deviations from the plan
+
+- The first CLI release covers `analyze` only; `author`, `serve`, and `doctor`
+  land with their phases. The CLI's `--save` path is the snapshot store; the API
+  will consume the same files in Phase 3.
+- NestJS and Prisma enrichment is structural: decorators and model names/fields
+  are captured, but DI graph reconstruction and framework-specific route
+  inventories are left to the authoring context pack.
+- Cross-file references are import-based and conservative (`confidence:
+'import'`), not full type resolution. Full type semantics would require the
+  TypeScript compiler API that TS 7.0 does not ship.

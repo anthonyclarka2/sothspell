@@ -10,6 +10,32 @@ export interface SourceRange {
   contentHash: string;
 }
 
+const LANGUAGE_BY_EXTENSION: Record<string, string> = {
+  '.ts': 'typescript',
+  '.tsx': 'tsx',
+  '.js': 'javascript',
+  '.jsx': 'jsx',
+  '.mjs': 'javascript',
+  '.cjs': 'javascript',
+  '.svelte': 'svelte',
+  '.json': 'json',
+  '.jsonc': 'jsonc',
+  '.md': 'markdown',
+  '.mdx': 'mdx',
+  '.prisma': 'prisma',
+  '.css': 'css',
+  '.html': 'html',
+  '.sh': 'bash',
+  '.sql': 'sql',
+  '.yaml': 'yaml',
+  '.yml': 'yaml',
+};
+
+/** Maps a file extension to the Shiki language id used by the compiler. */
+export function languageForPath(filePath: string): string {
+  return LANGUAGE_BY_EXTENSION[path.extname(filePath).toLowerCase()] ?? 'plaintext';
+}
+
 export function hashText(text: string): string {
   return `sha256:${createHash('sha256').update(text, 'utf8').digest('hex')}`;
 }

@@ -8,6 +8,8 @@ docs.
 
 - [Development](./development.md) — workspace layout, commands, the golden-tour
   workflow, and the TypeScript 7 constraints.
+- [Repository analysis](./analysis.md) — read-only snapshots, symbol IDs, cache,
+  the CLI, and the project brief.
 
 ## Planned guides
 

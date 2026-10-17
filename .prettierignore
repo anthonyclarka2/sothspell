@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+apps/web/dist/
+examples/bunbun-tour/tour.json
+packages/core/schema/sothspell.schema.json
+test-results/
+playwright-report/

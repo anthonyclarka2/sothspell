@@ -22,7 +22,11 @@
     },
     "audience": {
       "type": "string",
-      "enum": ["new-contributor", "technical-evaluator", "maintainer"]
+      "enum": [
+        "new-contributor",
+        "technical-evaluator",
+        "maintainer"
+      ]
     },
     "project": {
       "type": "object",
@@ -60,11 +64,19 @@
               "type": "boolean"
             }
           },
-          "required": ["commit", "branch", "dirty"],
+          "required": [
+            "commit",
+            "branch",
+            "dirty"
+          ],
           "additionalProperties": false
         }
       },
-      "required": ["slug", "name", "revision"],
+      "required": [
+        "slug",
+        "name",
+        "revision"
+      ],
       "additionalProperties": false
     },
     "estimatedDurationMs": {
@@ -105,7 +117,13 @@
                 },
                 "kind": {
                   "type": "string",
-                  "enum": ["architecture", "dependency", "flow", "tree", "sequence"]
+                  "enum": [
+                    "architecture",
+                    "dependency",
+                    "flow",
+                    "tree",
+                    "sequence"
+                  ]
                 },
                 "title": {
                   "type": "string",
@@ -148,7 +166,11 @@
                         "minLength": 1
                       }
                     },
-                    "required": ["id", "label", "type"],
+                    "required": [
+                      "id",
+                      "label",
+                      "type"
+                    ],
                     "additionalProperties": false
                   }
                 },
@@ -188,12 +210,23 @@
                         "maxLength": 32
                       }
                     },
-                    "required": ["id", "from", "to", "kind"],
+                    "required": [
+                      "id",
+                      "from",
+                      "to",
+                      "kind"
+                    ],
                     "additionalProperties": false
                   }
                 }
               },
-              "required": ["id", "kind", "title", "nodes", "edges"],
+              "required": [
+                "id",
+                "kind",
+                "title",
+                "nodes",
+                "edges"
+              ],
               "additionalProperties": false
             }
           },
@@ -254,7 +287,10 @@
                             "maximum": 9007199254740991
                           }
                         },
-                        "required": ["start", "end"],
+                        "required": [
+                          "start",
+                          "end"
+                        ],
                         "additionalProperties": false
                       },
                       "contentHash": {
@@ -276,7 +312,12 @@
                         "minLength": 1
                       }
                     },
-                    "required": ["id", "path", "lines", "contentHash"],
+                    "required": [
+                      "id",
+                      "path",
+                      "lines",
+                      "contentHash"
+                    ],
                     "additionalProperties": false
                   }
                 },
@@ -312,7 +353,9 @@
                       }
                     }
                   },
-                  "required": ["anchorIds"],
+                  "required": [
+                    "anchorIds"
+                  ],
                   "additionalProperties": false
                 },
                 "suggestedQuestions": {
@@ -325,12 +368,24 @@
                   }
                 }
               },
-              "required": ["id", "title", "narration", "anchors", "stage"],
+              "required": [
+                "id",
+                "title",
+                "narration",
+                "anchors",
+                "stage"
+              ],
               "additionalProperties": false
             }
           }
         },
-        "required": ["id", "title", "summary", "diagrams", "beats"],
+        "required": [
+          "id",
+          "title",
+          "summary",
+          "diagrams",
+          "beats"
+        ],
         "additionalProperties": false
       }
     }

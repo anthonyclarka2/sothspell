@@ -871,7 +871,7 @@ Phase 7. Phase 8 is the release gate.
 | Phase | Status                | Primary outcome                                                                                                                  |
 | ----- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | 1     | complete (2026-10-17) | Toolchain, schema, compiler, hand-authored Bunbun tour, minimal player ([closure record](PHASE-1.md#shipped-closure-2026-10-17)) |
-| 2     | planned               | Read-only snapshot, TS/JS symbol graph, project brief                                                                            |
+| 2     | complete (2026-10-17) | Read-only snapshot, TS/JS symbol graph, project brief, CLI ([closure record](PHASE-2.md#shipped-closure-2026-10-17))             |
 | 3     | planned               | LLM curriculum, beat authoring, validation, repair, CLI                                                                          |
 | 4     | planned               | Movie-like player, code browser, diagrams, local progress                                                                        |
 | 5     | planned               | Browser + cloud narration, captions, accessibility gate                                                                          |
@@ -884,6 +884,14 @@ checked-in golden Bunbun tour (6 chapters, 19 beats, 20 anchors, pinned to
 `9fef24d`), the Hono API, the minimal React player, IndexedDB progress, and the
 TypeScript 7 toolchain guard. The full closure evidence lives in
 [`PHASE-1.md`](PHASE-1.md#shipped-closure-2026-10-17).
+
+Phase 2 shipped the read-only analyzer, `oxc-parser` symbol extraction, file and
+package import graphs, approximate reference edges, Prisma models, the
+deterministic project brief, the per-file cache, snapshot save/load, and the
+`sothspell analyze` CLI. On Bunbun at `9fef24d` it produces 642 files, 10,040
+symbols, 1,588 file imports, and 822 package imports in about 0.8 s cold and
+0.17 s warm, with the Bunbun worktree unchanged. The full evidence lives in
+[`PHASE-2.md`](PHASE-2.md#shipped-closure-2026-10-17).
 
 ## 20. Risks and open questions
 

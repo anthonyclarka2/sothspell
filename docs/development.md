@@ -4,11 +4,12 @@
 
 ```
 apps/api                  @sothspell/api — Hono API and static web host
+apps/cli                  @sothspell/cli — analyze CLI
 apps/web                  @sothspell/web — React 19 + Vite 8 player
 packages/core             @sothspell/core — schema, source access, compiler
+packages/analyzer         @sothspell/analyzer — snapshots, symbols, graph, brief
 packages/diagram          @sothspell/diagram — diagram IR, validation, ELK layout
 packages/player           @sothspell/player — framework-free playback engine
-packages/analyzer         Phase 2 placeholder
 packages/authoring        Phase 3 placeholder
 packages/narration        Phase 5 placeholder
 packages/harness          Phase 7 placeholder
@@ -41,7 +42,13 @@ pnpm build            # production web build
 pnpm check:toolchain  # TypeScript 7 and no classic compiler API packages
 pnpm schema:json      # regenerate packages/core/schema/sothspell.schema.json
 pnpm tour:build       # regenerate examples/bunbun-tour/tour.json
+pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --brief
+pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --save
 ```
+
+The analyzer guide is [analysis.md](./analysis.md). The CLI cache and saved
+snapshots live under `SOTHSPELL_HOME` (default `~/.sothspell`), never in the
+analyzed project.
 
 The dev server ports are `127.0.0.1:4319` (API) and `127.0.0.1:5173` (web). The
 web dev server proxies `/api` to the API.

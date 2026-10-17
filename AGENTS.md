@@ -7,10 +7,10 @@
   codebase with synchronized narration, diagrams, and highlighted code anchors.
   The website is first; an OpenCode V2 plugin follows; other harness adapters
   are a future track.
-- **Repository status: Phase 1 implemented (2026-10-17).** The workspace,
-  schema, compiler, golden tour, API, and minimal player exist. The analyzer,
-  authoring, narration, and OpenCode plugin packages are placeholders until
-  their phases land.
+- **Repository status: Phase 2 implemented (2026-10-17).** The workspace,
+  schema, compiler, golden tour, API, minimal player, read-only analyzer, and
+  `sothspell analyze` CLI exist. Authoring, narration, and the OpenCode plugin
+  are placeholders until their phases land.
 - **Example project:** Bunbun at `/Users/ajc/Projects/codegens/bunbun`, pinned to
   commit `9fef24d`. It is **read-only**. No command may create, modify, or delete
   anything inside that tree. All snapshots, tours, audio, logs, and runs live
@@ -87,11 +87,11 @@ Do not claim completion without fresh verification output.
 - `apps/web/` — React player and code browser (Phase 1: minimal player).
 - `apps/api/` — Hono API and static web host (Phase 1: compiled tour and anchors;
   SQLite persistence lands with the run sync phase).
-- `apps/cli/` — `sothspell` CLI (`analyze`, `author`, `serve`, `doctor`) —
-  Phase 2.
+- `apps/cli/` — `sothspell` CLI (`analyze` now; `author`, `serve`, `doctor` as
+  their phases land).
 - `packages/core/` — tour schema, compiler, source access, validation, IDs.
-- `packages/analyzer/` — read-only snapshot and symbol graph (Phase 2
-  placeholder).
+- `packages/analyzer/` — read-only snapshots, symbols, graph, brief, anchor
+  resolution, cache.
 - `packages/authoring/` — `GuideModel`, prompts, curriculum/beat pipeline
   (Phase 3 placeholder).
 - `packages/player/` — framework-free playback state machine.
@@ -123,14 +123,15 @@ pnpm check:toolchain
 pnpm schema:json
 pnpm tour:build
 pnpm sothspell doctor
-pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun
+pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --brief
+pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --save
 pnpm sothspell author /Users/ajc/Projects/codegens/bunbun --out "$SOTHSPELL_HOME/projects/bunbun/tours"
 pnpm sothspell serve
 ```
 
-The `sothspell` CLI commands arrive in Phase 2. Everything above them is
-available now. The dev server ports are `4319` (API) and `5173` (web); an agent
-may kill processes on those ports to free them.
+`pnpm sothspell analyze` is available now; `author`, `serve`, and `doctor` arrive
+with their phases. The dev server ports are `4319` (API) and `5173` (web); an
+agent may kill processes on those ports to free them.
 
 ## Domain vocabulary
 

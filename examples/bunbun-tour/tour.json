@@ -231,10 +231,18 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_readme_overview"],
+            "anchorIds": [
+              "anchor_readme_overview"
+            ],
             "diagramId": "diagram_sources",
-            "nodeIds": ["node_pds", "node_index"],
-            "edgeIds": ["edge_pds_index", "edge_api_index"]
+            "nodeIds": [
+              "node_pds",
+              "node_index"
+            ],
+            "edgeIds": [
+              "edge_pds_index",
+              "edge_api_index"
+            ]
           },
           "suggestedQuestions": [
             "Why keep a local index if the PDS is the source of truth?"
@@ -260,9 +268,16 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_readme_layout"],
+            "anchorIds": [
+              "anchor_readme_layout"
+            ],
             "diagramId": "diagram_repo_map",
-            "nodeIds": ["node_repo", "node_apps_api", "node_apps_web", "node_acceptance"]
+            "nodeIds": [
+              "node_repo",
+              "node_apps_api",
+              "node_apps_web",
+              "node_acceptance"
+            ]
           }
         },
         {
@@ -285,7 +300,9 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_context_glossary"],
+            "anchorIds": [
+              "anchor_context_glossary"
+            ],
             "diagramId": "diagram_domain",
             "nodeIds": [
               "node_user",
@@ -294,7 +311,11 @@
               "node_comment",
               "node_reply"
             ],
-            "edgeIds": ["edge_bun_thread", "edge_thread_comment", "edge_comment_reply"]
+            "edgeIds": [
+              "edge_bun_thread",
+              "edge_thread_comment",
+              "edge_comment_reply"
+            ]
           }
         }
       ]
@@ -461,10 +482,17 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_main_bootstrap"],
+            "anchorIds": [
+              "anchor_main_bootstrap"
+            ],
             "diagramId": "diagram_boot",
-            "nodeIds": ["node_boot", "node_root_module"],
-            "edgeIds": ["edge_boot_root"]
+            "nodeIds": [
+              "node_boot",
+              "node_root_module"
+            ],
+            "edgeIds": [
+              "edge_boot_root"
+            ]
           }
         },
         {
@@ -488,10 +516,17 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_app_module_imports"],
+            "anchorIds": [
+              "anchor_app_module_imports"
+            ],
             "diagramId": "diagram_boot",
-            "nodeIds": ["node_root_module", "node_feature_modules"],
-            "edgeIds": ["edge_root_features"]
+            "nodeIds": [
+              "node_root_module",
+              "node_feature_modules"
+            ],
+            "edgeIds": [
+              "edge_root_features"
+            ]
           }
         },
         {
@@ -515,10 +550,18 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_thread_controller"],
+            "anchorIds": [
+              "anchor_thread_controller"
+            ],
             "diagramId": "diagram_thread_page",
-            "nodeIds": ["node_request", "node_controller"],
-            "edgeIds": ["edge_request_controller", "edge_controller_loader"]
+            "nodeIds": [
+              "node_request",
+              "node_controller"
+            ],
+            "edgeIds": [
+              "edge_request_controller",
+              "edge_controller_loader"
+            ]
           }
         },
         {
@@ -555,10 +598,19 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_thread_loader", "anchor_thread_states"],
+            "anchorIds": [
+              "anchor_thread_loader",
+              "anchor_thread_states"
+            ],
             "diagramId": "diagram_thread_page",
-            "nodeIds": ["node_loader", "node_renderer"],
-            "edgeIds": ["edge_controller_loader", "edge_loader_renderer"]
+            "nodeIds": [
+              "node_loader",
+              "node_renderer"
+            ],
+            "edgeIds": [
+              "edge_controller_loader",
+              "edge_loader_renderer"
+            ]
           }
         },
         {
@@ -582,10 +634,20 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_comment_query"],
+            "anchorIds": [
+              "anchor_comment_query"
+            ],
             "diagramId": "diagram_thread_page",
-            "nodeIds": ["node_query", "node_index", "node_pds"],
-            "edgeIds": ["edge_loader_query", "edge_query_index", "edge_query_pds"]
+            "nodeIds": [
+              "node_query",
+              "node_index",
+              "node_pds"
+            ],
+            "edgeIds": [
+              "edge_loader_query",
+              "edge_query_index",
+              "edge_query_pds"
+            ]
           }
         }
       ]
@@ -705,10 +767,17 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_oauth_guard"],
+            "anchorIds": [
+              "anchor_oauth_guard"
+            ],
             "diagramId": "diagram_write_path",
-            "nodeIds": ["node_guard", "node_service"],
-            "edgeIds": ["edge_guard_service"]
+            "nodeIds": [
+              "node_guard",
+              "node_service"
+            ],
+            "edgeIds": [
+              "edge_guard_service"
+            ]
           }
         },
         {
@@ -732,10 +801,19 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_comments_create"],
+            "anchorIds": [
+              "anchor_comments_create"
+            ],
             "diagramId": "diagram_write_path",
-            "nodeIds": ["node_service", "node_adapter", "node_writer"],
-            "edgeIds": ["edge_service_adapter", "edge_service_writer"]
+            "nodeIds": [
+              "node_service",
+              "node_adapter",
+              "node_writer"
+            ],
+            "edgeIds": [
+              "edge_service_adapter",
+              "edge_service_writer"
+            ]
           }
         },
         {
@@ -759,10 +837,17 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_pds_create"],
+            "anchorIds": [
+              "anchor_pds_create"
+            ],
             "diagramId": "diagram_write_path",
-            "nodeIds": ["node_adapter", "node_pds"],
-            "edgeIds": ["edge_adapter_pds"]
+            "nodeIds": [
+              "node_adapter",
+              "node_pds"
+            ],
+            "edgeIds": [
+              "edge_adapter_pds"
+            ]
           }
         },
         {
@@ -786,10 +871,19 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_index_writer"],
+            "anchorIds": [
+              "anchor_index_writer"
+            ],
             "diagramId": "diagram_write_path",
-            "nodeIds": ["node_writer", "node_index", "node_cache"],
-            "edgeIds": ["edge_writer_index", "edge_writer_cache"]
+            "nodeIds": [
+              "node_writer",
+              "node_index",
+              "node_cache"
+            ],
+            "edgeIds": [
+              "edge_writer_index",
+              "edge_writer_cache"
+            ]
           }
         }
       ]
@@ -897,10 +991,19 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_sync_worker"],
+            "anchorIds": [
+              "anchor_sync_worker"
+            ],
             "diagramId": "diagram_sync",
-            "nodeIds": ["node_worker", "node_writer", "node_main"],
-            "edgeIds": ["edge_worker_writer", "edge_worker_main"]
+            "nodeIds": [
+              "node_worker",
+              "node_writer",
+              "node_main"
+            ],
+            "edgeIds": [
+              "edge_worker_writer",
+              "edge_worker_main"
+            ]
           }
         },
         {
@@ -924,10 +1027,17 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_thread_reconciler"],
+            "anchorIds": [
+              "anchor_thread_reconciler"
+            ],
             "diagramId": "diagram_sync",
-            "nodeIds": ["node_reconciler", "node_pds"],
-            "edgeIds": ["edge_reconciler_pds"]
+            "nodeIds": [
+              "node_reconciler",
+              "node_pds"
+            ],
+            "edgeIds": [
+              "edge_reconciler_pds"
+            ]
           }
         },
         {
@@ -951,10 +1061,19 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_tag_service"],
+            "anchorIds": [
+              "anchor_tag_service"
+            ],
             "diagramId": "diagram_sync",
-            "nodeIds": ["node_worker", "node_reconciler", "node_index"],
-            "edgeIds": ["edge_worker_reconciler", "edge_writer_index"]
+            "nodeIds": [
+              "node_worker",
+              "node_reconciler",
+              "node_index"
+            ],
+            "edgeIds": [
+              "edge_worker_reconciler",
+              "edge_writer_index"
+            ]
           }
         }
       ]
@@ -1036,10 +1155,19 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_web_main"],
+            "anchorIds": [
+              "anchor_web_main"
+            ],
             "diagramId": "diagram_web_islands",
-            "nodeIds": ["node_page", "node_bundle", "node_islands"],
-            "edgeIds": ["edge_page_bundle", "edge_bundle_islands"]
+            "nodeIds": [
+              "node_page",
+              "node_bundle",
+              "node_islands"
+            ],
+            "edgeIds": [
+              "edge_page_bundle",
+              "edge_bundle_islands"
+            ]
           }
         },
         {
@@ -1063,10 +1191,17 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_composer"],
+            "anchorIds": [
+              "anchor_composer"
+            ],
             "diagramId": "diagram_web_islands",
-            "nodeIds": ["node_islands", "node_api"],
-            "edgeIds": ["edge_islands_api"]
+            "nodeIds": [
+              "node_islands",
+              "node_api"
+            ],
+            "edgeIds": [
+              "edge_islands_api"
+            ]
           }
         }
       ]
@@ -1146,10 +1281,17 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_docs_index"],
+            "anchorIds": [
+              "anchor_docs_index"
+            ],
             "diagramId": "diagram_extension",
-            "nodeIds": ["node_question", "node_docs"],
-            "edgeIds": ["edge_question_docs"]
+            "nodeIds": [
+              "node_question",
+              "node_docs"
+            ],
+            "edgeIds": [
+              "edge_question_docs"
+            ]
           }
         },
         {
@@ -1172,10 +1314,17 @@
             }
           ],
           "stage": {
-            "anchorIds": ["anchor_agents_commands"],
+            "anchorIds": [
+              "anchor_agents_commands"
+            ],
             "diagramId": "diagram_extension",
-            "nodeIds": ["node_code", "node_verify"],
-            "edgeIds": ["edge_code_verify"]
+            "nodeIds": [
+              "node_code",
+              "node_verify"
+            ],
+            "edgeIds": [
+              "edge_code_verify"
+            ]
           }
         }
       ]

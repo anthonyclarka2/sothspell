@@ -1,8 +1,44 @@
-/**
- * Repository analysis lands in Phase 2. Keeping the package boundary now makes
- * the future analyzer a real module instead of a folder that appears later in
- * the middle of the API.
- */
-export interface AnalyzerContract {
-  readonly phase: 2;
-}
+export {
+  ANALYZER_VERSION,
+  analyzeProject,
+  snapshotId,
+  type AnalyzeOptions,
+} from './analyze.js';
+
+export { buildProjectBrief, renderProjectBriefMarkdown } from './brief.js';
+
+export { resolveAnchor, type AnchorInput, type ResolvedAnchor } from './anchor.js';
+
+export { parsePrismaModels } from './prisma.js';
+
+export { loadSnapshot, saveSnapshot, snapshotPathFor } from './store.js';
+
+export {
+  listProjectFiles,
+  readProjectFile,
+  redactionReason,
+  type ReadFileResult,
+} from './source.js';
+
+export type {
+  AnalysisStats,
+  AnalysisWarning,
+  BriefApplication,
+  DocEntry,
+  FeatureModule,
+  FileEntry,
+  FileLanguage,
+  GraphEdge,
+  LanguageStat,
+  PackageManifest,
+  PrismaField,
+  PrismaModel,
+  ProjectBrief,
+  ProjectGraph,
+  ProjectIdentity,
+  ProjectRevision,
+  ProjectSnapshot,
+  SymbolDecorator,
+  SymbolKind,
+  SymbolNode,
+} from './types.js';

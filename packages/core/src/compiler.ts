@@ -1,4 +1,3 @@
-import path from 'node:path';
 import { createHighlighter, type Highlighter } from 'shiki';
 import { layoutDiagram, type PositionedDiagram } from '@sothspell/diagram';
 import {
@@ -7,7 +6,7 @@ import {
   type CodeAnchor,
   type SothspellDocument,
 } from './schema.js';
-import { hashText, readSourceRange } from './source.js';
+import { hashText, languageForPath, readSourceRange } from './source.js';
 
 export interface CompiledAnchor {
   id: string;
@@ -61,31 +60,6 @@ export interface CompiledTour {
 export interface CompileOptions {
   /** When an anchor has no embedded excerpt, read it from this read-only root. */
   sourceRoot?: string;
-}
-
-const LANGUAGE_BY_EXTENSION: Record<string, string> = {
-  '.ts': 'typescript',
-  '.tsx': 'tsx',
-  '.js': 'javascript',
-  '.jsx': 'jsx',
-  '.mjs': 'javascript',
-  '.cjs': 'javascript',
-  '.svelte': 'svelte',
-  '.json': 'json',
-  '.jsonc': 'jsonc',
-  '.md': 'markdown',
-  '.mdx': 'mdx',
-  '.prisma': 'prisma',
-  '.css': 'css',
-  '.html': 'html',
-  '.sh': 'bash',
-  '.sql': 'sql',
-  '.yaml': 'yaml',
-  '.yml': 'yaml',
-};
-
-function languageForPath(filePath: string): string {
-  return LANGUAGE_BY_EXTENSION[path.extname(filePath).toLowerCase()] ?? 'plaintext';
 }
 
 let highlighterPromise: Promise<Highlighter> | undefined;

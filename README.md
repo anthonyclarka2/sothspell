@@ -13,7 +13,7 @@ resume later.
 
 ## Status
 
-**Phase 1 implemented (2026-10-17).** The repository contains:
+**Phase 2 implemented (2026-10-17).** The repository contains:
 
 - a pnpm workspace on TypeScript 7.0.2, React 19, Vite 8, and Hono 4;
 - the versioned Sóþspell schema, a generated JSON Schema, and a compiler that
@@ -22,7 +22,10 @@ resume later.
 - a checked-in golden Bunbun tour pinned to commit `9fef24d`;
 - a local API and a minimal web player with chapter navigation, auto-advance,
   pause/resume, code pages, diagram-to-code links, and IndexedDB progress;
-- unit, browser, and accessibility tests.
+- a read-only repository analyzer with `oxc-parser`: deterministic snapshots,
+  symbol extraction, import/reference graphs, NestJS/Prisma signals, a project
+  brief, a per-file cache, and the `sothspell analyze` CLI;
+- unit, browser, and accessibility tests, including the Bunbun acceptance pass.
 
 The LLM authoring pipeline (Phase 3), narration (Phase 5), Q&A (Phase 6), the
 OpenCode plugin (Phase 7), and the release hardening (Phase 8) are planned but
@@ -36,6 +39,13 @@ pnpm dev            # API on 127.0.0.1:4319, web on 127.0.0.1:5173
 ```
 
 Open <http://127.0.0.1:5173> and play the golden tour.
+
+Analyze a local repository read-only:
+
+```bash
+pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --brief
+pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --save
+```
 
 ```bash
 pnpm typecheck
@@ -85,6 +95,8 @@ stores only small, attributed excerpts.
 - [Phase 8](plans/PHASE-8.md) — self-hosted release and hardening.
 - [Development guide](docs/development.md) — workspace, commands, and the
   golden-tour workflow.
+- [Repository analysis](docs/analysis.md) — read-only snapshots, symbols, cache,
+  CLI, and project brief.
 - [Domain context](CONTEXT.md) — the project glossary.
 - [Agent instructions](AGENTS.md) — how agents work in this repository.
 
@@ -92,7 +104,8 @@ stores only small, attributed excerpts.
 
 pnpm 12.14.0 · Node.js 26 · TypeScript 7.0.2 · React 19.3.1 · Vite 8.3.4 ·
 TanStack Router 1.170.45 · Hono 4.13.13 · Zod 4.6.7 · Shiki 4.5.0 ·
-React Flow 12.12.0 · ELK 0.12.0 · Vitest 5.0.5 · Playwright 1.64.1 ·
+React Flow 12.12.0 · ELK 0.12.0 · oxc-parser 0.154.0 · fast-glob 3.3.3 ·
+ignore 7.0.12 · yaml 2.9.1 · Vitest 5.0.5 · Playwright 1.64.1 ·
 axe-core 4.14.0.
 
 TypeScript 7.0 has no programmatic compiler API; the analyzer will use
