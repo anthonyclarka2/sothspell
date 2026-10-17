@@ -56,7 +56,9 @@ pnpm install
 pnpm dev            # API on 127.0.0.1:4319, web on 127.0.0.1:5173
 ```
 
-Open <http://127.0.0.1:5173> and play the golden tour. The API reads full files
+Open <http://127.0.0.1:5173> and play the golden tour. Use **New tour** in the
+topbar to open a local git repository or a public GitHub URL and author a tour
+with the fixture model or the active authoring profile. The API reads full files
 from `SOTHSPELL_PROJECT_ROOT` (default: the pinned Bunbun checkout) for the code
 browser.
 

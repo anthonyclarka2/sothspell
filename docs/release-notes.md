@@ -10,6 +10,9 @@ and distribution.
 - **Preferences UI** — connection profiles for authoring and narration with a
   write-only secret store, provider testing, env fallback, and profile-aware
   pipelines.
+- **Web authoring flow** — `/new` opens a local git repository or a public
+  GitHub URL, inspects it read-only, and authors a tour with the fixture or
+  active profile model through a progress job.
 - **Harness plugins** — the `HarnessAdapter` contract and shared runtime, the
   OpenCode plugin refactor, and Claude Code and Codex adapters with fake-host
   conformance tests.
