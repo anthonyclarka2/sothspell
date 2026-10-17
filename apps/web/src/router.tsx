@@ -8,6 +8,7 @@ import {
 import { HomePage } from './routes/HomePage.js';
 import { PlayerPage } from './routes/PlayerPage.js';
 import { CodePage } from './routes/CodePage.js';
+import { ImportPage } from './routes/ImportPage.js';
 import { NotFoundPage } from './routes/NotFoundPage.js';
 import { SettingsPage } from './routes/SettingsPage.js';
 
@@ -66,9 +67,16 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
+const importRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/import',
+  component: ImportPage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   settingsRoute,
+  importRoute,
   playerRoute,
   codeRoute,
 ]);
@@ -78,7 +86,7 @@ export const router = createRouter({
   defaultPreload: 'intent',
 });
 
-export { codeRoute, homeRoute, playerRoute, settingsRoute };
+export { codeRoute, homeRoute, importRoute, playerRoute, settingsRoute };
 
 declare module '@tanstack/react-router' {
   interface Register {
