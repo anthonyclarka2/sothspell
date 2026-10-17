@@ -1,6 +1,6 @@
 # Phase 13 — Language Analyzers
 
-**Status: planned.** Depends on: the v1 analyzer and Phase 11 (imported
+**Status: in progress (2026-10-17).** Depends on: the v1 analyzer and Phase 11 (imported
 repositories). Can run in parallel with Phase 12 after Phase 9.
 
 ## Goal

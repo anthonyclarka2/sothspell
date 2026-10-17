@@ -1,6 +1,6 @@
 # Phase 16 — Embeddable Player
 
-**Status: planned.** Depends on: the v1 player and tour format, Phase 15
+**Status: in progress (2026-10-17).** Depends on: the v1 player and tour format, Phase 15
 (approved tours). Can run in parallel with later phases.
 
 ## Goal

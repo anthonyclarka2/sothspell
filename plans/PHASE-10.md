@@ -1,6 +1,6 @@
 # Phase 10 — Harness Plugins
 
-**Status: planned.** Depends on: Phase 9 (connection profiles), Phase 7
+**Status: in progress (2026-10-17).** Depends on: Phase 9 (connection profiles), Phase 7
 (OpenCode plugin, archived). Claude Code ships first, then Codex, then the
 remaining agent CLIs.
 

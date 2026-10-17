@@ -1,6 +1,6 @@
 # Phase 9 — Preferences UI
 
-**Status: planned.** Depends on: the v1 release (archived plans). This is the
+**Status: in progress (2026-10-17).** Depends on: the v1 release (archived plans). This is the
 foundation phase for the next stage.
 
 ## Goal

@@ -1,6 +1,6 @@
 # Phase 12 — Accounts and Cross-Device Sync
 
-**Status: planned.** Depends on: Phase 9 (profiles) and the v1 run store. Can
+**Status: in progress (2026-10-17).** Depends on: Phase 9 (profiles) and the v1 run store. Can
 run in parallel with Phases 10, 11, and 13 after Phase 9.
 
 ## Goal

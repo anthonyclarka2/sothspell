@@ -1,6 +1,6 @@
 # Phase 11 — GitHub Import
 
-**Status: planned.** Depends on: Phase 9 (profiles) and the v1 analyzer. Can run
+**Status: in progress (2026-10-17).** Depends on: Phase 9 (profiles) and the v1 analyzer. Can run
 in parallel with Phase 10 after Phase 9.
 
 ## Goal

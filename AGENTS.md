@@ -100,22 +100,22 @@ All v1 tracks were merged and their worktrees and branches were removed after
 verification. The narration contract lives in
 `packages/narration/src/types.ts`.
 
-### Next-stage dispatches
+### Next-stage dispatches (2026-10-17)
 
-Phases 9–16 are planned; no next-stage subagent is dispatched yet. When one is
-created, add a row here with the phase, branch/worktree, owner scope, and
-session id before the subagent starts. The planned parallel tracks are:
+| Phase | Track / worktree / branch | Owner scope                                                                             | Session                          |
+| ----- | ------------------------- | --------------------------------------------------------------------------------------- | -------------------------------- |
+| 9     | `phase-9-a-preferences`   | `packages/settings/**`, settings API routes, `/settings` page, profile-aware resolution | `ses_eb608b86cffe8nuLB3XC1PKR20` |
+| 10    | `phase-10-a-harness`      | `packages/harness/**`, Claude Code and Codex adapter packages, OpenCode plugin refactor | `ses_eb608b86bffepaeqpbK3W8DRRF` |
+| 11    | `phase-11-a-import`       | `packages/import/**`, import API/UI, `sothspell import`                                 | `ses_eb608b86affeoF0nH3bsJw8lcF` |
+| 12    | `phase-12-a-accounts`     | `packages/accounts/**`, auth/account/sync API and UI, run user scope                    | `ses_eb608b85effezfutU5v30MDhau` |
+| 13    | `phase-13-a-analyzers`    | `packages/analyzer/**`, Python/Go/Rust/Java adapters and fixtures                       | `ses_eb608b85effdbBCIsoHfBwtSUY` |
+| 16    | `phase-16-a-embed`        | `packages/embed/**`, `examples/embed-docs/**`, `sothspell export`                       | `ses_eb608b85dffeAIjNC7nHDCGSde` |
 
-- Phase 9 is the foundation and is owned by the main agent first.
-- Phase 10, Phase 11, Phase 12, and Phase 15 can overlap after Phase 9 with
-  non-overlapping packages (`packages/harness`, `packages/import`,
-  `packages/accounts`, review surfaces).
-- Phase 13 depends on Phase 11 but can use local fixtures in parallel.
-- Phase 14 depends on Phase 9 and Phase 10.
-- Phase 16 depends on the player and tour format, not on accounts.
-
-Main owns integration, `plans/**`, `docs/**`, `CONTEXT.md`, and the final
-verification for every track.
+Phase 14 (translation) follows Phase 9 and Phase 10. Phase 15 (review UI)
+follows Phase 9. Main owns integration, `plans/**`, `docs/**`, `CONTEXT.md`,
+and the final verification for every track. Shared-file edits (`app.ts`,
+`router.tsx`, `cli.ts`) are kept minimal by each track and resolved by main at
+merge.
 
 ## Verification
 

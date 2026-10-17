@@ -64,16 +64,16 @@ and the tour format, not on accounts.
 
 ## Status
 
-| Phase | Status  | Primary outcome                                                   |
-| ----- | ------- | ----------------------------------------------------------------- |
-| 9     | planned | Connection profiles, settings API, `/settings` UI, provider tests |
-| 10    | planned | `HarnessAdapter` contract, Claude Code plugin, Codex plugin       |
-| 11    | planned | GitHub URL import, shallow clone sandbox, import UI               |
-| 12    | planned | GitHub OAuth accounts, run sync, account export/delete            |
-| 13    | planned | Python/Go/Rust/Java analyzer adapters and fixtures                |
-| 14    | planned | Locale-aware tours, translation pipeline, per-locale narration    |
-| 15    | planned | Review queue, beat comments, edit/regenerate, approval            |
-| 16    | planned | Standalone embed bundle, export command, docs integration         |
+| Phase | Status                   | Primary outcome                                                   |
+| ----- | ------------------------ | ----------------------------------------------------------------- |
+| 9     | in progress (2026-10-17) | Connection profiles, settings API, `/settings` UI, provider tests |
+| 10    | in progress (2026-10-17) | `HarnessAdapter` contract, Claude Code plugin, Codex plugin       |
+| 11    | in progress (2026-10-17) | GitHub URL import, shallow clone sandbox, import UI               |
+| 12    | in progress (2026-10-17) | GitHub OAuth accounts, run sync, account export/delete            |
+| 13    | in progress (2026-10-17) | Python/Go/Rust/Java analyzer adapters and fixtures                |
+| 14    | planned                  | Locale-aware tours, translation pipeline, per-locale narration    |
+| 15    | planned                  | Review queue, beat comments, edit/regenerate, approval            |
+| 16    | in progress (2026-10-17) | Standalone embed bundle, export command, docs integration         |
 
 ## 1. Product direction
 
