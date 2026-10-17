@@ -1,23 +1,15 @@
 import { parseSync, type Node } from 'oxc-parser';
 import { walk } from 'oxc-walker';
-import type { FileLanguage, SymbolDecorator, SymbolKind, SymbolNode } from './types.js';
-
-export interface ImportBinding {
-  imported: string;
-  local: string;
-}
-
-export interface FileImport {
-  specifier: string;
-  bindings: ImportBinding[];
-}
-
-export interface FileAnalysis {
-  symbols: SymbolNode[];
-  imports: FileImport[];
-  exportedNames: string[];
-  parseErrors: string[];
-}
+import type {
+  FileAnalysis,
+  FileImport,
+  FileLanguage,
+  ImportBinding,
+  LanguageId,
+  SymbolDecorator,
+  SymbolKind,
+  SymbolNode,
+} from './types.js';
 
 function lineStartsOf(buffer: Buffer): number[] {
   const starts = [0];
@@ -103,8 +95,9 @@ function symbolId(path: string, qualifiedName: string): string {
     : `symbol:${path}#${qualifiedName}`;
 }
 
-function buildSymbol(input: {
+export function buildSymbol(input: {
   path: string;
+  language: LanguageId;
   kind: SymbolKind;
   name: string;
   qualifiedName: string;
@@ -114,6 +107,7 @@ function buildSymbol(input: {
   parentId: string | null;
   decorators: SymbolDecorator[];
   signature: string;
+  documentation?: string | null;
 }): SymbolNode {
   return {
     id: symbolId(input.path, input.qualifiedName),
@@ -127,7 +121,8 @@ function buildSymbol(input: {
     parentId: input.parentId,
     decorators: input.decorators,
     signature: input.signature,
-    documentation: null,
+    documentation: input.documentation ?? null,
+    language: input.language,
   };
 }
 
@@ -147,11 +142,13 @@ export function analyzeSourceFile(
   path: string,
   text: string,
   language: FileLanguage,
+  symbolLanguage: LanguageId,
 ): FileAnalysis {
   const buffer = Buffer.from(text, 'utf8');
   const lineStarts = lineStartsOf(buffer);
   const moduleSymbol = buildSymbol({
     path,
+    language: symbolLanguage,
     kind: 'module',
     name: path.split('/').pop() ?? path,
     qualifiedName: '',
@@ -169,6 +166,7 @@ export function analyzeSourceFile(
       imports: [],
       exportedNames: [],
       parseErrors: [],
+      entryPoint: false,
     };
   }
 
@@ -219,6 +217,7 @@ export function analyzeSourceFile(
           }
           const symbol = buildSymbol({
             path,
+            language: symbolLanguage,
             kind: 'class',
             name,
             qualifiedName: `${parentPrefix}${name}`,
@@ -245,6 +244,7 @@ export function analyzeSourceFile(
           symbols.push(
             buildSymbol({
               path,
+              language: symbolLanguage,
               kind: 'function',
               name,
               qualifiedName: `${parentPrefix}${name}`,
@@ -275,6 +275,7 @@ export function analyzeSourceFile(
             symbols.push(
               buildSymbol({
                 path,
+                language: symbolLanguage,
                 kind,
                 name,
                 qualifiedName: `${parentPrefix}${name}`,
@@ -297,6 +298,7 @@ export function analyzeSourceFile(
           symbols.push(
             buildSymbol({
               path,
+              language: symbolLanguage,
               kind: 'interface',
               name,
               qualifiedName: `${parentPrefix}${name}`,
@@ -318,6 +320,7 @@ export function analyzeSourceFile(
           symbols.push(
             buildSymbol({
               path,
+              language: symbolLanguage,
               kind: 'type',
               name,
               qualifiedName: `${parentPrefix}${name}`,
@@ -339,6 +342,7 @@ export function analyzeSourceFile(
           symbols.push(
             buildSymbol({
               path,
+              language: symbolLanguage,
               kind: 'enum',
               name,
               qualifiedName: `${parentPrefix}${name}`,
@@ -359,6 +363,7 @@ export function analyzeSourceFile(
           }
           const symbol = buildSymbol({
             path,
+            language: symbolLanguage,
             kind: 'namespace',
             name,
             qualifiedName: `${parentPrefix}${name}`,
@@ -385,6 +390,7 @@ export function analyzeSourceFile(
           symbols.push(
             buildSymbol({
               path,
+              language: symbolLanguage,
               kind: 'method',
               name,
               qualifiedName: `${parentPrefix}${name}`,
@@ -406,6 +412,7 @@ export function analyzeSourceFile(
           symbols.push(
             buildSymbol({
               path,
+              language: symbolLanguage,
               kind: 'property',
               name,
               qualifiedName: `${parentPrefix}${name}`,
@@ -436,5 +443,6 @@ export function analyzeSourceFile(
     imports,
     exportedNames: [...exportedNames],
     parseErrors,
+    entryPoint: false,
   };
 }

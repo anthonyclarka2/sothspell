@@ -4,6 +4,10 @@ export type FileLanguage =
   | 'javascript'
   | 'jsx'
   | 'svelte'
+  | 'python'
+  | 'go'
+  | 'rust'
+  | 'java'
   | 'json'
   | 'jsonc'
   | 'markdown'
@@ -16,6 +20,14 @@ export type FileLanguage =
   | 'yaml'
   | 'text'
   | 'binary';
+
+/**
+ * A language an adapter claims. It is the unit the snapshot's language mix, the
+ * dependency graph, and the authoring budget group by; `FileLanguage` stays the
+ * per-file detail (for example `tsx` is parsed as `typescript`).
+ */
+export type LanguageId =
+  'typescript' | 'javascript' | 'svelte' | 'python' | 'go' | 'rust' | 'java';
 
 export interface FileEntry {
   path: string;
@@ -30,10 +42,18 @@ export interface FileEntry {
 }
 
 export interface LanguageStat {
+  /** File language as recorded on the file entry, exactly as v1 reported it. */
   language: FileLanguage;
+  /** Adapter language that owns the file language, or the file language itself. */
+  id: LanguageId | FileLanguage;
   files: number;
   bytes: number;
   lines: number;
+  /**
+   * True for the single file language with the most source bytes. At most one
+   * entry carries it; non-source languages (docs, config, assets) never do.
+   */
+  primary: boolean;
 }
 
 export interface PackageManifest {
@@ -75,7 +95,9 @@ export type SymbolKind =
   | 'type'
   | 'enum'
   | 'namespace'
-  | 'object';
+  | 'object'
+  | 'model'
+  | 'other';
 
 export interface SymbolDecorator {
   name: string;
@@ -95,6 +117,28 @@ export interface SymbolNode {
   decorators: SymbolDecorator[];
   signature: string;
   documentation: string | null;
+  /** The language that produced the symbol, so mixed-language snapshots stay readable. */
+  language: LanguageId | FileLanguage;
+}
+
+export interface ImportBinding {
+  imported: string;
+  local: string;
+}
+
+export interface FileImport {
+  specifier: string;
+  bindings: ImportBinding[];
+}
+
+/** The per-file parse result every adapter returns. */
+export interface FileAnalysis {
+  symbols: SymbolNode[];
+  imports: FileImport[];
+  exportedNames: string[];
+  parseErrors: string[];
+  /** Direct evidence that the file is an entry point (a `main` function and so on). */
+  entryPoint: boolean;
 }
 
 export type GraphEdgeKind = 'imports' | 'references' | 'package-imports' | 'contains';
@@ -119,6 +163,36 @@ export interface AnalysisWarning {
   message: string;
 }
 
+export type ManifestDependencyKind = 'runtime' | 'dev' | 'build' | 'unknown';
+
+export interface ManifestDependency {
+  name: string;
+  version: string | null;
+  kind: ManifestDependencyKind;
+}
+
+/**
+ * The brief-sized view of a build manifest. The raw file stays in the snapshot
+ * manifest with its hash, so a tour can anchor the manifest itself.
+ */
+export interface LanguageManifest {
+  path: string;
+  language: LanguageId;
+  buildSystem: string;
+  name: string | null;
+  version: string | null;
+  /** Entry points declared by the build (console scripts, binaries, main class). */
+  entryPoints: string[];
+  dependencies: ManifestDependency[];
+}
+
+export interface LanguageRuntimeStat {
+  id: LanguageId;
+  grammarBytes: number;
+  loadMs: number;
+  abiVersion: number;
+}
+
 export interface ProjectRevision {
   commit: string | null;
   branch: string | null;
@@ -135,6 +209,8 @@ export interface AnalysisStats {
   durationMs: number;
   cacheHits: number;
   cacheMisses: number;
+  /** Per-language parser runtime cost, recorded only for detected languages. */
+  languageRuntimes: LanguageRuntimeStat[];
 }
 
 export interface BriefApplication {
@@ -154,11 +230,46 @@ export interface FeatureModule {
   representativeSymbols: string[];
 }
 
+export interface LanguageModule {
+  name: string;
+  path: string;
+  files: number;
+  symbols: number;
+  representativeSymbols: string[];
+}
+
+export interface NotableSymbol {
+  id: string;
+  qualifiedName: string;
+  kind: SymbolKind;
+  path: string;
+}
+
+/**
+ * The per-language brief: build system, entry points, module layout, notable
+ * symbols, and the language's known limits. One entry per detected language.
+ */
+export interface LanguageBrief {
+  id: LanguageId;
+  files: number;
+  bytes: number;
+  lines: number;
+  primary: boolean;
+  fileLanguages: FileLanguage[];
+  buildSystems: string[];
+  manifests: string[];
+  entryPoints: string[];
+  modules: LanguageModule[];
+  notableSymbols: NotableSymbol[];
+  risks: string[];
+}
+
 export interface ProjectBrief {
   project: ProjectIdentity;
   revision: ProjectRevision;
   workspace: { kind: 'pnpm' | 'single'; packages: PackageManifest[] };
   languages: LanguageStat[];
+  languageBriefs: LanguageBrief[];
   applications: BriefApplication[];
   featureModules: FeatureModule[];
   docs: DocEntry[];
@@ -186,6 +297,7 @@ export interface ProjectSnapshot {
   packages: PackageManifest[];
   docs: DocEntry[];
   prismaModels: PrismaModel[];
+  manifests: LanguageManifest[];
   symbols: SymbolNode[];
   graph: ProjectGraph;
   warnings: AnalysisWarning[];

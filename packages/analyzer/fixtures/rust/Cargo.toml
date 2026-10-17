@@ -1,0 +1,15 @@
+[package]
+name = "fixture"
+version = "0.1.0"
+edition = "2021"
+description = "A hand-written Rust fixture for the analyzer tests."
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+
+[dev-dependencies]
+pretty_assertions = "1.4"
+
+[[bin]]
+name = "fixture"
+path = "src/main.rs"

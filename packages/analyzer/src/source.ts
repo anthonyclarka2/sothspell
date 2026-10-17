@@ -54,8 +54,24 @@ export function normalizeLanguage(language: string): FileLanguage {
   return (language === 'plaintext' ? 'text' : language) as FileLanguage;
 }
 
+/**
+ * Extensions the analyzer parses with a language adapter. They live here rather
+ * than in `@sothspell/core`'s highlight map because only the analyzer needs to
+ * know that a `.py` file is Python source rather than plain text.
+ */
+const ANALYZER_EXTENSIONS: Record<string, FileLanguage> = {
+  '.py': 'python',
+  '.pyi': 'python',
+  '.go': 'go',
+  '.rs': 'rust',
+  '.java': 'java',
+};
+
 export function languageOf(filePath: string): FileLanguage {
-  return normalizeLanguage(languageForPath(filePath));
+  return (
+    ANALYZER_EXTENSIONS[path.extname(filePath).toLowerCase()] ??
+    normalizeLanguage(languageForPath(filePath))
+  );
 }
 
 async function loadIgnoreRules(root: string): Promise<IgnoreRule[]> {
