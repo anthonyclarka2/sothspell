@@ -11,6 +11,7 @@
   --accent: #1f4fff;
   --accent-ink: #ffffff;
   --accent-soft: #eaf0ff;
+  --danger: #b3261e;
   --focus-ring: #1f4fff;
   --code-bg: #ffffff;
   --shadow: 0 1px 2px rgb(17 20 24 / 6%), 0 8px 24px rgb(17 20 24 / 6%);
@@ -29,6 +30,7 @@
     --accent: #6b8cff;
     --accent-ink: #08101f;
     --accent-soft: #17203a;
+    --danger: #ffb4ab;
     --code-bg: #0e1219;
     --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 12px 32px rgb(0 0 0 / 35%);
     color-scheme: dark;
@@ -1215,5 +1217,238 @@ pre,
 
   .transport-speed select {
     padding: 4px;
+  }
+}
+
+/* Settings — connection profiles for authoring and narration */
+
+.topbar-link {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 520;
+}
+
+.topbar-link:hover {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.settings-page {
+  max-width: 880px;
+}
+
+.settings-header h1 {
+  margin: 0 0 8px;
+  font-size: clamp(26px, 3vw, 34px);
+  letter-spacing: -0.03em;
+  font-weight: 640;
+}
+
+.settings-header p {
+  margin: 0;
+  max-width: 70ch;
+  color: var(--muted);
+}
+
+.settings-section {
+  margin-top: 26px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.settings-section-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-section-head h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.settings-section-head p {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.settings-env-note {
+  margin: 14px 0 0;
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.settings-error {
+  margin: 12px 0 0;
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--danger);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.profile-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.profile-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: var(--bg);
+}
+
+.profile-card[data-active='true'] {
+  border-color: var(--accent);
+}
+
+.profile-card-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-card-head h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.profile-badge {
+  border: 1px solid var(--accent);
+  border-radius: 99px;
+  padding: 2px 8px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.profile-badge--muted {
+  border-color: var(--line);
+  background: var(--panel-strong);
+  color: var(--muted);
+  font-weight: 520;
+}
+
+.profile-card-meta {
+  margin: 6px 0 0;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.profile-card-note {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.profile-actions .secondary-action {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.profile-test-result {
+  margin: 8px 0 0;
+  min-height: 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.profile-test-result[data-state='ok'],
+.profile-test-result[data-state='error'] {
+  color: var(--ink);
+}
+
+.profile-test-result[data-state='error'] {
+  font-weight: 560;
+}
+
+.profile-form {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  display: grid;
+  gap: 12px;
+  max-width: 560px;
+}
+
+.profile-form h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 5px;
+}
+
+.field label {
+  font-size: 13px;
+  font-weight: 540;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.field input[readonly] {
+  background: var(--panel-strong);
+  color: var(--muted);
+}
+
+.field-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.field-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 12.5px;
+}
+
+.profile-form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .settings-section-head {
+    flex-direction: column;
   }
 }

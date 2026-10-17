@@ -16,12 +16,22 @@ import {
   createFixtureGuideModel,
   type TourPlan,
 } from '@sothspell/authoring';
+import {
+  createSettingsService,
+  type AuthoringConnection,
+  type SettingsService,
+} from '@sothspell/settings';
 import { runDoctor } from './doctor.js';
 import { runServe, type ServeArgs } from './serve.js';
 
 export interface CliIO {
   stdout: (line: string) => void;
   stderr: (line: string) => void;
+}
+
+export interface CliDependencies {
+  /** Injected settings service; tests keep the real SOTHSPELL_HOME untouched. */
+  settings?: SettingsService;
 }
 
 const USAGE = `Usage:
@@ -44,6 +54,8 @@ Options:
   --out <file|dir>  Write the snapshot JSON, or the authored tour directory.
   --save            Save the snapshot under SOTHSPELL_HOME/projects/<slug>/.
   --model <id>      provider/model, or "fixture" for a deterministic offline tour.
+                    Defaults to SOTHSPELL_MODEL, then the active authoring
+                    profile from /settings.
   --audience <kind> new-contributor, technical-evaluator, or maintainer.
   --max-minutes <n> Target tour runtime for the curriculum planner.
   --port <n>        Port for serve (default 4319).
@@ -221,11 +233,24 @@ async function ensureOutsideProject(root: string, outputPath: string): Promise<s
   return resolved;
 }
 
-async function runAuthor(args: AuthorArgs, io: CliIO): Promise<number> {
-  const modelId = args.model ?? process.env.SOTHSPELL_MODEL ?? null;
+async function runAuthor(
+  args: AuthorArgs,
+  io: CliIO,
+  dependencies: CliDependencies,
+): Promise<number> {
+  // The settings resolver is consulted only when no explicit --model is given;
+  // it applies SOTHSPELL_MODEL precedence itself and falls back to the active
+  // authoring profile from /settings.
+  let connection: AuthoringConnection | null = null;
+  if (args.model === null) {
+    const settings =
+      dependencies.settings ?? createSettingsService({ homeDirectory: sothspellHome() });
+    connection = await settings.resolveAuthoringConnection();
+  }
+  const modelId = args.model ?? connection?.modelId ?? null;
   if (!modelId) {
     io.stderr(
-      `no model selected; pass --model <provider/model> or set SOTHSPELL_MODEL\n\n${USAGE}`,
+      `no model selected; pass --model <provider/model>, set SOTHSPELL_MODEL, or activate an authoring profile in /settings\n\n${USAGE}`,
     );
     return 2;
   }
@@ -240,10 +265,17 @@ async function runAuthor(args: AuthorArgs, io: CliIO): Promise<number> {
       sourceRoot: args.root,
       maxCandidates: 60,
     });
+    const modelOptions =
+      args.model === null && connection?.source === 'profile'
+        ? {
+            ...(connection.apiKey === null ? {} : { apiKey: connection.apiKey }),
+            ...(connection.baseUrl === null ? {} : { baseUrl: connection.baseUrl }),
+          }
+        : undefined;
     const model =
       modelId === 'fixture' || modelId === 'fake'
         ? createFixtureGuideModel(context)
-        : createAiSdkGuideModel(modelId);
+        : createAiSdkGuideModel(modelId, modelOptions);
 
     const result = await authorTour(snapshot, model, {
       sourceRoot: args.root,
@@ -251,6 +283,7 @@ async function runAuthor(args: AuthorArgs, io: CliIO): Promise<number> {
       ...(args.audience === null ? {} : { audience: args.audience }),
       ...(args.maxMinutes === null ? {} : { maxMinutes: args.maxMinutes }),
       ...(args.noCache ? {} : { cacheDirectory: defaultAuthoringCacheDirectory() }),
+      ...(connection?.profileName == null ? {} : { profileName: connection.profileName }),
       onProgress: (progress) => {
         const detail = progress.detail ? ` — ${progress.detail}` : '';
         const chapter =
@@ -339,7 +372,11 @@ function parseServeArgs(argv: string[]): ServeArgs {
  * The CLI is a thin shell over the analyzer seam. Keeping argument parsing here
  * means tests can drive the same behavior without spawning a process.
  */
-export async function runCli(argv: string[], io: CliIO): Promise<number> {
+export async function runCli(
+  argv: string[],
+  io: CliIO,
+  dependencies: CliDependencies = {},
+): Promise<number> {
   if (argv.length === 0 || argv[0] === '--help' || argv[0] === 'help') {
     io.stdout(USAGE.trimEnd());
     return 0;
@@ -360,7 +397,7 @@ export async function runCli(argv: string[], io: CliIO): Promise<number> {
 
   if (argv[0] === 'author') {
     try {
-      return await runAuthor(parseAuthorArgs(argv.slice(1)), io);
+      return await runAuthor(parseAuthorArgs(argv.slice(1)), io, dependencies);
     } catch (error) {
       io.stderr(error instanceof Error ? error.message : String(error));
       return 2;

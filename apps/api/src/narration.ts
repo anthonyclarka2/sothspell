@@ -5,6 +5,7 @@ import type {
   NarrationSegment,
   NarrationSynthesisResult,
 } from '@sothspell/narration';
+import type { NarrationConnection } from '@sothspell/settings';
 import { z } from 'zod';
 import {
   NarrationUnavailableError,
@@ -43,8 +44,15 @@ export function narrationContentHash(
   text: string,
   voiceId: string,
   modelId: string | undefined,
+  outputFormat?: string,
 ): string {
-  const canonical = JSON.stringify([text, voiceId, modelId ?? null]);
+  // The three-argument form keeps the pinned digests from the v1 cache; the
+  // output format joins the key only when a profile actually sets one.
+  const canonical = JSON.stringify(
+    outputFormat === undefined
+      ? [text, voiceId, modelId ?? null]
+      : [text, voiceId, modelId ?? null, outputFormat],
+  );
   return `sha256:${createHash('sha256').update(canonical).digest('hex')}`;
 }
 
@@ -53,6 +61,12 @@ export interface NarrationSynthesisInput {
   text: string;
   voiceId?: string;
   modelId?: string;
+  /**
+   * Server-side override for the settings connection test, which must probe
+   * the profile under test rather than the active one. Routes never accept
+   * this from a request body.
+   */
+  connection?: NarrationConnection | null;
 }
 
 export interface NarrationService {
@@ -64,7 +78,14 @@ export interface NarrationServiceOptions {
   apiKey?: string;
   voiceId?: string;
   modelId?: string;
+  outputFormat?: string;
   fetchImpl?: typeof fetch;
+  /**
+   * Profile-aware resolution seam. When supplied, the active narration
+   * connection (or an environment override) supplies voice, model, format, and
+   * key; the option fields remain the fallback.
+   */
+  resolveConnection?: () => Promise<NarrationConnection | null>;
   /** Provider seam. Tests inject a fake; production uses the package client. */
   synthesize?: CloudSynthesizer;
   /**
@@ -118,14 +139,28 @@ export function createNarrationService(
 
   return {
     async synthesize(input) {
-      const voiceId = input.voiceId ?? options.voiceId;
-      if (!voiceId) {
+      const connection =
+        input.connection ??
+        (options.resolveConnection ? await options.resolveConnection() : null);
+      if (connection?.provider === 'browser') {
         throw new NarrationUnavailableError(
-          'cloud narration needs a voice id; pass voiceId or set ELEVENLABS_VOICE_ID',
+          'the active narration profile uses browser speech; cloud narration is not configured',
         );
       }
-      const modelId = input.modelId ?? options.modelId;
-      const contentHash = narrationContentHash(input.text, voiceId, modelId);
+      const voiceId = input.voiceId ?? connection?.voiceId ?? options.voiceId;
+      if (!voiceId) {
+        throw new NarrationUnavailableError(
+          'cloud narration needs a voice id; choose a narration profile in /settings or set ELEVENLABS_VOICE_ID',
+        );
+      }
+      const modelId = input.modelId ?? connection?.modelId ?? options.modelId;
+      const outputFormat = connection?.outputFormat ?? options.outputFormat ?? null;
+      const contentHash = narrationContentHash(
+        input.text,
+        voiceId,
+        modelId,
+        outputFormat ?? undefined,
+      );
 
       const cached = (await options.assetStore.has(contentHash))
         ? await options.assetStore.read(contentHash)
@@ -150,17 +185,19 @@ export function createNarrationService(
 
       // A clip that is already cached stays playable without a key; only a
       // provider call needs one.
-      if (!options.apiKey) {
+      const apiKey = connection?.apiKey ?? options.apiKey;
+      if (!apiKey) {
         throw new NarrationUnavailableError(
-          'cloud narration needs an ElevenLabs API key; set ELEVENLABS_API_KEY',
+          'cloud narration needs an ElevenLabs API key; store one in /settings or set ELEVENLABS_API_KEY',
         );
       }
 
       const synthesized = await synthesize({
-        apiKey: options.apiKey,
+        apiKey,
         text: input.text,
         voiceId,
         modelId,
+        ...(outputFormat === null ? {} : { outputFormat }),
         beatId: input.beatId,
         fetchImpl: options.fetchImpl,
       });

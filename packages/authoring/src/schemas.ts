@@ -56,6 +56,8 @@ export interface AuthoringQuality {
   usage: { inputTokens: number; outputTokens: number; totalTokens: number };
   promptVersion: string;
   modelId: string;
+  /** The active connection profile, when authoring resolved one; never a secret. */
+  profileName?: string;
   estimatedDurationMs: number;
 }
 

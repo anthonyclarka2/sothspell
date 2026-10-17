@@ -37,6 +37,11 @@ export interface AuthorTourOptions {
   signal?: AbortSignal;
   maxRepairAttempts?: number;
   onProgress?: (progress: AuthoringProgress) => void;
+  /**
+   * Name of the active connection profile, recorded in the quality report.
+   * Callers must pass the name only; secrets never reach this option.
+   */
+  profileName?: string;
 }
 
 export class AuthoringError extends Error {
@@ -286,6 +291,7 @@ export async function authorTour(
     usage: runner.usage,
     promptVersion: PROMPT_VERSION,
     modelId: model.id,
+    ...(options.profileName === undefined ? {} : { profileName: options.profileName }),
     estimatedDurationMs: totalDurationMs(document),
   };
 

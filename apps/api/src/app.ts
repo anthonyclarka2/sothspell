@@ -6,6 +6,11 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { NarrationAssetStore } from '@sothspell/narration';
 import {
+  createSettingsService,
+  type ProfileTester,
+  type SettingsService,
+} from '@sothspell/settings';
+import {
   compileSothspell,
   highlightCodeLines,
   languageForPath,
@@ -24,6 +29,8 @@ import {
 import { createRunStore, RunBodySchema, type RunRecord } from './runs.js';
 import { AskUnavailableError, createAskService, type AskService } from './ask-service.js';
 import { createDrilldownService, type DrilldownService } from './drilldown-service.js';
+import { registerSettingsRoutes } from './settings.js';
+import { createConnectionGuideModel, createProfileTester } from './settings-tester.js';
 
 const AskBodySchema = z.object({
   beatId: z.string().min(1).max(128),
@@ -60,6 +67,10 @@ export interface AppOptions {
   askService?: AskService | null;
   /** Drilldown service; tests inject a fake. */
   drilldownService?: DrilldownService | null;
+  /** Connection-profile store; tests inject a store over a temp home. */
+  settingsService?: SettingsService;
+  /** Provider-test seam; tests inject a fake, `null` disables the test route. */
+  profileTester?: ProfileTester | null;
 }
 
 const DEFAULT_TOUR_PATH = new URL(
@@ -272,6 +283,8 @@ export function createApp(options: AppOptions = {}): Hono {
     createDeferredNarrationAssetStore(
       options.narrationAssetRoot ?? defaultNarrationAssetRoot(),
     );
+  const settingsService =
+    options.settingsService ?? createSettingsService({ homeDirectory: sothspellHome() });
   const narrationService =
     options.narrationService ??
     createNarrationService({
@@ -280,13 +293,32 @@ export function createApp(options: AppOptions = {}): Hono {
       voiceId: options.elevenLabsVoiceId ?? process.env.ELEVENLABS_VOICE_ID,
       modelId: options.elevenLabsModelId ?? process.env.ELEVENLABS_MODEL_ID,
       fetchImpl: options.fetchImpl,
+      resolveConnection: () => settingsService.resolveNarrationConnection(),
     });
+  const profileTester =
+    options.profileTester === undefined
+      ? createProfileTester({ narrationService })
+      : options.profileTester;
+  // The active authoring profile supplies the model for ask and drilldown;
+  // when it is absent the services keep the SOTHSPELL_MODEL fallback.
+  const resolveAuthoringModel = async () => {
+    const connection = await settingsService.resolveAuthoringConnection();
+    if (
+      !connection ||
+      connection.modelId === 'fixture' ||
+      connection.modelId === 'fake'
+    ) {
+      return null;
+    }
+    return createConnectionGuideModel(connection);
+  };
   const askService =
     options.askService === undefined
       ? createAskService({
           resolveTourPath: (tourId) => resolveTourJsonPath(tourJsonPath, tourId),
           sourceRoot: projectRoot,
           modelId: process.env.SOTHSPELL_MODEL ?? null,
+          resolveModel: resolveAuthoringModel,
         })
       : options.askService;
   const drilldownService =
@@ -295,11 +327,13 @@ export function createApp(options: AppOptions = {}): Hono {
           resolveTourPath: (tourId) => resolveTourJsonPath(tourJsonPath, tourId),
           sourceRoot: projectRoot ?? process.cwd(),
           modelId: process.env.SOTHSPELL_MODEL ?? null,
+          resolveModel: resolveAuthoringModel,
         })
       : options.drilldownService;
   const app = new Hono();
 
   registerAudioRoutes(app, { assetStore });
+  registerSettingsRoutes(app, { service: settingsService, tester: profileTester });
 
   app.get('/api/health', (context) =>
     context.json({
