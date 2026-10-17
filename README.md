@@ -13,7 +13,7 @@ resume later.
 
 ## Status
 
-**v1 release complete (2026-10-17); next stage planned.**
+**v1 release complete (2026-10-17); next stage in progress.**
 The repository contains:
 
 - a pnpm workspace on TypeScript 7.0.2, React 19, Vite 8, and Hono 4;
@@ -42,9 +42,10 @@ The repository contains:
   acceptance pass.
 
 The v1 plans are archived in [`plans/archive/`](plans/archive/README.md). The
-next stage is planned in [`plans/ROADMAP.md`](plans/ROADMAP.md): preferences UI,
-Claude Code and Codex harness plugins, GitHub import, accounts and sync,
-Python/Go/Rust/Java analyzers, translation, review UI, and an embeddable player.
+next stage is in [`plans/ROADMAP.md`](plans/ROADMAP.md): preferences UI, Claude
+Code and Codex harness plugins, GitHub import, accounts and sync,
+Python/Go/Rust/Java analyzers, and the embeddable player are complete; the
+review UI is complete; multi-language narration and translation is in progress.
 A reviewed real-model Bunbun tour and live cloud narration remain owner-gated on
 provider credentials; fixture and browser paths are verified.
 
@@ -144,6 +145,8 @@ stores only small, attributed excerpts.
   rules, export, and delete.
 - [Embeddable player](docs/embed.md) — export, the host API, progress, CSP, and
   the docs fixture.
+- [Human review](docs/review.md) — the review state machine, editing,
+  regeneration, anchor gating, and decisions.
 - [Self-hosting](docs/self-hosting.md) — install, serve, storage, and upgrades.
 - [Privacy](docs/privacy.md) — what stays local and what cloud choices send.
 - [Accessibility](docs/accessibility.md) — the axe gate and keyboard map.

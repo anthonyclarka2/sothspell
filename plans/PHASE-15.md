@@ -1,7 +1,7 @@
 # Phase 15 — Human Review UI
 
-**Status: in progress (2026-10-17).** Depends on: Phase 9 (profiles) and the v1 authoring and
-quality reports. Can run in parallel with Phases 10–12 after Phase 9.
+**Status: complete (2026-10-17).** Depends on: Phase 9 (profiles) and the v1 authoring and
+quality reports; shipped in parallel with Phases 13–16.
 
 ## Goal
 
@@ -146,3 +146,44 @@ reject it — with a recorded decision.
   and React.
 - Use the `design-taste-frontend` guardrails for the review surface.
 - Record review terms and the state machine in `CONTEXT.md` and `docs/review.md`.
+
+## Shipped (closure, 2026-10-17)
+
+- **`packages/review`** — review schemas, the state machine with guards, beat
+  edits, validation, regeneration with a stored previous narration, anchor
+  verification against live or embedded source, SQLite store, export, and a
+  file tour source.
+- **API** — start/load reviews, comments, beat edits, regeneration and revert,
+  decisions, and export; one session per tour revision; approval blocked by any
+  non-verified anchor; quality overrides recorded.
+- **UI** — `/review/$tourId` with the outline, beat reader, quality panel,
+  comments, inline edit validation, word-diff regeneration with revert, and
+  keyboard shortcuts. Reading, editing, and decision states pass axe at
+  0 critical/serious.
+- **CLI** — `sothspell review list|show|approve|reject`.
+- **Docs** — `docs/review.md`.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- Track: `pnpm exec vitest run packages/review apps/api apps/cli` 15 files /
+  133 tests; `pnpm test` 62 files / 453 tests; `pnpm build` clean.
+- Track browser: `CI=1 pnpm test:browser` 36 passed (10 review flows plus new
+  layout regression, 10 a11y states); `pnpm test:a11y` 10 passed.
+- Real-browser check against the real API: the golden tour at `9fef24d`
+  verified 20/20 anchors, then comment, edit, regenerate (503 without a model),
+  approve with the decision record; CLI `review list`, `review show`, and a
+  refused re-approve behaved as specified.
+- After merge on main: `pnpm typecheck` and `pnpm lint` clean, `pnpm test`
+  91 files / 739 tests, `pnpm build` clean, and `CI=1 pnpm test:browser`
+  51 passed.
+- The track found and fixed a wide-diagram layout bug that covered the review
+  panel; a regression test guards it.
+- Bunbun remains read-only.
+
+### Follow-ups
+
+- Reviewer identity is `local` until a signed-in account is used; roles and
+  assignments are future work.
+- Regeneration requires a configured authoring model; the rest of the review
+  works without one.
+- The editor is beat-scoped; structural tour edits are future work.

@@ -34,6 +34,8 @@ docs.
   export, and delete.
 - [Embeddable player](./embed.md) — export, the host API, progress, CSP, and
   the docs fixture.
+- [Human review](./review.md) — the review state machine, editing, regeneration,
+  anchor gating, and decisions.
 - [Self-hosting](./self-hosting.md) — install, serve, environment, storage, and
   upgrades.
 - [Privacy](./privacy.md) — what stays local and what cloud choices send.
