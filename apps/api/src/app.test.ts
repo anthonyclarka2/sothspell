@@ -214,6 +214,31 @@ describe('API', () => {
     expect(response.status).toBe(400);
   });
 
+  it('preserves an explicit updatedAt on anonymous runs for CLI pulls', async () => {
+    const app = appFor();
+    const payload = {
+      clientId: 'client-abcdefgh',
+      beatId: 'beat_purpose_01',
+      offsetMs: 0,
+      completedBeatIds: [],
+      mode: 'read',
+      speed: 1,
+      updatedAt: 1234,
+    };
+
+    const put = await app.request('/api/runs/tour_bunbun_golden', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    await expect(put.json()).resolves.toMatchObject({ updatedAt: 1234 });
+
+    const get = await app.request(
+      '/api/runs/tour_bunbun_golden?clientId=client-abcdefgh',
+    );
+    await expect(get.json()).resolves.toMatchObject({ updatedAt: 1234 });
+  });
+
   it('answers an in-tour question through the injected service', async () => {
     const app = createApp({
       databasePath: ':memory:',
@@ -434,5 +459,279 @@ describe('narration API', () => {
         process.env.SOTHSPELL_HOME = previous;
       }
     }
+  });
+});
+
+/**
+ * The account flow through the full app: the fake provider stands in for
+ * github.com, so nothing here touches the network.
+ */
+function fakeGithub() {
+  const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    const body =
+      typeof init?.body === 'string'
+        ? (JSON.parse(init.body) as Record<string, unknown>)
+        : {};
+    if (url.endsWith('/login/oauth/access_token')) {
+      if (typeof body.grant_type === 'string') {
+        return Response.json({ access_token: 'gho_device_token' });
+      }
+      return Response.json({ access_token: 'gho_code_token' });
+    }
+    if (url.endsWith('/user')) {
+      return Response.json({
+        id: 7,
+        login: 'octocat',
+        name: 'The Octocat',
+        avatar_url: 'https://avatars.example/octocat.png',
+      });
+    }
+    if (url.endsWith('/login/device/code')) {
+      return Response.json({
+        device_code: 'device-1',
+        user_code: 'ABCD-EFGH',
+        verification_uri: 'https://github.test/login/device',
+        expires_in: 900,
+        interval: 5,
+      });
+    }
+    return new Response('unexpected provider call', { status: 500 });
+  }) as typeof fetch;
+  return { fetchImpl };
+}
+
+function accountApp() {
+  return createApp({
+    databasePath: ':memory:',
+    githubClientId: 'client-1',
+    githubClientSecret: 'secret-1',
+    sessionSecret: 'test-session-secret',
+    publicUrl: 'http://127.0.0.1:4319',
+    oauthFetchImpl: fakeGithub().fetchImpl,
+    now: () => 5_000,
+  });
+}
+
+function cookieValue(response: Response, name: string): string {
+  const entry = response.headers
+    .getSetCookie()
+    .find((header) => header.startsWith(`${name}=`));
+  return entry ? (entry.slice(name.length + 1).split(';')[0] ?? '') : '';
+}
+
+async function signInThroughApp(app: ReturnType<typeof createApp>): Promise<string> {
+  const start = await app.request('/api/auth/github');
+  const location = new URL(start.headers.get('location') ?? '');
+  const state = location.searchParams.get('state') ?? '';
+  const oauthCookie = cookieValue(start, 'sothspell_oauth');
+  const callback = await app.request(
+    `/api/auth/github/callback?code=code-1&state=${encodeURIComponent(state)}`,
+    { headers: { cookie: `sothspell_oauth=${oauthCookie}` } },
+  );
+  expect(callback.status).toBe(302);
+  return cookieValue(callback, 'sothspell_session');
+}
+
+const originHeader = { origin: 'http://127.0.0.1:4319' };
+
+describe('account and sync API through createApp', () => {
+  it('signs in, syncs a run, exports, and deletes the account', async () => {
+    const app = accountApp();
+    const sessionCookie = await signInThroughApp(app);
+    const withSession = {
+      'content-type': 'application/json',
+      ...originHeader,
+      cookie: `sothspell_session=${sessionCookie}`,
+    };
+
+    const session = await app.request('/api/auth/session', {
+      headers: { cookie: `sothspell_session=${sessionCookie}` },
+    });
+    await expect(session.json()).resolves.toMatchObject({
+      signedIn: true,
+      configured: true,
+      user: { login: 'octocat' },
+    });
+
+    const push = await app.request('/api/sync/push', {
+      method: 'POST',
+      headers: withSession,
+      body: JSON.stringify({
+        runs: [
+          {
+            tourId: 'tour_bunbun_golden',
+            beatId: 'beat_purpose_01',
+            offsetMs: 1200,
+            completedBeatIds: ['beat_purpose_01'],
+            mode: 'read',
+            speed: 1,
+            updatedAt: 4_000,
+          },
+        ],
+      }),
+    });
+    expect(push.status).toBe(200);
+    await expect(push.json()).resolves.toMatchObject({
+      results: [{ tourId: 'tour_bunbun_golden', status: 'stored' }],
+    });
+
+    const pull = await app.request('/api/sync/pull', {
+      method: 'POST',
+      headers: withSession,
+    });
+    await expect(pull.json()).resolves.toMatchObject({
+      runs: [expect.objectContaining({ beatId: 'beat_purpose_01' })],
+      serverTime: 5_000,
+    });
+
+    const exported = await app.request('/api/account/export', {
+      headers: { cookie: `sothspell_session=${sessionCookie}` },
+    });
+    expect(exported.headers.get('content-disposition')).toContain('attachment');
+    await expect(exported.json()).resolves.toMatchObject({
+      account: { login: 'octocat' },
+      runs: [expect.objectContaining({ tourId: 'tour_bunbun_golden' })],
+    });
+
+    const deleted = await app.request('/api/account', {
+      method: 'DELETE',
+      headers: { ...originHeader, cookie: `sothspell_session=${sessionCookie}` },
+    });
+    expect(deleted.status).toBe(200);
+
+    const after = await app.request('/api/auth/session', {
+      headers: { cookie: `sothspell_session=${sessionCookie}` },
+    });
+    await expect(after.json()).resolves.toMatchObject({ signedIn: false });
+  });
+
+  it('claims anonymous runs for the client that signs in', async () => {
+    const app = accountApp();
+    const payload = {
+      clientId: 'client-abcdefgh',
+      beatId: 'beat_purpose_02',
+      offsetMs: 300,
+      completedBeatIds: ['beat_purpose_02'],
+      mode: 'read',
+      speed: 1,
+    };
+    await app.request('/api/runs/tour_bunbun_golden', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const sessionCookie = await signInThroughApp(app);
+
+    const claimed = await app.request('/api/sync/claim', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...originHeader,
+        cookie: `sothspell_session=${sessionCookie}`,
+      },
+      body: JSON.stringify({ clientId: 'client-abcdefgh' }),
+    });
+
+    await expect(claimed.json()).resolves.toMatchObject({
+      claimed: 1,
+      runs: [expect.objectContaining({ beatId: 'beat_purpose_02' })],
+    });
+    const anonymous = await app.request(
+      '/api/runs/tour_bunbun_golden?clientId=client-abcdefgh',
+    );
+    expect(anonymous.status).toBe(404);
+  });
+
+  it('tombstones the account run when a signed-in client deletes its progress', async () => {
+    const app = accountApp();
+    const sessionCookie = await signInThroughApp(app);
+    const withSession = {
+      'content-type': 'application/json',
+      ...originHeader,
+      cookie: `sothspell_session=${sessionCookie}`,
+    };
+    await app.request('/api/sync/push', {
+      method: 'POST',
+      headers: withSession,
+      body: JSON.stringify({
+        runs: [
+          {
+            tourId: 'tour_bunbun_golden',
+            beatId: 'beat_purpose_01',
+            offsetMs: 0,
+            completedBeatIds: [],
+            mode: 'read',
+            speed: 1,
+            updatedAt: 4_000,
+          },
+        ],
+      }),
+    });
+
+    const removed = await app.request(
+      '/api/runs/tour_bunbun_golden?clientId=client-abcdefgh',
+      {
+        method: 'DELETE',
+        headers: { cookie: `sothspell_session=${sessionCookie}` },
+      },
+    );
+    expect(removed.status).toBe(200);
+
+    const pull = await app.request('/api/sync/pull', {
+      method: 'POST',
+      headers: withSession,
+    });
+    await expect(pull.json()).resolves.toMatchObject({
+      runs: [],
+      tombstones: [{ tourId: 'tour_bunbun_golden', deletedAt: 5_000 }],
+    });
+  });
+
+  it('keeps anonymous runs working when accounts are configured', async () => {
+    const app = accountApp();
+    const payload = {
+      clientId: 'client-abcdefgh',
+      beatId: 'beat_purpose_01',
+      offsetMs: 100,
+      completedBeatIds: [],
+      mode: 'read',
+      speed: 1,
+    };
+
+    const put = await app.request('/api/runs/tour_bunbun_golden', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    expect(put.status).toBe(200);
+    const get = await app.request(
+      '/api/runs/tour_bunbun_golden?clientId=client-abcdefgh',
+    );
+    await expect(get.json()).resolves.toMatchObject({ beatId: 'beat_purpose_01' });
+  });
+
+  it('exposes the device flow for CLI sign-in through the app', async () => {
+    const app = accountApp();
+
+    const started = await app.request('/api/auth/github/device', { method: 'POST' });
+    const start = (await started.json()) as { pendingId: string; userCode: string };
+    expect(start.userCode).toBe('ABCD-EFGH');
+
+    const poll = await app.request('/api/auth/github/device/poll', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ pendingId: start.pendingId }),
+    });
+    const body = (await poll.json()) as { status: string; token: string };
+    expect(body.status).toBe('complete');
+
+    const session = await app.request('/api/auth/session', {
+      headers: { authorization: `Bearer ${body.token}` },
+    });
+    await expect(session.json()).resolves.toMatchObject({
+      signedIn: true,
+      user: { login: 'octocat' },
+    });
   });
 });

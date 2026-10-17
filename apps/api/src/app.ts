@@ -16,6 +16,13 @@ import {
 } from '@sothspell/core';
 import { createDeferredNarrationAssetStore, registerAudioRoutes } from './audio.js';
 import {
+  createAuthRuntime,
+  registerAuthRoutes,
+  resolveAuth,
+  ensureTrustedOrigin,
+} from './auth.js';
+import { registerAccountRoutes } from './accounts.js';
+import {
   NarrationBodySchema,
   NarrationUnavailableError,
   createNarrationService,
@@ -24,6 +31,8 @@ import {
 import { createRunStore, RunBodySchema, type RunRecord } from './runs.js';
 import { AskUnavailableError, createAskService, type AskService } from './ask-service.js';
 import { createDrilldownService, type DrilldownService } from './drilldown-service.js';
+import { createSyncService, type AccountStore, type SyncService } from '@sothspell/accounts';
+import { createSqliteAccountStore } from '@sothspell/accounts/sqlite';
 
 const AskBodySchema = z.object({
   beatId: z.string().min(1).max(128),
@@ -60,6 +69,24 @@ export interface AppOptions {
   askService?: AskService | null;
   /** Drilldown service; tests inject a fake. */
   drilldownService?: DrilldownService | null;
+  /** Account store override for tests; defaults to SQLite beside the runs. */
+  accountStore?: AccountStore;
+  /** Sync service override for tests. */
+  syncService?: SyncService;
+  /** Signing secret for session cookies; falls back to SOTHSPELL_SESSION_SECRET. */
+  sessionSecret?: string | null;
+  /** GitHub OAuth app credentials; fall back to GITHUB_CLIENT_ID/GITHUB_CLIENT_SECRET. */
+  githubClientId?: string | null;
+  githubClientSecret?: string | null;
+  githubBaseUrl?: string;
+  githubApiBaseUrl?: string;
+  /** Public base URL for redirects and origin checks; SOTHSPELL_PUBLIC_URL. */
+  publicUrl?: string | null;
+  allowedOrigins?: string[];
+  /** Fake provider seam for OAuth tests; narration keeps its own fetchImpl. */
+  oauthFetchImpl?: typeof fetch;
+  /** Injectable clock for session and tombstone tests. */
+  now?: () => number;
 }
 
 const DEFAULT_TOUR_PATH = new URL(
@@ -267,6 +294,24 @@ export function createApp(options: AppOptions = {}): Hono {
   const tourJsonPath = options.tourJsonPath ?? DEFAULT_TOUR_PATH.pathname;
   const projectRoot = options.projectRoot ?? process.env.SOTHSPELL_PROJECT_ROOT ?? null;
   const runStore = createRunStore(options.databasePath ?? defaultDatabasePath());
+  const accountStore =
+    options.accountStore ??
+    createSqliteAccountStore(options.databasePath ?? defaultDatabasePath());
+  const auth = createAuthRuntime({
+    accountStore,
+    sessionSecret: options.sessionSecret,
+    clientId: options.githubClientId,
+    clientSecret: options.githubClientSecret,
+    publicUrl: options.publicUrl,
+    allowedOrigins: options.allowedOrigins,
+    githubBaseUrl: options.githubBaseUrl,
+    apiBaseUrl: options.githubApiBaseUrl,
+    fetchImpl: options.oauthFetchImpl,
+    now: options.now,
+  });
+  const syncService =
+    options.syncService ??
+    createSyncService({ accountStore, runStore, now: options.now });
   const assetStore =
     options.narrationAssetStore ??
     createDeferredNarrationAssetStore(
@@ -300,6 +345,8 @@ export function createApp(options: AppOptions = {}): Hono {
   const app = new Hono();
 
   registerAudioRoutes(app, { assetStore });
+  registerAuthRoutes(app, auth);
+  registerAccountRoutes(app, { auth, sync: syncService });
 
   app.get('/api/health', (context) =>
     context.json({
@@ -447,18 +494,29 @@ export function createApp(options: AppOptions = {}): Hono {
     const record: RunRecord = {
       ...parsed.data,
       tourId: context.req.param('tourId'),
-      updatedAt: Date.now(),
+      updatedAt: parsed.data.updatedAt ?? Date.now(),
     };
     runStore.put(record.tourId, record);
     return context.json(record);
   });
 
   app.delete('/api/runs/:tourId', (context) => {
+    const originError = ensureTrustedOrigin(context, auth);
+    if (originError) {
+      return originError;
+    }
     const clientId = context.req.query('clientId');
     if (!clientId) {
       return context.json({ error: 'clientId query parameter is required' }, 400);
     }
-    runStore.remove(clientId, context.req.param('tourId'));
+    const tourId = context.req.param('tourId');
+    runStore.remove(clientId, tourId);
+    // A signed-in "start over" also clears the account copy; the tombstone
+    // keeps another device from pulling the deleted progress back.
+    const authenticated = resolveAuth(context, auth);
+    if (authenticated) {
+      runStore.deleteUserRun(authenticated.user.id, tourId, auth.now());
+    }
     return context.json({ ok: true });
   });
 

@@ -253,6 +253,9 @@ importers:
       '@hono/node-server':
         specifier: 2.1.5
         version: 2.1.5(hono@4.13.13)
+      '@sothspell/accounts':
+        specifier: workspace:*
+        version: link:../../packages/accounts
       '@sothspell/analyzer':
         specifier: workspace:*
         version: link:../../packages/analyzer
@@ -287,6 +290,9 @@ importers:
       '@hono/node-server':
         specifier: 2.1.5
         version: 2.1.5(hono@4.13.13)
+      '@sothspell/accounts':
+        specifier: workspace:*
+        version: link:../../packages/accounts
       '@sothspell/analyzer':
         specifier: workspace:*
         version: link:../../packages/analyzer
@@ -360,6 +366,16 @@ importers:
       vite:
         specifier: 8.3.4
         version: 8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
+
+  packages/accounts:
+    dependencies:
+      better-sqlite3:
+        specifier: 13.0.3
+        version: 13.0.3
+    devDependencies:
+      '@types/better-sqlite3':
+        specifier: 9.6.0
+        version: 9.6.0
 
   packages/analyzer:
     dependencies:

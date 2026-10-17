@@ -18,6 +18,7 @@ import {
 } from '@sothspell/authoring';
 import { runDoctor } from './doctor.js';
 import { runServe, type ServeArgs } from './serve.js';
+import { runAccountCommand } from './account.js';
 
 export interface CliIO {
   stdout: (line: string) => void;
@@ -365,6 +366,10 @@ export async function runCli(argv: string[], io: CliIO): Promise<number> {
       io.stderr(error instanceof Error ? error.message : String(error));
       return 2;
     }
+  }
+
+  if (argv[0] === 'account' || argv[0] === 'sync') {
+    return runAccountCommand(argv, io);
   }
 
   if (argv[0] !== 'analyze') {
