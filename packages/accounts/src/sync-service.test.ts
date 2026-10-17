@@ -147,7 +147,11 @@ describe('SyncService.claim', () => {
     const { sync, user, runStore } = setup();
     runStore.putUserRun(
       user.id,
-      run({ beatId: 'beat_account', completedBeatIds: ['beat_account'], updatedAt: 2000 }),
+      run({
+        beatId: 'beat_account',
+        completedBeatIds: ['beat_account'],
+        updatedAt: 2000,
+      }),
     );
     runStore.seedAnonymous(
       'client-abcdefgh',

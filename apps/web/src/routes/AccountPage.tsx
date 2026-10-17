@@ -115,9 +115,7 @@ export function AccountPage() {
       await signOut();
       setSignedOutNotice('Signed out. Local progress stays on this device.');
     } catch (error) {
-      setSignedOutNotice(
-        error instanceof Error ? error.message : 'Sign-out failed.',
-      );
+      setSignedOutNotice(error instanceof Error ? error.message : 'Sign-out failed.');
     } finally {
       setReloadToken((token) => token + 1);
     }
@@ -134,9 +132,7 @@ export function AccountPage() {
         `Synced: pulled ${report.pulled}, pushed ${report.pushed}, removed ${report.removed}.`,
       );
     } catch (error) {
-      setSyncMessage(
-        error instanceof Error ? error.message : 'Sync failed.',
-      );
+      setSyncMessage(error instanceof Error ? error.message : 'Sync failed.');
     } finally {
       setSyncBusy(false);
     }
@@ -162,9 +158,9 @@ export function AccountPage() {
         <section className="account-card" aria-label="Sign in">
           <h2>Sign in with GitHub</h2>
           <p>
-            The <code>read:user</code> scope reads the public profile only — no
-            email, no repository access. A signed session lives on the server
-            with an httpOnly cookie.
+            The <code>read:user</code> scope reads the public profile only — no email, no
+            repository access. A signed session lives on the server with an httpOnly
+            cookie.
           </p>
           {data.configured ? (
             <a className="primary-action" href="/api/auth/github">
@@ -173,9 +169,8 @@ export function AccountPage() {
           ) : (
             <div className="notice">
               <strong>GitHub sign-in is not configured.</strong> Set{' '}
-              <code>GITHUB_CLIENT_ID</code> and <code>GITHUB_CLIENT_SECRET</code>,
-              then register this redirect URI on the OAuth app:{' '}
-              <code>{data.redirectUri}</code>
+              <code>GITHUB_CLIENT_ID</code> and <code>GITHUB_CLIENT_SECRET</code>, then
+              register this redirect URI on the OAuth app: <code>{data.redirectUri}</code>
             </div>
           )}
           <p className="account-muted">
@@ -188,7 +183,10 @@ export function AccountPage() {
             {user?.avatarUrl ? (
               <img className="account-avatar" src={user.avatarUrl} alt="" />
             ) : (
-              <span className="account-avatar account-avatar--placeholder" aria-hidden="true">
+              <span
+                className="account-avatar account-avatar--placeholder"
+                aria-hidden="true"
+              >
                 {(user?.login ?? '?').slice(0, 1).toUpperCase()}
               </span>
             )}
@@ -223,8 +221,8 @@ export function AccountPage() {
               <dd>{remoteCount ?? '—'}</dd>
             </dl>
             <p className="account-muted">
-              Newer position wins, completed beats are unioned, and deletions
-              carry a tombstone so they do not come back.
+              Newer position wins, completed beats are unioned, and deletions carry a
+              tombstone so they do not come back.
             </p>
             <button
               type="button"
@@ -252,8 +250,8 @@ export function AccountPage() {
           <section className="account-card" aria-label="Export">
             <h2>Export</h2>
             <p>
-              Download everything the account stores — profile, sessions, runs,
-              and tombstones — as one JSON file.
+              Download everything the account stores — profile, sessions, runs, and
+              tombstones — as one JSON file.
             </p>
             <a
               className="secondary-action"

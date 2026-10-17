@@ -6,9 +6,10 @@ interface RecordedCall {
   init: RequestInit | undefined;
 }
 
-function fakeFetch(
-  responder: (call: RecordedCall) => Response | Promise<Response>,
-): { fetchImpl: typeof fetch; calls: RecordedCall[] } {
+function fakeFetch(responder: (call: RecordedCall) => Response | Promise<Response>): {
+  fetchImpl: typeof fetch;
+  calls: RecordedCall[];
+} {
   const calls: RecordedCall[] = [];
   const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const call = { url: String(input), init };
@@ -170,7 +171,9 @@ describe('GitHub OAuth client', () => {
   });
 
   it('throws OAuthError for unknown device-flow failures', async () => {
-    const { fetchImpl } = fakeFetch(() => json({ error: 'incorrect_client_credentials' }));
+    const { fetchImpl } = fakeFetch(() =>
+      json({ error: 'incorrect_client_credentials' }),
+    );
     await expect(client(fetchImpl).pollDeviceFlow('device-1')).rejects.toBeInstanceOf(
       OAuthError,
     );

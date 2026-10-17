@@ -127,13 +127,17 @@ export function createSqliteAccountStore(databasePath: string): AccountStore {
       updated_at = excluded.updated_at
   `);
   const selectUserById = database.prepare('SELECT * FROM users WHERE id = ?');
-  const selectUserByGithubId = database.prepare('SELECT * FROM users WHERE github_id = ?');
+  const selectUserByGithubId = database.prepare(
+    'SELECT * FROM users WHERE github_id = ?',
+  );
   const insertSession = database.prepare(`
     INSERT INTO sessions (id, user_id, created_at, last_seen_at, expires_at, revoked_at, user_agent)
     VALUES (@id, @userId, @createdAt, @createdAt, @expiresAt, NULL, @userAgent)
   `);
   const selectSession = database.prepare('SELECT * FROM sessions WHERE id = ?');
-  const touchSession = database.prepare('UPDATE sessions SET last_seen_at = ? WHERE id = ?');
+  const touchSession = database.prepare(
+    'UPDATE sessions SET last_seen_at = ? WHERE id = ?',
+  );
   const revokeSession = database.prepare(
     'UPDATE sessions SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL',
   );
@@ -143,7 +147,9 @@ export function createSqliteAccountStore(databasePath: string): AccountStore {
   const listSessions = database.prepare(
     'SELECT * FROM sessions WHERE user_id = ? ORDER BY created_at DESC',
   );
-  const deleteSessionsForUser = database.prepare('DELETE FROM sessions WHERE user_id = ?');
+  const deleteSessionsForUser = database.prepare(
+    'DELETE FROM sessions WHERE user_id = ?',
+  );
   const deleteUser = database.prepare('DELETE FROM users WHERE id = ?');
   const insertDeviceFlow = database.prepare(`
     INSERT INTO device_flows (id, device_code, interval_seconds, created_at, expires_at)

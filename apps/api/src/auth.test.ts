@@ -511,11 +511,7 @@ describe('GitHub device flow', () => {
 
   it('reports pending, slow-down, and denied states without minting a session', async () => {
     const provider = fakeGithubProvider({
-      devicePolls: [
-        { status: 'pending' },
-        { status: 'slow-down' },
-        { status: 'denied' },
-      ],
+      devicePolls: [{ status: 'pending' }, { status: 'slow-down' }, { status: 'denied' }],
     });
     const { app } = makeApp({ fetchImpl: provider.fetchImpl });
 

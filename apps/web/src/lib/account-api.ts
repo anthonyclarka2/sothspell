@@ -92,9 +92,7 @@ export async function fetchSession(): Promise<SessionResponse> {
 }
 
 export async function signOut(): Promise<void> {
-  await readJson<{ ok: boolean }>(
-    await fetch('/api/auth/signout', { method: 'POST' }),
-  );
+  await readJson<{ ok: boolean }>(await fetch('/api/auth/signout', { method: 'POST' }));
 }
 
 export async function fetchAccount(): Promise<AccountResponse> {
@@ -110,9 +108,7 @@ export async function deleteAccount(): Promise<void> {
 }
 
 export async function pullSync(): Promise<SyncPullResponse> {
-  return readJson<SyncPullResponse>(
-    await fetch('/api/sync/pull', { method: 'POST' }),
-  );
+  return readJson<SyncPullResponse>(await fetch('/api/sync/pull', { method: 'POST' }));
 }
 
 export async function pushSync(runs: SyncRunPayload[]): Promise<SyncPushResponse> {

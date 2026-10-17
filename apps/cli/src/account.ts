@@ -71,9 +71,7 @@ export function clientIdFilePath(home: string): string {
   return path.join(home, 'client-id');
 }
 
-export async function readCredentials(
-  home: string,
-): Promise<StoredCredentials | null> {
+export async function readCredentials(home: string): Promise<StoredCredentials | null> {
   try {
     const raw = await readFile(accountsFilePath(home), 'utf8');
     const parsed = JSON.parse(raw) as Partial<StoredCredentials>;
@@ -100,11 +98,10 @@ export async function writeCredentials(
   credentials: StoredCredentials,
 ): Promise<void> {
   await mkdir(home, { recursive: true });
-  await writeFile(
-    accountsFilePath(home),
-    `${JSON.stringify(credentials, null, 2)}\n`,
-    { encoding: 'utf8', mode: 0o600 },
-  );
+  await writeFile(accountsFilePath(home), `${JSON.stringify(credentials, null, 2)}\n`, {
+    encoding: 'utf8',
+    mode: 0o600,
+  });
 }
 
 export async function clearCredentials(home: string): Promise<void> {
@@ -112,10 +109,7 @@ export async function clearCredentials(home: string): Promise<void> {
 }
 
 /** A stable local client id, mirroring the browser's localStorage id. */
-export async function resolveClientId(
-  home: string,
-  override?: string,
-): Promise<string> {
+export async function resolveClientId(home: string, override?: string): Promise<string> {
   if (override) {
     return override;
   }
@@ -161,9 +155,10 @@ function errorMessage(body: Record<string, unknown>, fallback: string): string {
   return typeof body.error === 'string' ? body.error : fallback;
 }
 
-export function parseAccountArgs(
-  argv: string[],
-): { flags: Map<string, string>; positional: string[] } {
+export function parseAccountArgs(argv: string[]): {
+  flags: Map<string, string>;
+  positional: string[];
+} {
   const flags = new Map<string, string>();
   const positional: string[] = [];
   for (let index = 0; index < argv.length; index += 1) {
@@ -190,11 +185,13 @@ async function runSignIn(
   io: CliIO,
 ): Promise<number> {
   const home = sothspellHome(options);
-  const serverUrl = (flags.get('--server') ?? options.serverUrl ?? defaultServerUrl()).replace(
-    /\/$/u,
-    '',
-  );
-  const sleep = options.sleep ?? ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)));
+  const serverUrl = (
+    flags.get('--server') ??
+    options.serverUrl ??
+    defaultServerUrl()
+  ).replace(/\/$/u, '');
+  const sleep =
+    options.sleep ?? ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)));
 
   const started = await requestJson(options, `${serverUrl}/api/auth/github/device`, {
     method: 'POST',

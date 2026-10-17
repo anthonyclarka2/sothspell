@@ -147,7 +147,9 @@ export function createGitHubOAuthClient(
         throw new OAuthError('GitHub profile request failed: network request failed');
       }
       if (!response.ok) {
-        throw new OAuthError(`GitHub profile request failed: provider returned ${response.status}`);
+        throw new OAuthError(
+          `GitHub profile request failed: provider returned ${response.status}`,
+        );
       }
       const payload = asRecord(await response.json().catch(() => null));
       const githubId = typeof payload.id === 'number' ? payload.id : null;

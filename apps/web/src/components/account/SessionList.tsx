@@ -30,8 +30,7 @@ export function SessionList({ sessions, currentSessionId }: SessionListProps) {
           </div>
           <span className="account-muted">
             Signed in {formatMoment(session.createdAt)} · last seen{' '}
-            {formatMoment(session.lastSeenAt)} · expires{' '}
-            {formatMoment(session.expiresAt)}
+            {formatMoment(session.lastSeenAt)} · expires {formatMoment(session.expiresAt)}
           </span>
         </li>
       ))}

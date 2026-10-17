@@ -40,8 +40,8 @@ export function DeleteAccountPanel({ login, onDeleted }: DeleteAccountPanelProps
     <section className="account-card account-danger" aria-label="Delete account">
       <h2>Delete account</h2>
       <p>
-        This removes the account, revokes every session, and deletes all synced
-        runs. Exported copies you already downloaded are not affected.
+        This removes the account, revokes every session, and deletes all synced runs.
+        Exported copies you already downloaded are not affected.
       </p>
       {!confirming ? (
         <button

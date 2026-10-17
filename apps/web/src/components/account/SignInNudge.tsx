@@ -22,8 +22,8 @@ export function SignInNudge() {
       <div>
         <strong>Keep your progress across devices.</strong>{' '}
         <span>
-          Sign in with GitHub to sync runs and sessions; Sóþspell keeps working
-          locally without an account.
+          Sign in with GitHub to sync runs and sessions; Sóþspell keeps working locally
+          without an account.
         </span>
       </div>
       <span className="account-nudge-actions">

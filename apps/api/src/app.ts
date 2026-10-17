@@ -40,7 +40,11 @@ import { createDrilldownService, type DrilldownService } from './drilldown-servi
 import { registerSettingsRoutes } from './settings.js';
 import { createConnectionGuideModel, createProfileTester } from './settings-tester.js';
 import { createImportService, type ImportService } from '@sothspell/import';
-import { createSyncService, type AccountStore, type SyncService } from '@sothspell/accounts';
+import {
+  createSyncService,
+  type AccountStore,
+  type SyncService,
+} from '@sothspell/accounts';
 import { createSqliteAccountStore } from '@sothspell/accounts/sqlite';
 
 const AskBodySchema = z.object({

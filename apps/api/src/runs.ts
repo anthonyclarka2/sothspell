@@ -235,7 +235,9 @@ export function createRunStore(databasePath: string): RunStore {
 
     listTombstones(userId) {
       const rows = database
-        .prepare('SELECT * FROM run_tombstones WHERE user_id = ? ORDER BY deleted_at DESC')
+        .prepare(
+          'SELECT * FROM run_tombstones WHERE user_id = ? ORDER BY deleted_at DESC',
+        )
         .all(userId) as TombstoneRow[];
       return rows.map((row): RunTombstone => ({
         tourId: row.tour_id,

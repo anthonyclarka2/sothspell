@@ -50,9 +50,7 @@ export function registerAccountRoutes(app: Hono, deps: AccountRouteDeps): void {
     const now = auth.now();
     const sessions = auth.accountStore
       .listSessions(authenticated.user.id)
-      .filter(
-        (session) => session.revokedAt === null && session.expiresAt > now,
-      )
+      .filter((session) => session.revokedAt === null && session.expiresAt > now)
       .map(publicSession);
     return context.json({
       user: publicUser(authenticated.user),

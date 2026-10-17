@@ -9,9 +9,7 @@ import { getOrCreateClientId, listRuns, type StoredRun } from '../../lib/run-sto
  */
 export function ClaimRunsBanner() {
   const [localRuns, setLocalRuns] = useState<StoredRun[] | null>(null);
-  const [status, setStatus] = useState<'idle' | 'claiming' | 'claimed' | 'error'>(
-    'idle',
-  );
+  const [status, setStatus] = useState<'idle' | 'claiming' | 'claimed' | 'error'>('idle');
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {

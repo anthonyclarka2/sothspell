@@ -88,9 +88,11 @@ async function signIn(
 ) {
   const code = await runAccountCommand(['account', 'signin'], io.io, harness.options);
   expect(code).toBe(0);
-  return JSON.parse(
-    await readFile(path.join(harness.home, 'accounts.json'), 'utf8'),
-  ) as { token: string; login: string; serverUrl: string };
+  return JSON.parse(await readFile(path.join(harness.home, 'accounts.json'), 'utf8')) as {
+    token: string;
+    login: string;
+    serverUrl: string;
+  };
 }
 
 async function seedAnonymousRun(

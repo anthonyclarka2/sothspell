@@ -74,7 +74,9 @@ describe('run store migrations', () => {
       speed: 1,
       updatedAt: 2000,
     });
-    expect(store.getUserRun('user_1', 'tour_bunbun_golden')?.beatId).toBe('beat_purpose_03');
+    expect(store.getUserRun('user_1', 'tour_bunbun_golden')?.beatId).toBe(
+      'beat_purpose_03',
+    );
     store.close();
 
     const reopened = createRunStore(databasePath);
@@ -180,7 +182,10 @@ describe('user-scoped runs', () => {
     const store = createRunStore(':memory:');
     store.put('tour_one', anonymousRun({ tourId: 'tour_one' }));
     store.put('tour_two', anonymousRun({ tourId: 'tour_two' }));
-    store.put('tour_other', anonymousRun({ clientId: 'client-otherclient', tourId: 'tour_one' }));
+    store.put(
+      'tour_other',
+      anonymousRun({ clientId: 'client-otherclient', tourId: 'tour_one' }),
+    );
 
     store.removeAnonymousRuns('client-abcdefgh');
 

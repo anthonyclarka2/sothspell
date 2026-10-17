@@ -49,7 +49,18 @@ function makeApp() {
   const { session, token } = runtime.sessions.signIn(user.id, { userAgent: 'vitest' });
   const authorized = { authorization: `Bearer ${token}` };
   const cookie = { cookie: `sothspell_session=${token}` };
-  return { app, runtime, accountStore, runStore, sync, user, session, token, authorized, cookie };
+  return {
+    app,
+    runtime,
+    accountStore,
+    runStore,
+    sync,
+    user,
+    session,
+    token,
+    authorized,
+    cookie,
+  };
 }
 
 describe('account routes', () => {
@@ -76,7 +87,12 @@ describe('account routes', () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
-      user: { id: expect.any(String), login: 'octocat', name: 'The Octocat', avatarUrl: null },
+      user: {
+        id: expect.any(String),
+        login: 'octocat',
+        name: 'The Octocat',
+        avatarUrl: null,
+      },
       sessions: [
         {
           id: session.id,
@@ -174,9 +190,9 @@ describe('account routes', () => {
     const { app, authorized } = makeApp();
     const evil = { origin: 'https://evil.example', ...authorized };
 
-    expect((await app.request('/api/sync/pull', { method: 'POST', headers: evil })).status).toBe(
-      403,
-    );
+    expect(
+      (await app.request('/api/sync/pull', { method: 'POST', headers: evil })).status,
+    ).toBe(403);
     expect(
       (
         await app.request('/api/sync/push', {
@@ -195,9 +211,9 @@ describe('account routes', () => {
         })
       ).status,
     ).toBe(403);
-    expect((await app.request('/api/account', { method: 'DELETE', headers: evil })).status).toBe(
-      403,
-    );
+    expect(
+      (await app.request('/api/account', { method: 'DELETE', headers: evil })).status,
+    ).toBe(403);
   });
 });
 
@@ -238,7 +254,9 @@ describe('sync routes', () => {
     const stalePush = await app.request('/api/sync/push', {
       method: 'POST',
       headers: { origin: 'http://127.0.0.1:4319', ...authorized },
-      body: JSON.stringify({ runs: [runPayload({ completedBeatIds: ['beat_b'], updatedAt: 2000 })] }),
+      body: JSON.stringify({
+        runs: [runPayload({ completedBeatIds: ['beat_b'], updatedAt: 2000 })],
+      }),
     });
     await expect(stalePush.json()).resolves.toMatchObject({
       results: [{ tourId: 'tour_bunbun_golden', status: 'merged' }],

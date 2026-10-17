@@ -115,11 +115,11 @@ describe('mergeRunCollections', () => {
 
 describe('tombstoneWins', () => {
   it('treats a deletion at the same timestamp as the write as final', () => {
-    expect(tombstoneWins({ tourId: 'tour', deletedAt: 1000 }, run({ updatedAt: 1000 }))).toBe(
-      true,
-    );
-    expect(tombstoneWins({ tourId: 'tour', deletedAt: 999 }, run({ updatedAt: 1000 }))).toBe(
-      false,
-    );
+    expect(
+      tombstoneWins({ tourId: 'tour', deletedAt: 1000 }, run({ updatedAt: 1000 })),
+    ).toBe(true);
+    expect(
+      tombstoneWins({ tourId: 'tour', deletedAt: 999 }, run({ updatedAt: 1000 })),
+    ).toBe(false);
   });
 });

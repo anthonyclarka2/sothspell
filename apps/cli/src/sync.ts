@@ -1,4 +1,9 @@
-import { mergeRunCollections, type RunMode, type RunTombstone, type SyncRun } from '@sothspell/accounts';
+import {
+  mergeRunCollections,
+  type RunMode,
+  type RunTombstone,
+  type SyncRun,
+} from '@sothspell/accounts';
 import type { CliIO } from './cli.js';
 import {
   defaultServerUrl,
@@ -67,10 +72,7 @@ async function syncStatus(
   const home = sothspellHome(options);
   const credentials = await readCredentials(home);
   const serverUrl = serverFor(options, flags, credentials?.serverUrl);
-  const clientId = await resolveClientId(
-    home,
-    flags.get('--client') ?? options.clientId,
-  );
+  const clientId = await resolveClientId(home, flags.get('--client') ?? options.clientId);
 
   const local = await requestAccountJson(
     options,
@@ -114,10 +116,7 @@ async function syncPush(
     return 1;
   }
   const serverUrl = serverFor(options, flags, credentials.serverUrl);
-  const clientId = await resolveClientId(
-    home,
-    flags.get('--client') ?? options.clientId,
-  );
+  const clientId = await resolveClientId(home, flags.get('--client') ?? options.clientId);
 
   const result = await requestAccountJson(options, `${serverUrl}/api/sync/claim`, {
     method: 'POST',
@@ -150,10 +149,7 @@ async function syncPull(
     return 1;
   }
   const serverUrl = serverFor(options, flags, credentials.serverUrl);
-  const clientId = await resolveClientId(
-    home,
-    flags.get('--client') ?? options.clientId,
-  );
+  const clientId = await resolveClientId(home, flags.get('--client') ?? options.clientId);
 
   const pulled = await requestAccountJson(options, `${serverUrl}/api/sync/pull`, {
     method: 'POST',

@@ -56,9 +56,7 @@ export function mergeRunCollections(
     byTour.set(run.tourId, existing ? mergeSyncRun(existing, run) : run);
   }
 
-  const deleted = new Map(
-    tombstones.map((tombstone) => [tombstone.tourId, tombstone]),
-  );
+  const deleted = new Map(tombstones.map((tombstone) => [tombstone.tourId, tombstone]));
   for (const [tourId, run] of byTour) {
     const tombstone = deleted.get(tourId);
     if (tombstone && tombstoneWins(tombstone, run)) {

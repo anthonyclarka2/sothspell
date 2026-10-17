@@ -140,9 +140,7 @@ test('shows setup instructions when GitHub sign-in is not configured', async ({
   await expect(
     page.getByText('http://127.0.0.1:4319/api/auth/github/callback'),
   ).toBeVisible();
-  await expect(
-    page.getByRole('link', { name: 'Sign in with GitHub' }),
-  ).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Sign in with GitHub' })).toHaveCount(0);
 });
 
 test('shows the signed-in state, syncs, and signs out', async ({ page }) => {
@@ -155,16 +153,17 @@ test('shows the signed-in state, syncs, and signs out', async ({ page }) => {
   await expect(page.getByText('this device', { exact: true })).toBeVisible();
   await expect(page.getByText('sothspell-cli')).toBeVisible();
 
-  await expect(page.getByRole('link', { name: 'Download account export' })).toHaveAttribute(
-    'href',
-    '/api/account/export',
-  );
+  await expect(
+    page.getByRole('link', { name: 'Download account export' }),
+  ).toHaveAttribute('href', '/api/account/export');
 
   await page.getByRole('button', { name: 'Sync now' }).click();
   await expect(page.getByText('Synced: pulled 0, pushed 0, removed 0.')).toBeVisible();
 
   await page.getByRole('button', { name: 'Sign out' }).click();
-  await expect(page.getByText('Signed out. Local progress stays on this device.')).toBeVisible();
+  await expect(
+    page.getByText('Signed out. Local progress stays on this device.'),
+  ).toBeVisible();
   await expect(page.getByRole('link', { name: 'Sign in with GitHub' })).toBeVisible();
 });
 
@@ -200,15 +199,11 @@ test('shows an error state with a retry when the session endpoint fails', async 
   );
   await page.goto('/account');
 
-  await expect(page.getByRole('alert')).toContainText(
-    'The account state did not load.',
-  );
+  await expect(page.getByRole('alert')).toContainText('The account state did not load.');
   await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
 });
 
-test('nudges sign-in on the home page and hides it when signed in', async ({
-  page,
-}) => {
+test('nudges sign-in on the home page and hides it when signed in', async ({ page }) => {
   await mockAccountApi(page, { signedIn: false, configured: true });
   await page.goto('/');
 
