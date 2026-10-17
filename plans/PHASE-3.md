@@ -1,7 +1,9 @@
 # Phase 3 — LLM Authoring Pipeline
 
-**Status: planned.** Depends on: Phase 1 (format/compiler), Phase 2 (snapshot and
-symbol graph).
+**Status: complete (2026-10-17).** Depends on: Phase 1 (format/compiler), Phase 2
+(snapshot and symbol graph). The pipeline is implemented and verified with the
+deterministic fixture model; a reviewed real-model Bunbun tour is owner-gated on
+provider credentials.
 
 **Deliverable:** a model-backed authoring pipeline that takes a project snapshot
 and produces a valid, evidence-anchored Sóþspell: curriculum, chapters, beats,
@@ -336,3 +338,73 @@ What they cover and miss:
   notes.
 - Do not tune prompts against a single Bunbun sentence; check the synthetic
   fixture too.
+
+## Shipped (closure, 2026-10-17)
+
+- **Model port and adapters** — `GuideModel` with `generateObject`/`generateText`,
+  usage normalization, an AI SDK 7 adapter for `openai/<model>` and
+  `anthropic/<model>`, and a recording `FakeGuideModel`.
+- **Context packs** — candidate anchors from feature modules, entry points, and
+  exported declarations; short excerpts, content hashes, docs, and an estimated
+  token count. Redacted files never enter the pack.
+- **Curriculum** — `TourPlanSchema` (3–8 chapters, 2–5 beats each, goals and
+  coverage checklists), prompt templates under `packages/authoring/prompts/`,
+  and plan validation before any chapter is written.
+- **Chapter authoring** — `ChapterDraftSchema` with one diagram instruction and
+  2–5 beats; anchors must come from candidate IDs; diagram focus IDs must exist.
+  Validation covers unknown anchors, dangling focus IDs, duplicate titles, and
+  30–180 word narration, with up to two repair attempts per chapter. Failed
+  chapters are dropped and recorded.
+- **Assembly and quality** — normalized chapter/beat/diagram IDs, candidate
+  resolution to `CodeAnchor`s with hashes and excerpts, `parseSothspell`
+  validation, and a `quality.json` report with chapters, beats, anchors, dropped
+  chapters, issues, duration, model calls, cache hits, usage, model ID, and
+  prompt version.
+- **Cache and CLI** — model calls cached by model/prompt/schema/system/prompt
+  hash; `sothspell author <path>` with `--model`, `--out`, `--audience`,
+  `--max-minutes`, and `--no-cache`; `--model fixture` produces a deterministic
+  offline tour. `pnpm sothspell` remains the entrypoint.
+- **Fixture pipeline and skill** — `createFixtureGuideModel` exercises the real
+  pipeline without a provider key; `skills/sothspell-author/SKILL.md` is the
+  author/review/repair checklist.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- `pnpm typecheck` → 0 errors.
+- `pnpm lint` → 0 errors, 0 warnings.
+- `pnpm test` → 18 files / 61 tests passed, including the Bunbun authoring
+  acceptance test and the authoring repair/cache tests.
+- `pnpm test:browser` → 6 passed.
+- `pnpm test:a11y` → 3 passed; 0 critical/serious.
+- `pnpm build` → web build succeeds (161.25 kB gzip).
+- `pnpm check:toolchain` → TypeScript 7.0.2, no classic compiler API packages.
+- Fixture Bunbun authoring: 4 chapters, 8 beats, 8 anchors, 0 dropped chapters,
+  5 model calls cold / 0 calls and 5 cache hits warm, compiled by the core
+  compiler.
+- `git -C /Users/ajc/Projects/codegens/bunbun status --porcelain` → empty before
+  and after.
+
+### Owner-gated item
+
+A reviewed real-model Bunbun tour was not generated in this environment because
+no provider key is present (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, and
+`SOTHSPELL_MODEL` are unset). The command is ready:
+
+```bash
+SOTHSPELL_MODEL=openai/gpt-5.2 pnpm sothspell author \
+  /Users/ajc/Projects/codegens/bunbun --out /tmp/bunbun-tour
+```
+
+Review `quality.json`, run the checklist in
+[`skills/sothspell-author/SKILL.md`](../skills/sothspell-author/SKILL.md), and
+commit the generated tour only after that review. Until then the checked-in
+golden tour remains the reviewed artifact.
+
+### Deviations from the plan
+
+- The chapter schema uses candidate IDs rather than raw `{path, symbol, lines}`
+  refs. The model chooses evidence from a supplied set; the pipeline resolves the
+  excerpt and hash. This is a stronger guarantee against invented line ranges.
+- Real-model output is not committed; the owner gate is recorded above.
+- `generateText` is part of the model port for Phase 6 Q&A, but the authoring
+  pipeline itself is structured-output only.

@@ -13,7 +13,7 @@ resume later.
 
 ## Status
 
-**Phase 2 implemented (2026-10-17).** The repository contains:
+**Phase 3 implemented (2026-10-17).** The repository contains:
 
 - a pnpm workspace on TypeScript 7.0.2, React 19, Vite 8, and Hono 4;
 - the versioned Sóþspell schema, a generated JSON Schema, and a compiler that
@@ -25,11 +25,16 @@ resume later.
 - a read-only repository analyzer with `oxc-parser`: deterministic snapshots,
   symbol extraction, import/reference graphs, NestJS/Prisma signals, a project
   brief, a per-file cache, and the `sothspell analyze` CLI;
+- an LLM authoring pipeline: `GuideModel` port, AI SDK adapters, a deterministic
+  fixture model, context packs, curriculum planning, chapter/diagram generation,
+  validation, bounded repair, caching, quality reports, and the
+  `sothspell author` CLI;
 - unit, browser, and accessibility tests, including the Bunbun acceptance pass.
 
-The LLM authoring pipeline (Phase 3), narration (Phase 5), Q&A (Phase 6), the
-OpenCode plugin (Phase 7), and the release hardening (Phase 8) are planned but
-not built yet.
+The narration phase (Phase 5), Q&A (Phase 6), the OpenCode plugin (Phase 7), and
+the release hardening (Phase 8) are planned but not built yet. A reviewed
+real-model Bunbun tour is owner-gated on provider credentials; the fixture model
+verifies the pipeline offline.
 
 ## Quick start
 
@@ -40,11 +45,13 @@ pnpm dev            # API on 127.0.0.1:4319, web on 127.0.0.1:5173
 
 Open <http://127.0.0.1:5173> and play the golden tour.
 
-Analyze a local repository read-only:
+Analyze a local repository read-only and author a tour:
 
 ```bash
 pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --brief
 pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --save
+pnpm sothspell author /Users/ajc/Projects/codegens/bunbun --model fixture --out /tmp/bunbun-tour
+SOTHSPELL_MODEL=openai/gpt-5.2 pnpm sothspell author /Users/ajc/Projects/codegens/bunbun --out /tmp/bunbun-tour
 ```
 
 ```bash
@@ -97,6 +104,10 @@ stores only small, attributed excerpts.
   golden-tour workflow.
 - [Repository analysis](docs/analysis.md) — read-only snapshots, symbols, cache,
   CLI, and project brief.
+- [Tour authoring](docs/authoring.md) — model port, context packs, curriculum,
+  validation, repair, quality reports, and the author CLI.
+- [Authoring skill](skills/sothspell-author/SKILL.md) — the checklist an agent
+  uses to author or review a tour.
 - [Domain context](CONTEXT.md) — the project glossary.
 - [Agent instructions](AGENTS.md) — how agents work in this repository.
 
@@ -105,8 +116,8 @@ stores only small, attributed excerpts.
 pnpm 12.14.0 · Node.js 26 · TypeScript 7.0.2 · React 19.3.1 · Vite 8.3.4 ·
 TanStack Router 1.170.45 · Hono 4.13.13 · Zod 4.6.7 · Shiki 4.5.0 ·
 React Flow 12.12.0 · ELK 0.12.0 · oxc-parser 0.154.0 · fast-glob 3.3.3 ·
-ignore 7.0.12 · yaml 2.9.1 · Vitest 5.0.5 · Playwright 1.64.1 ·
-axe-core 4.14.0.
+ignore 7.0.12 · yaml 2.9.1 · Vercel AI SDK 7.0.143 · Vitest 5.0.5 ·
+Playwright 1.64.1 · axe-core 4.14.0.
 
 TypeScript 7.0 has no programmatic compiler API; the analyzer will use
 `oxc-parser`, not the TypeScript compiler API. See the roadmap for the full

@@ -7,10 +7,10 @@
   codebase with synchronized narration, diagrams, and highlighted code anchors.
   The website is first; an OpenCode V2 plugin follows; other harness adapters
   are a future track.
-- **Repository status: Phase 2 implemented (2026-10-17).** The workspace,
-  schema, compiler, golden tour, API, minimal player, read-only analyzer, and
-  `sothspell analyze` CLI exist. Authoring, narration, and the OpenCode plugin
-  are placeholders until their phases land.
+- **Repository status: Phase 3 implemented (2026-10-17).** The workspace,
+  schema, compiler, golden tour, API, minimal player, read-only analyzer,
+  `sothspell analyze`, and the authoring pipeline with `sothspell author` exist.
+  Narration and the OpenCode plugin are placeholders until their phases land.
 - **Example project:** Bunbun at `/Users/ajc/Projects/codegens/bunbun`, pinned to
   commit `9fef24d`. It is **read-only**. No command may create, modify, or delete
   anything inside that tree. All snapshots, tours, audio, logs, and runs live
@@ -87,13 +87,13 @@ Do not claim completion without fresh verification output.
 - `apps/web/` — React player and code browser (Phase 1: minimal player).
 - `apps/api/` — Hono API and static web host (Phase 1: compiled tour and anchors;
   SQLite persistence lands with the run sync phase).
-- `apps/cli/` — `sothspell` CLI (`analyze` now; `author`, `serve`, `doctor` as
-  their phases land).
+- `apps/cli/` — `sothspell` CLI (`analyze` and `author` now; `serve` and
+  `doctor` as their phases land).
 - `packages/core/` — tour schema, compiler, source access, validation, IDs.
 - `packages/analyzer/` — read-only snapshots, symbols, graph, brief, anchor
   resolution, cache.
-- `packages/authoring/` — `GuideModel`, prompts, curriculum/beat pipeline
-  (Phase 3 placeholder).
+- `packages/authoring/` — `GuideModel`, prompts, context packs, curriculum and
+  chapter generation, validation, repair, cache, quality report.
 - `packages/player/` — framework-free playback state machine.
 - `packages/narration/` — browser and ElevenLabs adapters, alignment, cache
   (Phase 5 placeholder).
@@ -125,13 +125,14 @@ pnpm tour:build
 pnpm sothspell doctor
 pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --brief
 pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --save
-pnpm sothspell author /Users/ajc/Projects/codegens/bunbun --out "$SOTHSPELL_HOME/projects/bunbun/tours"
+pnpm sothspell author /Users/ajc/Projects/codegens/bunbun --model fixture --out /tmp/bunbun-tour
+SOTHSPELL_MODEL=openai/gpt-5.2 pnpm sothspell author /Users/ajc/Projects/codegens/bunbun --out /tmp/bunbun-tour
 pnpm sothspell serve
 ```
 
-`pnpm sothspell analyze` is available now; `author`, `serve`, and `doctor` arrive
-with their phases. The dev server ports are `4319` (API) and `5173` (web); an
-agent may kill processes on those ports to free them.
+`pnpm sothspell analyze` and `pnpm sothspell author` are available now; `serve`
+and `doctor` arrive with their phases. The dev server ports are `4319` (API) and
+`5173` (web); an agent may kill processes on those ports to free them.
 
 ## Domain vocabulary
 

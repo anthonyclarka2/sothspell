@@ -165,6 +165,30 @@ The process that turns a project snapshot into a sóþspell: curriculum planning
 context packing, beat and diagram generation, validation, repair, and quality
 reporting. It is not the player and does not run during playback.
 
+### Context pack
+
+The bounded evidence a guide may cite while authoring: the project brief,
+anchor candidates with short excerpts and hashes, docs, and supporting metadata.
+A context pack never contains a whole file and never contains a redacted file.
+
+### Tour plan
+
+The curriculum the guide proposes before any chapter is written: title,
+subtitle, audience, and 3–8 chapters with a goal, a beat budget, and a coverage
+checklist. A tour plan is validated before chapter generation.
+
+### Chapter draft
+
+The guide's structured output for one chapter: a diagram instruction and 2–5
+beats, each citing anchor candidate IDs and optional diagram focus IDs. A chapter
+draft is validated and repaired before it can be assembled.
+
+### Quality report
+
+The record produced beside a generated sóþspell: planned versus written
+chapters, beat and anchor counts, dropped chapters, validation issues, estimated
+duration, model calls, cache hits, token usage, model ID, and prompt version.
+
 ### Publisher
 
 The person or process that generates and reviews a sóþspell. In the first release

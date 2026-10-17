@@ -9,6 +9,13 @@ import {
   snapshotPathFor,
   type ProjectSnapshot,
 } from '@sothspell/analyzer';
+import {
+  authorTour,
+  buildContextPack,
+  createAiSdkGuideModel,
+  createFixtureGuideModel,
+  type TourPlan,
+} from '@sothspell/authoring';
 
 export interface CliIO {
   stdout: (line: string) => void;
@@ -17,16 +24,23 @@ export interface CliIO {
 
 const USAGE = `Usage:
   sothspell analyze <path> [--json | --brief] [--out <file>] [--save] [--no-cache]
+  sothspell author <path> [--model <provider/model>] [--out <dir>]
+                          [--audience new-contributor|technical-evaluator|maintainer]
+                          [--max-minutes <n>] [--no-cache]
 
 Commands:
   analyze <path>    Build a read-only project snapshot.
+  author <path>     Plan and write a Sóþspell tour from the snapshot.
 
 Options:
-  --json            Print the snapshot JSON.
-  --brief           Print the project brief as Markdown.
-  --out <file>      Write the snapshot JSON to a file outside the project.
+  --json            Print the snapshot JSON (analyze).
+  --brief           Print the project brief as Markdown (analyze).
+  --out <file|dir>  Write the snapshot JSON, or the authored tour directory.
   --save            Save the snapshot under SOTHSPELL_HOME/projects/<slug>/.
-  --no-cache        Ignore the per-file analysis cache.
+  --model <id>      provider/model, or "fixture" for a deterministic offline tour.
+  --audience <kind> new-contributor, technical-evaluator, or maintainer.
+  --max-minutes <n> Target tour runtime for the curriculum planner.
+  --no-cache        Ignore the analysis and authoring caches.
   --help            Show this help.
 `;
 
@@ -36,6 +50,15 @@ interface AnalyzeArgs {
   brief: boolean;
   out: string | null;
   save: boolean;
+  noCache: boolean;
+}
+
+interface AuthorArgs {
+  root: string;
+  model: string | null;
+  out: string | null;
+  audience: TourPlan['audience'] | null;
+  maxMinutes: number | null;
   noCache: boolean;
 }
 
@@ -87,12 +110,82 @@ function parseAnalyzeArgs(argv: string[]): AnalyzeArgs {
   return { root, json, brief, out, save, noCache };
 }
 
+function parseAuthorArgs(argv: string[]): AuthorArgs {
+  const root = argv[0];
+  if (!root || root.startsWith('--')) {
+    throw new Error(`author needs a project path\n\n${USAGE}`);
+  }
+
+  let model: string | null = null;
+  let out: string | null = null;
+  let audience: AuthorArgs['audience'] = null;
+  let maxMinutes: number | null = null;
+  let noCache = false;
+
+  for (let index = 1; index < argv.length; index += 1) {
+    const arg = argv[index];
+    switch (arg) {
+      case '--model': {
+        const value = argv[index + 1];
+        if (!value || value.startsWith('--')) {
+          throw new Error(`--model needs a provider/model id\n\n${USAGE}`);
+        }
+        model = value;
+        index += 1;
+        break;
+      }
+      case '--out': {
+        const value = argv[index + 1];
+        if (!value || value.startsWith('--')) {
+          throw new Error(`--out needs a directory or file path\n\n${USAGE}`);
+        }
+        out = value;
+        index += 1;
+        break;
+      }
+      case '--audience': {
+        const value = argv[index + 1];
+        if (
+          value !== 'new-contributor' &&
+          value !== 'technical-evaluator' &&
+          value !== 'maintainer'
+        ) {
+          throw new Error(`--audience must be a known audience\n\n${USAGE}`);
+        }
+        audience = value;
+        index += 1;
+        break;
+      }
+      case '--max-minutes': {
+        const value = Number.parseInt(argv[index + 1] ?? '', 10);
+        if (!Number.isFinite(value) || value < 1 || value > 60) {
+          throw new Error(`--max-minutes needs a number between 1 and 60\n\n${USAGE}`);
+        }
+        maxMinutes = value;
+        index += 1;
+        break;
+      }
+      case '--no-cache':
+        noCache = true;
+        break;
+      default:
+        throw new Error(`unknown option: ${arg}\n\n${USAGE}`);
+    }
+  }
+
+  return { root, model, out, audience, maxMinutes, noCache };
+}
+
 function sothspellHome(): string {
   return process.env.SOTHSPELL_HOME ?? path.join(os.homedir(), '.sothspell');
 }
 
 function defaultCacheDirectory(): string {
   return path.join(sothspellHome(), 'cache', 'analysis');
+}
+
+function defaultAuthoringCacheDirectory(): string {
+  return path.join(sothspellHome(), 'cache', 'authoring');
 }
 
 function summary(snapshot: ProjectSnapshot): string[] {
@@ -119,6 +212,85 @@ async function ensureOutsideProject(root: string, outputPath: string): Promise<s
   return resolved;
 }
 
+async function runAuthor(args: AuthorArgs, io: CliIO): Promise<number> {
+  const modelId = args.model ?? process.env.SOTHSPELL_MODEL ?? null;
+  if (!modelId) {
+    io.stderr(
+      `no model selected; pass --model <provider/model> or set SOTHSPELL_MODEL\n\n${USAGE}`,
+    );
+    return 2;
+  }
+
+  try {
+    const analysisOptions = args.noCache
+      ? {}
+      : { cacheDirectory: defaultCacheDirectory() };
+    const snapshot = await analyzeProject(args.root, analysisOptions);
+    const brief = buildProjectBrief(snapshot);
+    const context = await buildContextPack(snapshot, brief, {
+      sourceRoot: args.root,
+      maxCandidates: 60,
+    });
+    const model =
+      modelId === 'fixture' || modelId === 'fake'
+        ? createFixtureGuideModel(context)
+        : createAiSdkGuideModel(modelId);
+
+    const result = await authorTour(snapshot, model, {
+      sourceRoot: args.root,
+      contextPack: context,
+      ...(args.audience === null ? {} : { audience: args.audience }),
+      ...(args.maxMinutes === null ? {} : { maxMinutes: args.maxMinutes }),
+      ...(args.noCache ? {} : { cacheDirectory: defaultAuthoringCacheDirectory() }),
+      onProgress: (progress) => {
+        const detail = progress.detail ? ` — ${progress.detail}` : '';
+        const chapter =
+          progress.chapterIndex === undefined ? '' : ` [${progress.chapterIndex + 1}]`;
+        io.stderr(`author: ${progress.stage}${chapter}${detail}`);
+      },
+    });
+
+    const requestedOut = args.out
+      ? await ensureOutsideProject(args.root, args.out)
+      : path.join(
+          sothspellHome(),
+          'projects',
+          snapshot.project.slug,
+          'tours',
+          result.document.id,
+        );
+    const isFile = requestedOut.endsWith('.json');
+    const tourPath = isFile ? requestedOut : path.join(requestedOut, 'tour.json');
+    const qualityPath = isFile
+      ? requestedOut.replace(/\.json$/u, '-quality.json')
+      : path.join(requestedOut, 'quality.json');
+
+    await mkdir(path.dirname(tourPath), { recursive: true });
+    await writeFile(tourPath, `${JSON.stringify(result.document, null, 2)}\n`, 'utf8');
+    await writeFile(qualityPath, `${JSON.stringify(result.quality, null, 2)}\n`, 'utf8');
+
+    io.stdout(`Tour: ${result.document.title}`);
+    io.stdout(
+      `Chapters: ${result.quality.chapters}, beats: ${result.quality.beats}, anchors: ${result.quality.anchors}`,
+    );
+    io.stdout(
+      `Model: ${result.quality.modelId}, calls: ${result.quality.modelCalls}, cache hits: ${result.quality.cacheHits}`,
+    );
+    if (result.quality.droppedChapters > 0) {
+      io.stderr(`Dropped chapters: ${result.quality.droppedChapters}`);
+    }
+    for (const issue of result.quality.issues) {
+      io.stderr(`Issue: ${issue}`);
+    }
+    io.stdout(`Wrote ${tourPath}`);
+    io.stdout(`Wrote ${qualityPath}`);
+    return 0;
+  } catch (error) {
+    io.stderr(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    return 1;
+  }
+}
+
 /**
  * The CLI is a thin shell over the analyzer seam. Keeping argument parsing here
  * means tests can drive the same behavior without spawning a process.
@@ -127,6 +299,15 @@ export async function runCli(argv: string[], io: CliIO): Promise<number> {
   if (argv.length === 0 || argv[0] === '--help' || argv[0] === 'help') {
     io.stdout(USAGE.trimEnd());
     return 0;
+  }
+
+  if (argv[0] === 'author') {
+    try {
+      return await runAuthor(parseAuthorArgs(argv.slice(1)), io);
+    } catch (error) {
+      io.stderr(error instanceof Error ? error.message : String(error));
+      return 2;
+    }
   }
 
   if (argv[0] !== 'analyze') {

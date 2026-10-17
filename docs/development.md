@@ -10,7 +10,7 @@ packages/core             @sothspell/core — schema, source access, compiler
 packages/analyzer         @sothspell/analyzer — snapshots, symbols, graph, brief
 packages/diagram          @sothspell/diagram — diagram IR, validation, ELK layout
 packages/player           @sothspell/player — framework-free playback engine
-packages/authoring        Phase 3 placeholder
+packages/authoring        @sothspell/authoring — GuideModel, context, authoring pipeline
 packages/narration        Phase 5 placeholder
 packages/harness          Phase 7 placeholder
 examples/bunbun-tour      checked-in golden tour (Bunbun 9fef24d)
@@ -44,11 +44,13 @@ pnpm schema:json      # regenerate packages/core/schema/sothspell.schema.json
 pnpm tour:build       # regenerate examples/bunbun-tour/tour.json
 pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --brief
 pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --save
+pnpm sothspell author /Users/ajc/Projects/codegens/bunbun --model fixture --out /tmp/bunbun-tour
 ```
 
-The analyzer guide is [analysis.md](./analysis.md). The CLI cache and saved
-snapshots live under `SOTHSPELL_HOME` (default `~/.sothspell`), never in the
-analyzed project.
+The analyzer guide is [analysis.md](./analysis.md) and the authoring guide is
+[authoring.md](./authoring.md). The CLI cache, saved snapshots, and authored
+tours live under `SOTHSPELL_HOME` (default `~/.sothspell`), never in the analyzed
+project.
 
 The dev server ports are `127.0.0.1:4319` (API) and `127.0.0.1:5173` (web). The
 web dev server proxies `/api` to the API.

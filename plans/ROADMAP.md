@@ -868,16 +868,16 @@ seam. Phase 6 needs progress storage and a stable Q&A context. Phase 7 needs the
 local server and the artifact format; the Phase 8 packaging work can start during
 Phase 7. Phase 8 is the release gate.
 
-| Phase | Status                | Primary outcome                                                                                                                  |
-| ----- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | complete (2026-10-17) | Toolchain, schema, compiler, hand-authored Bunbun tour, minimal player ([closure record](PHASE-1.md#shipped-closure-2026-10-17)) |
-| 2     | complete (2026-10-17) | Read-only snapshot, TS/JS symbol graph, project brief, CLI ([closure record](PHASE-2.md#shipped-closure-2026-10-17))             |
-| 3     | planned               | LLM curriculum, beat authoring, validation, repair, CLI                                                                          |
-| 4     | planned               | Movie-like player, code browser, diagrams, local progress                                                                        |
-| 5     | planned               | Browser + cloud narration, captions, accessibility gate                                                                          |
-| 6     | planned               | Q&A interludes, drilldown, resumable runs                                                                                        |
-| 7     | planned               | OpenCode V2 command/tools/RPC, local player launch                                                                               |
-| 8     | planned               | Packaging, security, performance, docs, release verification                                                                     |
+| Phase | Status                | Primary outcome                                                                                                                                     |
+| ----- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | complete (2026-10-17) | Toolchain, schema, compiler, hand-authored Bunbun tour, minimal player ([closure record](PHASE-1.md#shipped-closure-2026-10-17))                    |
+| 2     | complete (2026-10-17) | Read-only snapshot, TS/JS symbol graph, project brief, CLI ([closure record](PHASE-2.md#shipped-closure-2026-10-17))                                |
+| 3     | complete (2026-10-17) | GuideModel, context packs, curriculum, chapter generation, validation, repair, author CLI ([closure record](PHASE-3.md#shipped-closure-2026-10-17)) |
+| 4     | planned               | Movie-like player, code browser, diagrams, local progress                                                                                           |
+| 5     | planned               | Browser + cloud narration, captions, accessibility gate                                                                                             |
+| 6     | planned               | Q&A interludes, drilldown, resumable runs                                                                                                           |
+| 7     | planned               | OpenCode V2 command/tools/RPC, local player launch                                                                                                  |
+| 8     | planned               | Packaging, security, performance, docs, release verification                                                                                        |
 
 Phase 1 shipped the workspace, schema, generated JSON Schema, compiler, the
 checked-in golden Bunbun tour (6 chapters, 19 beats, 20 anchors, pinned to
@@ -892,6 +892,14 @@ deterministic project brief, the per-file cache, snapshot save/load, and the
 symbols, 1,588 file imports, and 822 package imports in about 0.8 s cold and
 0.17 s warm, with the Bunbun worktree unchanged. The full evidence lives in
 [`PHASE-2.md`](PHASE-2.md#shipped-closure-2026-10-17).
+
+Phase 3 shipped the `GuideModel` port, AI SDK and fixture adapters, bounded
+context packs, curriculum planning, chapter and diagram generation, validation,
+bounded repair, the authoring cache, quality reports, the `sothspell author`
+CLI, and the `sothspell-author` skill. The pipeline is verified end to end with
+the deterministic fixture model; a reviewed real-model Bunbun tour is owner-gated
+on provider credentials. The full evidence lives in
+[`PHASE-3.md`](PHASE-3.md#shipped-closure-2026-10-17).
 
 ## 20. Risks and open questions
 

@@ -9,6 +9,7 @@
   "types": "./src/index.ts",
   "dependencies": {
     "@sothspell/analyzer": "workspace:*",
+    "@sothspell/authoring": "workspace:*",
     "@sothspell/core": "workspace:*"
   }
 }
