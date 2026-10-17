@@ -8,6 +8,13 @@ The plugin targets `@opencode/plugin` 2.0.32 and the V2 API only. It writes
 snapshots, tours, and runs under `SOTHSPELL_HOME` (default `~/.sothspell`), never
 into the project root.
 
+Since Phase 10 the plugin is a thin translation: the runtime behavior
+(analysis → authoring → storage → player reads → browser launch → ask) lives in
+`@sothspell/harness`, and `src/runtime.ts` implements the `HarnessAdapter` port
+for the OpenCode host. The commands, tools, and RPC handlers call the shared
+runtime; the plugin keeps its own RPC `run.updated` emission and its
+`http://127.0.0.1:5173` default player URL for compatibility.
+
 ## Install
 
 Add the package to the project configuration:
@@ -79,11 +86,10 @@ console.log(await rpc.status({}));
 - The terminal does not render diagrams, code highlighting, or narration audio;
   the browser player is the theater.
 - `ask` requires the local player API and a generated or checked-in tour.
-- The current player API serves the checked-in golden tour by alias. Serving a
-  freshly generated tour by its ID is part of the Phase 8 local-server work.
-- Run progress is read with the client ID from `SOTHSPELL_CLIENT_ID`, defaulting
-  to `opencode-plugin`. Sharing the browser's client ID needs the Phase 8 server
-  or a player setting.
-- `serverPort` is accepted but the packaged-server launch lands with Phase 8.
+- Run progress is read with the client ID from `SOTHSPELL_CLIENT_ID`; otherwise
+  the shared runtime derives a stable per-install id from `SOTHSPELL_HOME`. Set
+  `SOTHSPELL_CLIENT_ID` in the browser and the host to share one run.
+- `serverPort` is accepted but unused; launch through `sothspell serve` (or set
+  `playerUrl` to the running server) is the single-server path.
 - A generation in flight is cancelled when the plugin unloads. A failed
   regeneration keeps the previous tour.

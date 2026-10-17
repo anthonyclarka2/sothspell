@@ -431,7 +431,44 @@ importers:
         specifier: 4.6.7
         version: 4.6.7
 
-  packages/harness: {}
+  packages/harness:
+    dependencies:
+      '@sothspell/analyzer':
+        specifier: workspace:*
+        version: link:../analyzer
+      '@sothspell/authoring':
+        specifier: workspace:*
+        version: link:../authoring
+      '@sothspell/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+
+  packages/harness-claude-code:
+    dependencies:
+      '@sothspell/authoring':
+        specifier: workspace:*
+        version: link:../authoring
+      '@sothspell/harness':
+        specifier: workspace:*
+        version: link:../harness
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+
+  packages/harness-codex:
+    dependencies:
+      '@sothspell/authoring':
+        specifier: workspace:*
+        version: link:../authoring
+      '@sothspell/harness':
+        specifier: workspace:*
+        version: link:../harness
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
 
   packages/narration: {}
 
@@ -446,6 +483,9 @@ importers:
       '@sothspell/core':
         specifier: workspace:*
         version: link:../core
+      '@sothspell/harness':
+        specifier: workspace:*
+        version: link:../harness
       zod:
         specifier: 4.6.7
         version: 4.6.7
