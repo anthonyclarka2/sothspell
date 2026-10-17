@@ -13,6 +13,9 @@
     "ignore": "7.0.12",
     "oxc-parser": "0.154.0",
     "oxc-walker": "1.1.1",
+    "smol-toml": "1.9.1",
+    "tree-sitter-wasms": "0.1.13",
+    "web-tree-sitter": "0.25.10",
     "yaml": "2.9.1"
   }
 }

@@ -3,6 +3,7 @@ export {
   analyzeProject,
   snapshotId,
   type AnalyzeOptions,
+  type SnapshotParts,
 } from './analyze.js';
 
 export { buildProjectBrief, renderProjectBriefMarkdown } from './brief.js';
@@ -20,16 +21,44 @@ export {
   type ReadFileResult,
 } from './source.js';
 
+export {
+  LANGUAGE_ANALYZERS,
+  detectedAnalyzers,
+  detectionFor,
+  languageIdFor,
+  primaryLanguage,
+  type LanguageDetection,
+} from './languages/index.js';
+
+export type {
+  EntryPointInput,
+  FileLanguageClaim,
+  LanguageAnalyzer,
+  ManifestInput,
+  ParseRequest,
+} from './port.js';
+
 export type {
   AnalysisStats,
   AnalysisWarning,
   BriefApplication,
   DocEntry,
   FeatureModule,
+  FileAnalysis,
   FileEntry,
+  FileImport,
   FileLanguage,
   GraphEdge,
+  ImportBinding,
+  LanguageBrief,
+  LanguageId,
+  LanguageManifest,
+  LanguageModule,
+  LanguageRuntimeStat,
   LanguageStat,
+  ManifestDependency,
+  ManifestDependencyKind,
+  NotableSymbol,
   PackageManifest,
   PrismaField,
   PrismaModel,

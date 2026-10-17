@@ -406,6 +406,15 @@ importers:
       oxc-walker:
         specifier: 1.1.1
         version: 1.1.1(@oxc-project/types@0.154.0)(oxc-parser@0.154.0)(rolldown@1.2.14)
+      smol-toml:
+        specifier: 1.9.1
+        version: 1.9.1
+      tree-sitter-wasms:
+        specifier: 0.1.13
+        version: 0.1.13
+      web-tree-sitter:
+        specifier: 0.25.10
+        version: 0.25.10
       yaml:
         specifier: 2.9.1
         version: 2.9.1
@@ -3791,6 +3800,10 @@ packages:
     resolution: {integrity: sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==}
     engines: {node: '>= 6.0.0', npm: '>= 3.0.0'}
 
+  smol-toml@1.9.1:
+    resolution: {integrity: sha512-j7WyPdf0CJoutMzMoPLF/bVXHtKZIT9Rb4eGeEbWw8X2t5oirjPgpL+OpaENZrILYaXqYwnVH+qgUwVbl+pUJQ==}
+    engines: {node: '>= 18'}
+
   socket.io-client@4.8.4:
     resolution: {integrity: sha512-7wjKAvVXYOJsbmUgkWbnhPD4bFpkqrUR0++XOjpGFmqDqsqV1CI93VTraeExLxpjxEqrWgFoSRZu1ihjLWfkAA==}
     engines: {node: '>=10.0.0'}
@@ -3909,6 +3922,9 @@ packages:
     peerDependenciesMeta:
       tree-sitter:
         optional: true
+
+  tree-sitter-wasms@0.1.13:
+    resolution: {integrity: sha512-wT+cR6DwaIz80/vho3AvSF0N4txuNx/5bcRKoXouOfClpxh/qqrF4URNLQXbbt8MaAxeksZcZd1j8gcGjc+QxQ==}
 
   treeverse@3.0.0:
     resolution: {integrity: sha512-gcANaAnd2QDZFmHFEOF4k7uc1J/6a6z3DJMd/QwEyxLoKGiptJRwid582r7QIsFlFMIZ3SnxfS52S4hm2DHkuQ==}
@@ -7587,6 +7603,8 @@ snapshots:
 
   smart-buffer@4.2.0: {}
 
+  smol-toml@1.9.1: {}
+
   socket.io-client@4.8.4:
     dependencies:
       '@socket.io/component-emitter': 3.1.2
@@ -7712,6 +7730,8 @@ snapshots:
     dependencies:
       node-addon-api: 7.1.1
       node-gyp-build: 4.8.4
+
+  tree-sitter-wasms@0.1.13: {}
 
   treeverse@3.0.0: {}
 

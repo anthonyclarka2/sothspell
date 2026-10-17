@@ -4,15 +4,25 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import fg from 'fast-glob';
 import { hashText } from '@sothspell/core';
+import {
+  LANGUAGE_ANALYZERS,
+  detectedAnalyzers,
+  detectionFor,
+  languageIdFor,
+  primaryLanguage,
+} from './languages/index.js';
+import type { LanguageAnalyzer } from './port.js';
 import { parsePrismaModels } from './prisma.js';
-import { analyzeSourceFile, type FileImport } from './symbols.js';
 import { listProjectFiles, readProjectFile } from './source.js';
 import type {
   AnalysisStats,
   AnalysisWarning,
   DocEntry,
+  FileAnalysis,
   FileEntry,
   GraphEdge,
+  LanguageManifest,
+  LanguageRuntimeStat,
   LanguageStat,
   PackageManifest,
   PrismaModel,
@@ -24,7 +34,7 @@ import type {
 
 const execFileAsync = promisify(execFile);
 
-export const ANALYZER_VERSION = '0.2.0';
+export const ANALYZER_VERSION = '0.3.0';
 export const IGNORE_VERSION = '1';
 
 export interface AnalyzeOptions {
@@ -158,95 +168,101 @@ function isDocPath(filePath: string): boolean {
   );
 }
 
-async function readDocs(root: string, files: FileEntry[]): Promise<DocEntry[]> {
+/** `docs/index.rst` and friends: a reStructuredText title is underlined. */
+function rstHeading(text: string): { title: string; summary: string } {
+  const lines = text.split('\n');
+  const underline = /^[=\-~^"'#*+]{3,}$/;
+  for (let index = 0; index < lines.length - 1; index += 1) {
+    const line = (lines[index] ?? '').trim();
+    const next = (lines[index + 1] ?? '').trim();
+    if (line.length === 0 || !underline.test(next)) {
+      continue;
+    }
+    const paragraph: string[] = [];
+    for (const candidate of lines.slice(index + 2)) {
+      const trimmed = candidate.trim();
+      if (trimmed.length === 0) {
+        if (paragraph.length > 0) {
+          break;
+        }
+        continue;
+      }
+      if (underline.test(trimmed)) {
+        continue;
+      }
+      paragraph.push(trimmed);
+    }
+    return { title: line, summary: paragraph.join(' ').slice(0, 240) };
+  }
+  return { title: '', summary: '' };
+}
+
+async function readDocs(
+  root: string,
+  files: FileEntry[],
+  analyzers: readonly LanguageAnalyzer[],
+): Promise<DocEntry[]> {
   const entries: DocEntry[] = [];
   for (const file of files) {
-    if (!isDocPath(file.path) || file.redacted || file.isBinary) {
+    const isAdapterDoc = analyzers.some(
+      (analyzer) => analyzer.matchesDoc?.(file.path) === true,
+    );
+    if ((!isDocPath(file.path) && !isAdapterDoc) || file.redacted || file.isBinary) {
       continue;
     }
     const text = await readFile(path.join(root, file.path), 'utf8').catch(() => null);
     if (text === null) {
       continue;
     }
+    const structured = file.path.endsWith('.rst')
+      ? rstHeading(text)
+      : { title: firstHeading(text), summary: firstParagraph(text) };
     entries.push({
       path: file.path,
-      title: firstHeading(text) || path.basename(file.path, '.md'),
-      summary: firstParagraph(text),
+      title: structured.title || path.basename(file.path).replace(/\.[^.]+$/, ''),
+      summary: structured.summary,
     });
   }
   return entries;
 }
 
-function aggregateLanguages(files: FileEntry[]): LanguageStat[] {
+function aggregateLanguages(files: FileEntry[], primary: string | null): LanguageStat[] {
   const byLanguage = new Map<string, LanguageStat>();
   for (const file of files) {
     const current = byLanguage.get(file.language) ?? {
       language: file.language,
+      id: languageIdFor(file.language) ?? file.language,
       files: 0,
       bytes: 0,
       lines: 0,
+      primary: false,
     };
     current.files += 1;
     current.bytes += file.bytes;
     current.lines += file.lineCount;
     byLanguage.set(file.language, current);
   }
-  return [...byLanguage.values()].toSorted((left, right) =>
+
+  const stats = [...byLanguage.values()].toSorted((left, right) =>
     left.language.localeCompare(right.language),
   );
+
+  // Exactly one entry carries `primary`: the biggest file language that belongs
+  // to the primary language. Ties break on the file language name.
+  const candidates = stats
+    .filter((entry) => entry.id === primary)
+    .toSorted(
+      (left, right) =>
+        right.bytes - left.bytes || left.language.localeCompare(right.language),
+    );
+  if (candidates[0]) {
+    candidates[0].primary = true;
+  }
+  return stats;
 }
 
 function moduleSymbolId(filePath: string): string {
   return `symbol:${filePath}`;
-}
-
-function resolveRelativeImport(
-  fromPath: string,
-  specifier: string,
-  fileSet: Set<string>,
-): string | null {
-  if (!specifier.startsWith('.')) {
-    return null;
-  }
-  const base = path.posix.normalize(
-    path.posix.join(path.posix.dirname(fromPath), specifier),
-  );
-  const candidates = [
-    base,
-    `${base}.ts`,
-    `${base}.tsx`,
-    `${base}.js`,
-    `${base}.jsx`,
-    `${base}.mjs`,
-    `${base}.cjs`,
-    `${base}/index.ts`,
-    `${base}/index.tsx`,
-    `${base}/index.js`,
-    `${base}/index.jsx`,
-  ];
-
-  // TypeScript ESM source often writes `./store.js` while the file on disk is
-  // `store.ts`. Treat the runtime extension as a hint, not a literal path.
-  const extension = path.posix.extname(base);
-  if (extension === '.js' || extension === '.jsx') {
-    const withoutExtension = base.slice(0, -extension.length);
-    candidates.push(
-      `${withoutExtension}.ts`,
-      `${withoutExtension}.tsx`,
-      `${withoutExtension}.jsx`,
-    );
-  } else if (extension === '.mjs') {
-    candidates.push(`${base.slice(0, -4)}.mts`, `${base.slice(0, -4)}.ts`);
-  }
-
-  return candidates.find((candidate) => fileSet.has(candidate)) ?? null;
-}
-
-function packageNameOf(specifier: string): string {
-  const parts = specifier.split('/');
-  return specifier.startsWith('@')
-    ? parts.slice(0, 2).join('/')
-    : (parts[0] ?? specifier);
 }
 
 interface SourceAnalysis {
@@ -255,18 +271,21 @@ interface SourceAnalysis {
   warnings: AnalysisWarning[];
   cacheHits: number;
   cacheMisses: number;
+  languageRuntimes: LanguageRuntimeStat[];
+  /** Analyzers that either parsed a source file or contributed a manifest. */
+  analyzers: LanguageAnalyzer[];
 }
 
 interface CachedAnalysis {
   version: string;
   key: string;
-  analysis: ReturnType<typeof analyzeSourceFile>;
+  analysis: FileAnalysis;
 }
 
 async function readCachedAnalysis(
   cacheDirectory: string,
   key: string,
-): Promise<ReturnType<typeof analyzeSourceFile> | null> {
+): Promise<FileAnalysis | null> {
   const cacheFile = path.join(
     cacheDirectory,
     `${hashText(key).slice('sha256:'.length)}.json`,
@@ -286,7 +305,7 @@ async function readCachedAnalysis(
 async function writeCachedAnalysis(
   cacheDirectory: string,
   key: string,
-  analysis: ReturnType<typeof analyzeSourceFile>,
+  analysis: FileAnalysis,
 ): Promise<void> {
   const cacheFile = path.join(
     cacheDirectory,
@@ -309,9 +328,14 @@ async function writeCachedAnalysis(
 }
 
 function isParseableLanguage(language: FileEntry['language']): boolean {
-  return ['typescript', 'tsx', 'javascript', 'jsx', 'svelte'].includes(language);
+  return detectionFor(language) !== null;
 }
 
+/**
+ * Reads every detected language's files through its adapter, resolves imports,
+ * collects entry points, and returns the merged symbol and graph view. Caching,
+ * redaction, and ordering stay pipeline concerns so adapters cannot drift apart.
+ */
 async function buildSourceAnalysis(
   files: FileEntry[],
   texts: Map<string, string>,
@@ -324,19 +348,38 @@ async function buildSourceAnalysis(
       isParseableLanguage(file.language),
   );
   const fileSet = new Set(files.map((file) => file.path));
+  const analyzers = detectedAnalyzers(sourceFiles);
+  const fileNames = new Set(files.map((file) => path.posix.basename(file.path)));
+  const manifestAnalyzers = LANGUAGE_ANALYZERS.filter((analyzer) =>
+    analyzer.manifestNames.some((name) => fileNames.has(name)),
+  );
+  const contributingAnalyzers = LANGUAGE_ANALYZERS.filter(
+    (analyzer) => analyzers.includes(analyzer) || manifestAnalyzers.includes(analyzer),
+  );
+
+  // Grammars load lazily: only for languages this project actually contains.
+  const languageRuntimes: LanguageRuntimeStat[] = [];
+  for (const analyzer of analyzers) {
+    const runtime = await analyzer.prepare?.();
+    if (runtime) {
+      languageRuntimes.push(runtime);
+    }
+  }
+
   const symbols: SymbolNode[] = [];
   const warnings: AnalysisWarning[] = [];
   const fileImports: ProjectGraph['fileImports'] = [];
   const packageImports: ProjectGraph['packageImports'] = [];
   const edges: GraphEdge[] = [];
   const exportedByFile = new Map<string, Map<string, string>>();
-  const importsByFile = new Map<string, FileImport[]>();
+  const analysesByFile = new Map<string, FileAnalysis>();
   let cacheHits = 0;
   let cacheMisses = 0;
 
   for (const file of sourceFiles) {
+    const detection = detectionFor(file.language);
     const text = texts.get(file.path) ?? parseTexts.get(file.path);
-    if (text === undefined) {
+    if (detection === null || text === undefined) {
       continue;
     }
     const redacted = !texts.has(file.path);
@@ -351,7 +394,12 @@ async function buildSourceAnalysis(
       cacheHits += 1;
     } else {
       cacheMisses += 1;
-      analysis = analyzeSourceFile(file.path, text, file.language);
+      analysis = detection.analyzer.parse({
+        path: file.path,
+        text,
+        fileLanguage: file.language,
+        language: detection.language,
+      });
       if (redacted) {
         // The file is parsed for names and relationships, but none of its
         // signatures or decorator arguments may reach the snapshot.
@@ -371,7 +419,7 @@ async function buildSourceAnalysis(
     }
 
     symbols.push(...analysis.symbols);
-    importsByFile.set(file.path, analysis.imports);
+    analysesByFile.set(file.path, analysis);
     for (const error of analysis.parseErrors) {
       warnings.push({
         path: file.path,
@@ -400,9 +448,17 @@ async function buildSourceAnalysis(
   };
 
   for (const file of sourceFiles) {
-    const imports = importsByFile.get(file.path) ?? [];
-    for (const imported of imports) {
-      const resolved = resolveRelativeImport(file.path, imported.specifier, fileSet);
+    const detection = detectionFor(file.language);
+    const analysis = analysesByFile.get(file.path);
+    if (detection === null || analysis === undefined) {
+      continue;
+    }
+    for (const imported of analysis.imports) {
+      const resolved = detection.analyzer.resolveImport(
+        file.path,
+        imported.specifier,
+        fileSet,
+      );
       if (resolved) {
         fileImports.push({
           from: file.path,
@@ -431,25 +487,29 @@ async function buildSourceAnalysis(
         continue;
       }
 
-      if (!imported.specifier.startsWith('.') && !imported.specifier.startsWith('/')) {
+      if (detection.analyzer.isExternal(imported.specifier)) {
         packageImports.push({
           from: file.path,
-          packageName: packageNameOf(imported.specifier),
+          packageName: detection.analyzer.packageName(imported.specifier),
           specifier: imported.specifier,
         });
       }
     }
   }
 
-  const entryPoints = sourceFiles
-    .map((file) => file.path)
-    .filter(
-      (filePath) =>
-        /(^|\/)(?:src\/)?(?:main|index)\.(?:ts|tsx|js|jsx|mjs)$/.test(filePath) &&
-        (/(^|\/)src\/(?:main|index)\./.test(filePath) ||
-          /^(?:main|index)\./.test(filePath)),
-    )
-    .toSorted();
+  const entryPointSet = new Set<string>();
+  for (const analyzer of analyzers) {
+    const analyzerFiles = sourceFiles.filter(
+      (file) => detectionFor(file.language)?.analyzer === analyzer,
+    );
+    for (const entryPoint of analyzer.entryPoints({
+      files: analyzerFiles,
+      analyses: analysesByFile,
+    })) {
+      entryPointSet.add(entryPoint);
+    }
+  }
+  const entryPoints = [...entryPointSet].toSorted();
 
   symbols.sort((left, right) => {
     const pathOrder = left.path.localeCompare(right.path);
@@ -486,7 +546,41 @@ async function buildSourceAnalysis(
     warnings,
     cacheHits,
     cacheMisses,
+    languageRuntimes,
+    analyzers: contributingAnalyzers,
   };
+}
+
+/**
+ * Reads the build manifests the brief needs. Only the fields the brief reports
+ * are extracted; the raw manifest stays in the file manifest, so a tour can
+ * anchor the manifest itself.
+ */
+function readManifests(
+  files: FileEntry[],
+  texts: Map<string, string>,
+  analyzers: LanguageAnalyzer[],
+): LanguageManifest[] {
+  const manifests: LanguageManifest[] = [];
+  for (const analyzer of analyzers) {
+    if (analyzer.readManifest === undefined || analyzer.manifestNames.length === 0) {
+      continue;
+    }
+    for (const file of files) {
+      if (!analyzer.manifestNames.includes(path.posix.basename(file.path))) {
+        continue;
+      }
+      const text = texts.get(file.path);
+      if (text === undefined) {
+        continue;
+      }
+      const manifest = analyzer.readManifest({ path: file.path, text });
+      if (manifest) {
+        manifests.push(manifest);
+      }
+    }
+  }
+  return manifests.toSorted((left, right) => left.path.localeCompare(right.path));
 }
 
 function readPrismaModels(files: FileEntry[], texts: Map<string, string>): PrismaModel[] {
@@ -517,6 +611,7 @@ export interface SnapshotParts {
   packages: PackageManifest[];
   docs: DocEntry[];
   prismaModels: PrismaModel[];
+  manifests: LanguageManifest[];
   symbols: SymbolNode[];
   graph: ProjectGraph;
   warnings: AnalysisWarning[];
@@ -576,7 +671,9 @@ export async function analyzeProject(
     readPackages(root),
     readRevision(root),
   ]);
-  const docs = await readDocs(root, files);
+  // Docs are read before parsing: an adapter only has to say which paths it
+  // treats as documentation, not what the file contains.
+  const docs = await readDocs(root, files, detectedAnalyzers(files));
   const sourceAnalysis = await buildSourceAnalysis(
     files,
     texts,
@@ -586,6 +683,7 @@ export async function analyzeProject(
   warnings.push(...sourceAnalysis.warnings);
   warnings.sort((left, right) => left.path.localeCompare(right.path));
   const prismaModels = readPrismaModels(files, texts);
+  const manifests = readManifests(files, texts, sourceAnalysis.analyzers);
 
   const packageName =
     packages.find((entry) => entry.path === '')?.name ?? path.basename(root);
@@ -596,16 +694,20 @@ export async function analyzeProject(
     durationMs: Date.now() - startedAt,
     cacheHits: sourceAnalysis.cacheHits,
     cacheMisses: sourceAnalysis.cacheMisses,
+    languageRuntimes: sourceAnalysis.languageRuntimes,
   };
+
+  const languages = aggregateLanguages(files, primaryLanguage(files));
 
   const parts: SnapshotParts = {
     roots: { canonicalRoot: root, fingerprint, slug, name, packageName },
     revision,
     files,
-    languages: aggregateLanguages(files),
+    languages,
     packages,
     docs,
     prismaModels,
+    manifests,
     symbols: sourceAnalysis.symbols,
     graph: sourceAnalysis.graph,
     warnings,
@@ -622,10 +724,11 @@ export async function analyzeProject(
     analyzerVersion: ANALYZER_VERSION,
     ignoreVersion: IGNORE_VERSION,
     files,
-    languages: parts.languages,
+    languages,
     packages,
     docs,
     prismaModels,
+    manifests,
     symbols: sourceAnalysis.symbols,
     graph: sourceAnalysis.graph,
     warnings,
