@@ -13,7 +13,7 @@ resume later.
 
 ## Status
 
-**Phase 8 implemented (2026-10-17): the first local-first release.**
+**v1 release complete (2026-10-17); next stage planned.**
 The repository contains:
 
 - a pnpm workspace on TypeScript 7.0.2, React 19, Vite 8, and Hono 4;
@@ -41,10 +41,12 @@ The repository contains:
 - unit, browser, accessibility, and plugin tests, including the Bunbun
   acceptance pass.
 
-The first local release is complete. A reviewed real-model Bunbun tour and live
-cloud narration are owner-gated on provider credentials; fixture and browser
-paths are verified. Future work is listed in the release notes and the Phase 8
-future track.
+The v1 plans are archived in [`plans/archive/`](plans/archive/README.md). The
+next stage is planned in [`plans/ROADMAP.md`](plans/ROADMAP.md): preferences UI,
+Claude Code and Codex harness plugins, GitHub import, accounts and sync,
+Python/Go/Rust/Java analyzers, translation, review UI, and an embeddable player.
+A reviewed real-model Bunbun tour and live cloud narration remain owner-gated on
+provider credentials; fixture and browser paths are verified.
 
 ## Quick start
 
@@ -82,10 +84,10 @@ pnpm tour:build      # regenerate the golden tour from the pinned Bunbun checkou
 
 - **Website first.** A local-first, self-hosted web player analyzes a local
   repository read-only and plays a generated tour.
-- **OpenCode plugin next.** The same tour artifact runs inside the OpenCode V2
+- **OpenCode plugin shipped.** The same tour artifact runs inside the OpenCode V2
   plugin, using the user's configured model and project context.
-- **Other harnesses later.** A small `HarnessAdapter` seam keeps the core
-  portable without building adapters before they are needed.
+- **More harnesses next.** Phase 10 adds Claude Code and Codex behind the
+  `HarnessAdapter` seam, then the remaining agent CLIs.
 
 Every tour is a **truth story**: code claims are anchored to a pinned project
 snapshot, resolved to real symbols, and hashed. The model produces structured
@@ -101,21 +103,23 @@ stores only small, attributed excerpts.
 
 ## Documentation
 
-- [Roadmap](plans/ROADMAP.md) — product definition, architecture, format, stack,
-  security, testing, risks, and phase sequence.
+- [Roadmap](plans/ROADMAP.md) — next-stage feature inventory, phase sequence,
+  architecture changes, security, testing standards, and risks.
+- [Archived v1 plans](plans/archive/README.md) — the first-release roadmap and
+  Phases 1–8, with the shipped baseline.
 - [Architecture](docs/architecture.md) — packages, pipeline, trust boundaries,
   and storage.
 - [Tour format](docs/tour-format.md) — the document, anchors, diagrams, and
   versioning.
-- [Phase 1](plans/PHASE-1.md) — foundation, schema, compiler, golden tour,
-  minimal player.
-- [Phase 2](plans/PHASE-2.md) — repository intelligence and symbol graph.
-- [Phase 3](plans/PHASE-3.md) — LLM authoring pipeline.
-- [Phase 4](plans/PHASE-4.md) — cinematic player and code browser.
-- [Phase 5](plans/PHASE-5.md) — narration and accessibility.
-- [Phase 6](plans/PHASE-6.md) — semi-interactive guide and progress sync.
-- [Phase 7](plans/PHASE-7.md) — OpenCode V2 plugin.
-- [Phase 8](plans/PHASE-8.md) — self-hosted release and hardening.
+- [Phase 9](plans/PHASE-9.md) — preferences UI for authoring and narration
+  connections.
+- [Phase 10](plans/PHASE-10.md) — Claude Code and Codex harness plugins.
+- [Phase 11](plans/PHASE-11.md) — public GitHub import with sandboxed cloning.
+- [Phase 12](plans/PHASE-12.md) — GitHub OAuth accounts and cross-device sync.
+- [Phase 13](plans/PHASE-13.md) — Python, Go, Rust, and Java analyzers.
+- [Phase 14](plans/PHASE-14.md) — multi-language narration and translation.
+- [Phase 15](plans/PHASE-15.md) — human review UI for generated tours.
+- [Phase 16](plans/PHASE-16.md) — embeddable player for documentation sites.
 - [Development guide](docs/development.md) — workspace, commands, and the
   golden-tour workflow.
 - [Repository analysis](docs/analysis.md) — read-only snapshots, symbols, cache,

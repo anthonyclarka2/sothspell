@@ -100,6 +100,6 @@ an empty result.
 ## Working agreements
 
 - pnpm only; never npm or yarn.
-- Test at public seams; see `plans/ROADMAP.md` §18.
+- Test at public seams; each phase plan lists its proposed seams.
 - Update the relevant phase plan when a decision changes.
 - Commit each completed wave with a descriptive message.

@@ -230,6 +230,62 @@ The rule that Sóþspell may read a project but never write to it or execute its
 code. Snapshots, tours, audio, logs, and runs live under Sóþspell's own data
 directory. Read-only is a product promise and a test invariant.
 
+## Next-stage terms (planned)
+
+These terms are reserved for the next-stage roadmap (Phases 9–16) and become
+binding as their phases land.
+
+### Connection profile
+
+A named, user-owned configuration for one provider connection: an authoring
+model, a narration voice, or another capability. It records the provider, base
+URL, model or voice id, output format, and a secret reference. One profile per
+kind is active; environment variables remain the fallback.
+
+### Secret reference
+
+An opaque pointer to a stored credential. A secret value never appears in an API
+response, a log line, a snapshot, or a sóþspell.
+
+### Imported project
+
+A project cloned from a public Git URL into `SOTHSPELL_HOME`, marked read-only
+and analyzed like a local checkout. An imported project records its source URL
+and revision; it is never written to and its code never runs.
+
+### Workspace account
+
+A GitHub-backed identity that owns runs, reviews, and preferences across
+devices. A run may stay anonymous; an account is optional and local-first use
+does not require one.
+
+### Review session
+
+A human review of one generated sóþspell revision: per-beat comments, beat
+edits, regeneration, anchor re-verification, and an approve or reject decision.
+A review session records the reviewer and the decision; it never changes the
+sóþspell silently.
+
+### Translation
+
+A locale-specific rendering of a sóþspell's human-facing strings: narration,
+titles, suggested questions, and diagram labels. A translation shares ids,
+anchors, paths, and line ranges with its source and never translates code or
+identifiers.
+
+### Locale
+
+The language of a sóþspell's narration, UI copy, and narration voice. Anchors
+and code are language-independent; a tour declares its source locale and each
+translation declares its target locale.
+
+### Embed bundle
+
+A self-contained player build plus one sóþspell's compiled data that a
+documentation site can serve without the Sóþspell server. An embed bundle
+contains excerpts and narration, never the full repository, and never provider
+secrets.
+
 ## Relationships
 
 - A project has many snapshots; a snapshot belongs to one project and one
@@ -251,6 +307,17 @@ directory. Read-only is a product promise and a test invariant.
 - An interlude belongs to one run and one beat; it does not modify the sóþspell.
 - A harness adapter presents a sóþspell and a run; it does not own either.
 - A golden tour is a sóþspell with a pinned revision and reviewed evidence.
+- A connection profile belongs to one user and one capability kind; at most one
+  profile per kind is active.
+- An imported project is a project; it has snapshots and a revision like any
+  other project.
+- A workspace account owns zero or more runs, reviews, and profiles; a run may
+  have no account.
+- A review session reviews one sóþspell revision and contains comments and one
+  decision.
+- A translation belongs to one sóþspell and one target locale; it shares anchors
+  with its source.
+- An embed bundle contains one sóþspell and one player build.
 
 ## Invariants
 
@@ -268,3 +335,9 @@ directory. Read-only is a product promise and a test invariant.
    temporarily unavailable.
 10. A harness adapter uses the same sóþspell format and the same run model as the
     web app.
+11. A secret value never appears in an API response, a log, a snapshot, or a
+    sóþspell.
+12. An imported project is read-only and its code never executes.
+13. A translation never changes anchor ids, paths, line ranges, or identifiers.
+14. An embed bundle contains excerpts and narration, never the full repository
+    and never provider secrets.

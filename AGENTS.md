@@ -5,13 +5,14 @@
 - **Sóþspell** (ASCII slug `sothspell`) is an AI-guided project walkthrough
   application. It generates a cinematic, semi-interactive explanation of a
   codebase with synchronized narration, diagrams, and highlighted code anchors.
-  The website is first; an OpenCode V2 plugin follows; other harness adapters
-  are a future track.
-- **Repository status: Phase 8 implemented (2026-10-17): first local-first
-  release.** The workspace, schema, compiler, analyzer, authoring pipeline,
-  cinematic player, narration, ask/interlude UI, local progress, CLI, local
-  server, and OpenCode V2 plugin exist. Remaining work is the future track in
-  `plans/PHASE-8.md`.
+  The website shipped first; the OpenCode V2 plugin is complete; Claude Code,
+  Codex, and other harness adapters are Phase 10 of the next stage.
+- **Repository status: v1 release complete (2026-10-17); next stage planned.**
+  The workspace, schema, compiler, analyzer, authoring pipeline, cinematic
+  player, narration, ask/interlude UI, local progress, CLI, local server, and
+  OpenCode V2 plugin exist. The v1 plans are archived in `plans/archive/`; the
+  next-stage roadmap and Phases 9–16 live in `plans/ROADMAP.md` and
+  `plans/PHASE-9.md` through `plans/PHASE-16.md`.
 - **Example project:** Bunbun at `/Users/ajc/Projects/codegens/bunbun`, pinned to
   commit `9fef24d`. It is **read-only**. No command may create, modify, or delete
   anything inside that tree. All snapshots, tours, audio, logs, and runs live
@@ -87,7 +88,7 @@ conflicts in favor of the agreed contract, reruns the full gate, and deletes the
 worktree only after the merge is verified. A subagent must never write to the
 Bunbun tree or to another agent's worktree.
 
-### Subagent dispatches (2026-10-17)
+### Subagent dispatches (v1, 2026-10-17 — historical)
 
 | Track               | Branch / worktree                                                    | Owner scope                                                                                                             | Session                          |
 | ------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
@@ -95,11 +96,26 @@ Bunbun tree or to another agent's worktree.
 | API audio/narration | `phase-5-b-api-audio` / `.worktrees/phase-5-b-api-audio`             | `apps/api/**` only: narration service, `POST /api/narration`, `GET /api/audio/:hash` with range support, tests          | `ses_eb653ebb7ffdGB5uz1mPyW6YC2` |
 | OpenCode V2 plugin  | `phase-7-a-opencode-plugin` / `.worktrees/phase-7-a-opencode-plugin` | `packages/opencode-plugin/**` only: V2 plugin, commands, tools, RPC, default runtime, OpenCode model adapter, tests     | `ses_eb642b477ffeRkFGjnWK7KpoiW` |
 
-All Phase 5 and Phase 7 tracks are merged and their worktrees and branches were
-removed after verification. Main owns `apps/web/**`, `packages/player/**`,
-`packages/core/**`, plans, docs, and the final player integration. The narration
-contract lives in `packages/narration/src/types.ts` and was frozen for both
-Phase 5 tracks.
+All v1 tracks were merged and their worktrees and branches were removed after
+verification. The narration contract lives in
+`packages/narration/src/types.ts`.
+
+### Next-stage dispatches
+
+Phases 9–16 are planned; no next-stage subagent is dispatched yet. When one is
+created, add a row here with the phase, branch/worktree, owner scope, and
+session id before the subagent starts. The planned parallel tracks are:
+
+- Phase 9 is the foundation and is owned by the main agent first.
+- Phase 10, Phase 11, Phase 12, and Phase 15 can overlap after Phase 9 with
+  non-overlapping packages (`packages/harness`, `packages/import`,
+  `packages/accounts`, review surfaces).
+- Phase 13 depends on Phase 11 but can use local fixtures in parallel.
+- Phase 14 depends on Phase 9 and Phase 10.
+- Phase 16 depends on the player and tour format, not on accounts.
+
+Main owns integration, `plans/**`, `docs/**`, `CONTEXT.md`, and the final
+verification for every track.
 
 ## Verification
 
@@ -108,8 +124,8 @@ Do not claim completion without fresh verification output.
 - Add or update a focused test before implementing a behavior change. When fixing
   a bug, add a specific regression test so it cannot reoccur.
 - Prefer real behavior tests over mock-only assertions.
-- Test at public seams. Proposed seams are listed in `plans/ROADMAP.md` §18;
-  confirm them before writing the first test for a phase.
+- Test at public seams. Each phase plan lists its proposed seams; confirm them
+  before writing the first test for a phase.
 - Run the smallest relevant command first, then the full gate:
   `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`,
   `pnpm test:browser`, `pnpm test:a11y`.
@@ -124,24 +140,25 @@ Do not claim completion without fresh verification output.
 - `apps/web/` — React player and virtualized code browser.
 - `apps/api/` — Hono API, static web host, full-file source route, and the
   local SQLite run store.
-- `apps/cli/` — `sothspell` CLI (`analyze` and `author` now; `serve` and
-  `doctor` as their phases land).
+- `apps/cli/` — `sothspell` CLI (`analyze`, `author`, `serve`, and `doctor`).
 - `packages/core/` — tour schema, compiler, source access, validation, IDs.
 - `packages/analyzer/` — read-only snapshots, symbols, graph, brief, anchor
-  resolution, cache.
+  resolution, cache. Phase 13 adds a `LanguageAnalyzer` port for Python, Go,
+  Rust, and Java.
 - `packages/authoring/` — `GuideModel`, prompts, context packs, curriculum and
   chapter generation, validation, repair, cache, quality report.
 - `packages/player/` — framework-free playback state machine.
-- `packages/narration/` — browser and ElevenLabs adapters, alignment, cache
-  (Phase 5 placeholder).
+- `packages/narration/` — browser and ElevenLabs adapters, alignment, cache.
 - `packages/diagram/` — diagram IR, validation, ELK layout.
-- `packages/harness/` — harness adapter contract (Phase 7 placeholder).
+- `packages/harness/` — harness adapter contract; Phase 10 adds the shared
+  runtime and the Claude Code and Codex adapters.
 - `packages/opencode-plugin/` — OpenCode V2 plugin (Phase 7).
 - `examples/bunbun-tour/` — checked-in golden tour pinned to Bunbun `9fef24d`.
-- `docs/` — development guide now; architecture, authoring, player, narration,
-  plugin, privacy, self-hosting, accessibility, and troubleshooting as phases
-  land.
-- `plans/` — roadmap and phase plans.
+- `docs/` — development, architecture, analysis, authoring, player, narration,
+  guide, plugin, self-hosting, privacy, accessibility, and troubleshooting.
+- `plans/ROADMAP.md` — the next-stage roadmap (Phases 9–16).
+- `plans/PHASE-9.md` … `plans/PHASE-16.md` — next-stage phase plans.
+- `plans/archive/` — the archived v1 roadmap and Phases 1–8.
 - `CONTEXT.md` — domain glossary. Required reading before domain code.
 - `AGENTS.md` — this file.
 
@@ -167,9 +184,9 @@ SOTHSPELL_MODEL=openai/gpt-5.2 pnpm sothspell author /Users/ajc/Projects/codegen
 pnpm sothspell serve
 ```
 
-`pnpm sothspell analyze` and `pnpm sothspell author` are available now; `serve`
-and `doctor` arrive with their phases. The dev server ports are `4319` (API) and
-`5173` (web); an agent may kill processes on those ports to free them.
+`pnpm sothspell analyze`, `author`, `serve`, and `doctor` are all available. The
+dev server ports are `4319` (API) and `5173` (web); an agent may kill processes
+on those ports to free them.
 
 ## Domain vocabulary
 
@@ -184,11 +201,14 @@ or "chat" for these concepts in code, tests, or docs.
 
 ## Plans and phase docs
 
-- [`plans/ROADMAP.md`](plans/ROADMAP.md) is the hub: product definition,
-  architecture, format, stack, security, testing, phase sequence, risks.
-- `plans/PHASE-1.md` through `plans/PHASE-8.md` are the phase plans. Each has a
-  goal, scope, decisions, waves, test seams, Bunbun acceptance, exit criteria, and
-  risks.
+- [`plans/ROADMAP.md`](plans/ROADMAP.md) is the hub for the next stage: feature
+  inventory, phase sequence, architecture changes, cross-cutting requirements,
+  testing standards, and risks.
+- `plans/PHASE-9.md` through `plans/PHASE-16.md` are the next-stage phase plans.
+  Each has a goal, scope, decisions, waves, test seams, Bunbun acceptance, exit
+  criteria, and risks.
+- `plans/archive/` holds the v1 roadmap and Phases 1–8, plus an archive index
+  that records the shipped baseline and the decisions that stay binding.
 - Status lines: `planned` → `in progress` → `complete (<date>)`, with shipped
   evidence under the phase.
 - Update the phase plan when a decision changes during implementation. Do not
