@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { createPlayback, type PlaybackSnapshot } from '@sothspell/player';
 import type { CompiledBeat, CompiledTour } from '@sothspell/core';
@@ -19,6 +19,11 @@ import { CodePane } from '../components/CodePane.js';
 import { DiagramStage } from '../components/DiagramStage.js';
 import { NarrationRail } from '../components/NarrationRail.js';
 import { Transport } from '../components/Transport.js';
+import { AskPanel } from '../components/AskPanel.js';
+import {
+  useNarration,
+  type NarrationProviderChoice,
+} from '../lib/use-narration.js';
 
 interface PlayerParams {
   tourId: string;
@@ -67,6 +72,31 @@ export function PlayerPage() {
   const [hasResumed, setHasResumed] = useState(false);
   const [completedBeatIds, setCompletedBeatIds] = useState<string[]>([]);
   const [theater, setTheater] = useState(false);
+  const [narrationMode, setNarrationMode] = useState<'read' | 'listen'>('read');
+  const [narrationProvider, setNarrationProvider] =
+    useState<NarrationProviderChoice>('browser');
+  const [askOpen, setAskOpen] = useState(false);
+  const resumeAfterAskRef = useRef(false);
+
+  const currentChapter =
+    tourState.data && snapshot
+      ? (tourState.data.chapters.find(
+          (candidate) => candidate.id === snapshot.chapterId,
+        ) ?? tourState.data.chapters[0] ?? null)
+      : null;
+  const currentBeat =
+    currentChapter?.beats.find((candidate) => candidate.id === snapshot?.beatId) ??
+    null;
+
+  const narration = useNarration({
+    tourId: params.tourId,
+    beat: currentBeat,
+    enabled: narrationMode === 'listen' && currentBeat !== null,
+    provider: narrationProvider,
+    speed: snapshot?.speed ?? 1,
+    onBeatEnd: () => playback?.next(),
+    onProgress: (offsetMs) => playback?.seekOffset(offsetMs),
+  });
 
   useEffect(() => {
     if (!playback) {
@@ -162,7 +192,7 @@ export function PlayerPage() {
       beatId: snapshot.beatId,
       offsetMs: playback.getSnapshot().offsetMs,
       completedBeatIds,
-      mode: 'read',
+      mode: narrationMode,
       speed: snapshot.speed,
       updatedAt: Date.now(),
     };
@@ -172,6 +202,7 @@ export function PlayerPage() {
     clientId,
     completedBeatIds,
     hasResumed,
+    narrationMode,
     params.tourId,
     playback,
     snapshot?.beatId,
@@ -241,10 +272,8 @@ export function PlayerPage() {
   }
 
   const tour = tourState.data;
-  const chapter =
-    tour.chapters.find((candidate) => candidate.id === snapshot.chapterId) ??
-    tour.chapters[0];
-  const beat = chapter?.beats.find((candidate) => candidate.id === snapshot.beatId);
+  const chapter = currentChapter;
+  const beat = currentBeat;
 
   if (!chapter || !beat) {
     return (
@@ -276,6 +305,7 @@ export function PlayerPage() {
       playback.seekOffset(resume.offsetMs);
       playback.setSpeed(resume.speed);
       setCompletedBeatIds(resume.completedBeatIds);
+      setNarrationMode(resume.mode === 'listen' ? 'listen' : 'read');
       setHasResumed(true);
     } catch {
       void clearRun(params.tourId);
@@ -299,6 +329,31 @@ export function PlayerPage() {
   const seek = (fraction: number) => {
     playback?.pause();
     playback?.seekProgress(fraction);
+  };
+
+  const openAsk = () => {
+    resumeAfterAskRef.current =
+      narrationMode === 'listen'
+        ? narration.status === 'playing'
+        : snapshot.status === 'playing';
+    if (narrationMode === 'listen') {
+      narration.pause();
+    } else {
+      playback?.pause();
+    }
+    setAskOpen(true);
+  };
+
+  const closeAsk = (shouldResume: boolean) => {
+    setAskOpen(false);
+    if (shouldResume && resumeAfterAskRef.current) {
+      if (narrationMode === 'listen') {
+        narration.resume();
+      } else {
+        playback?.play();
+      }
+    }
+    resumeAfterAskRef.current = false;
   };
 
   return (
@@ -353,14 +408,54 @@ export function PlayerPage() {
             </section>
           </div>
 
-          <NarrationRail chapter={chapter} beat={beat} />
+          <NarrationRail
+            chapter={chapter}
+            beat={beat}
+            mode={narrationMode}
+            provider={narrationProvider}
+            narrationStatus={narration.status}
+            activeSentenceIndex={narration.activeSentenceIndex}
+            narrationError={narration.error}
+            onToggleMode={() => {
+              if (narrationMode === 'read') {
+                playback?.pause();
+                setNarrationMode('listen');
+              } else {
+                narration.stop();
+                setNarrationMode('read');
+              }
+            }}
+            onProviderChange={setNarrationProvider}
+            onAsk={openAsk}
+          />
         </div>
       </div>
+
+      {askOpen ? (
+        <AskPanel
+          tourId={params.tourId}
+          beatId={beat.id}
+          projectSlug={tour.project.slug}
+          onClose={() => closeAsk(false)}
+          onContinue={() => closeAsk(true)}
+        />
+      ) : null}
 
       <Transport
         snapshot={snapshot}
         theater={theater}
-        onToggle={() => playback?.toggle()}
+        playingOverride={
+          narrationMode === 'listen'
+            ? narration.status === 'playing'
+            : snapshot.status === 'playing'
+        }
+        onToggle={() => {
+          if (narrationMode === 'listen') {
+            narration.toggle();
+          } else {
+            playback?.toggle();
+          }
+        }}
         onNext={() => playback?.next()}
         onPrevious={() => playback?.previous()}
         onSeek={seek}

@@ -12,6 +12,7 @@ import { formatDuration } from '../lib/api.js';
 export interface TransportProps {
   snapshot: PlaybackSnapshot;
   theater: boolean;
+  playingOverride?: boolean;
   onToggle: () => void;
   onNext: () => void;
   onPrevious: () => void;
@@ -23,6 +24,7 @@ export interface TransportProps {
 export function Transport({
   snapshot,
   theater,
+  playingOverride,
   onToggle,
   onNext,
   onPrevious,
@@ -30,7 +32,7 @@ export function Transport({
   onSpeed,
   onToggleTheater,
 }: TransportProps) {
-  const playing = snapshot.status === 'playing';
+  const playing = playingOverride ?? snapshot.status === 'playing';
 
   return (
     <div className="transport" role="group" aria-label="Playback controls">

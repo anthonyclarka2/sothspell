@@ -1,6 +1,7 @@
 import type {
   CharacterAlignment,
   NarrationAssetStore,
+  Sentence,
   SentenceTiming,
   WordTiming,
 } from '@sothspell/narration';
@@ -36,6 +37,7 @@ export interface CloudSynthesisRequest {
   text: string;
   voiceId: string;
   modelId?: string;
+  beatId: string;
   fetchImpl?: typeof fetch;
 }
 
@@ -71,9 +73,20 @@ export type AlignmentNormalizer = (
  *   createFileNarrationStore({ root }) -> NarrationAssetStore
  */
 interface NarrationModule {
-  synthesizeElevenLabs?: (request: CloudSynthesisRequest) => Promise<CloudSynthesis>;
-  normalizeAlignment?: AlignmentNormalizer;
-  createFileNarrationStore?: (options: { root: string }) => NarrationAssetStore;
+  synthesizeElevenLabs?: (
+    request: CloudSynthesisRequest,
+  ) => Promise<{
+    audio: Uint8Array;
+    mimeType: string;
+    record: { durationMs: number; alignment: CharacterAlignment };
+  }>;
+  normalizeAlignment?: (
+    text: string,
+    sentences: readonly Sentence[],
+    alignment: CharacterAlignment,
+  ) => NarrationTimings;
+  splitSentences?: (text: string) => Sentence[];
+  createFileNarrationStore?: (rootDirectory: string) => NarrationAssetStore;
 }
 
 async function loadNarrationModule(): Promise<NarrationModule> {
@@ -97,7 +110,13 @@ export async function synthesizeWithNarrationPackage(
       '@sothspell/narration does not export synthesizeElevenLabs',
     );
   }
-  return narration.synthesizeElevenLabs(request);
+  const result = await narration.synthesizeElevenLabs(request);
+  return {
+    audio: result.audio,
+    mimeType: result.mimeType,
+    durationMs: result.record.durationMs,
+    alignment: result.record.alignment,
+  };
 }
 
 /** Default alignment seam: rebuild sentence and word timings from the record. */
@@ -106,12 +125,19 @@ export async function normalizeWithNarrationPackage(
   alignment: CharacterAlignment,
 ): Promise<NarrationTimings> {
   const narration = await loadNarrationModule();
-  if (typeof narration.normalizeAlignment !== 'function') {
+  if (
+    typeof narration.normalizeAlignment !== 'function' ||
+    typeof narration.splitSentences !== 'function'
+  ) {
     throw new NarrationUnavailableError(
-      '@sothspell/narration does not export normalizeAlignment',
+      '@sothspell/narration does not export normalizeAlignment/splitSentences',
     );
   }
-  return narration.normalizeAlignment(text, alignment);
+  return narration.normalizeAlignment(
+    text,
+    narration.splitSentences(text),
+    alignment,
+  );
 }
 
 /**
@@ -146,5 +172,5 @@ async function loadFileNarrationStore(root: string): Promise<NarrationAssetStore
       '@sothspell/narration does not export createFileNarrationStore',
     );
   }
-  return narration.createFileNarrationStore({ root });
+  return narration.createFileNarrationStore(root);
 }

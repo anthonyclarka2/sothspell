@@ -95,6 +95,96 @@ test('scrubs across a beat boundary', async ({ page }) => {
   ).toBeVisible();
 });
 
+test('narrates with browser speech and pauses', async ({ page }) => {
+  await page.addInitScript(() => {
+    class FakeUtterance {
+      text: string;
+      rate = 1;
+      pitch = 1;
+      onboundary?: (event: { charIndex: number }) => void;
+      onend?: () => void;
+      onerror?: (event: { error: string }) => void;
+
+      constructor(text: string) {
+        this.text = text;
+      }
+    }
+
+    Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+      configurable: true,
+      value: FakeUtterance,
+    });
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: {
+        speak: (utterance: FakeUtterance) => {
+          utterance.onboundary?.({ charIndex: 0 });
+        },
+        cancel: () => undefined,
+        pause: () => undefined,
+        resume: () => undefined,
+      },
+    });
+  });
+
+  await page.goto('/t/tour_bunbun_golden/beat_purpose_01');
+  await page.getByRole('button', { name: 'Listen' }).click();
+  await expect(page.getByText(/Listening · browser voice/)).toBeVisible();
+  await expect(page.locator('.narration-sentence.is-active')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Pause' }).click();
+  await expect(page.getByText('Narration paused')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+});
+
+test('asks a question, opens a cited anchor, and continues', async ({ page }) => {
+  await page.route('**/api/tours/*/ask', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        answer: {
+          markdown: 'The PDS is the source of truth. The local index is a read model.',
+          citations: ['anchor_readme_overview'],
+          followUps: ['Why is the index separate?'],
+        },
+        citations: [
+          {
+            id: 'anchor_readme_overview',
+            label: 'What Bunbun is',
+            path: 'README.md',
+            startLine: 3,
+            endLine: 3,
+          },
+        ],
+        warnings: [],
+        modelId: 'fake/model',
+      }),
+    });
+  });
+
+  await page.goto('/t/tour_bunbun_golden/beat_purpose_01');
+  await page.getByRole('button', { name: 'Ask about this beat' }).click();
+  await page.getByLabel('Your question').fill('What is the source of truth?');
+  await page.getByRole('button', { name: 'Ask', exact: true }).click();
+
+  await expect(
+    page.getByText('The PDS is the source of truth.'),
+  ).toBeVisible();
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.getByRole('link', { name: 'What Bunbun is' }).click(),
+  ]);
+  await expect(
+    popup.getByRole('heading', { name: 'What Bunbun is' }),
+  ).toBeVisible();
+  await popup.close();
+  await page.getByRole('button', { name: 'Continue tour' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Two sources, one conversation' }),
+  ).toBeVisible();
+});
+
 test('remembers a paused position across a reload', async ({ page }) => {
   await page.goto('/t/tour_bunbun_golden/beat_purpose_02');
   await expect(

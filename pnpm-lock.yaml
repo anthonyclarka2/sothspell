@@ -308,6 +308,9 @@ importers:
       '@sothspell/diagram':
         specifier: workspace:*
         version: link:../../packages/diagram
+      '@sothspell/narration':
+        specifier: workspace:*
+        version: link:../../packages/narration
       '@sothspell/player':
         specifier: workspace:*
         version: link:../../packages/player

@@ -161,6 +161,7 @@ export function createNarrationService(
         text: input.text,
         voiceId,
         modelId,
+        beatId: input.beatId,
         fetchImpl: options.fetchImpl,
       });
       const timings = await normalize(input.text, synthesized.alignment);

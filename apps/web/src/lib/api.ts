@@ -18,6 +18,26 @@ export interface AnchorOutlineEntry {
   beatTitle: string;
 }
 
+export interface AskCitation {
+  id: string;
+  label: string;
+  path: string;
+  startLine: number;
+  endLine: number;
+}
+
+export interface AskResponse {
+  answer: {
+    markdown: string;
+    citations: string[];
+    followUps: string[];
+    suggestedBeatId?: string;
+  };
+  citations: AskCitation[];
+  warnings: string[];
+  modelId: string;
+}
+
 export interface AnchorResponse {
   projectId: string;
   tourId: string;
@@ -83,4 +103,25 @@ export function firstBeatId(tour: CompiledTour): string {
     throw new Error('the tour has no beats');
   }
   return beat.id;
+}
+
+export async function askQuestion(input: {
+  tourId: string;
+  beatId: string;
+  question: string;
+  history: Array<{ question: string; answer: string }>;
+}): Promise<AskResponse> {
+  const response = await fetch(
+    `/api/tours/${encodeURIComponent(input.tourId)}/ask`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        beatId: input.beatId,
+        question: input.question,
+        history: input.history.slice(-3),
+      }),
+    },
+  );
+  return readJson<AskResponse>(response);
 }

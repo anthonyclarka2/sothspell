@@ -35,7 +35,7 @@ function DiagramNodeView({ data }: NodeProps<DiagramFlowNode>) {
       data-anchor-id={data.anchorId}
       role="button"
       tabIndex={0}
-      aria-label={`${data.label} — open code`}
+      aria-label={`${data.label} ${data.kind} — open code`}
       onPointerDown={() => {
         if (data.anchorId) {
           data.onOpen?.(data.anchorId);
@@ -51,6 +51,7 @@ function DiagramNodeView({ data }: NodeProps<DiagramFlowNode>) {
       }}
     >
       {data.label}
+      {' '}
       <span className="node-kind">{data.kind}</span>
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
