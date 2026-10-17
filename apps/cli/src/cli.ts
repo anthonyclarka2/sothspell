@@ -16,6 +16,8 @@ import {
   createFixtureGuideModel,
   type TourPlan,
 } from '@sothspell/authoring';
+import { runDoctor } from './doctor.js';
+import { runServe, type ServeArgs } from './serve.js';
 
 export interface CliIO {
   stdout: (line: string) => void;
@@ -27,10 +29,14 @@ const USAGE = `Usage:
   sothspell author <path> [--model <provider/model>] [--out <dir>]
                           [--audience new-contributor|technical-evaluator|maintainer]
                           [--max-minutes <n>] [--no-cache]
+  sothspell serve [--port <n>] [--host <host>] [--no-open]
+  sothspell doctor
 
 Commands:
   analyze <path>    Build a read-only project snapshot.
   author <path>     Plan and write a Sóþspell tour from the snapshot.
+  serve             Start the local API and web player.
+  doctor            Check the local runtime and optional integrations.
 
 Options:
   --json            Print the snapshot JSON (analyze).
@@ -40,6 +46,9 @@ Options:
   --model <id>      provider/model, or "fixture" for a deterministic offline tour.
   --audience <kind> new-contributor, technical-evaluator, or maintainer.
   --max-minutes <n> Target tour runtime for the curriculum planner.
+  --port <n>        Port for serve (default 4319).
+  --host <host>     Host for serve (default 127.0.0.1).
+  --no-open         Do not open the browser from serve.
   --no-cache        Ignore the analysis and authoring caches.
   --help            Show this help.
 `;
@@ -291,6 +300,41 @@ async function runAuthor(args: AuthorArgs, io: CliIO): Promise<number> {
   }
 }
 
+function parseServeArgs(argv: string[]): ServeArgs {
+  let port = 4319;
+  let host = '127.0.0.1';
+  let open = true;
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    switch (arg) {
+      case '--port': {
+        const value = Number.parseInt(argv[index + 1] ?? '', 10);
+        if (!Number.isFinite(value) || value < 1 || value > 65535) {
+          throw new Error(`--port needs a valid port\n\n${USAGE}`);
+        }
+        port = value;
+        index += 1;
+        break;
+      }
+      case '--host': {
+        const value = argv[index + 1];
+        if (!value || value.startsWith('--')) {
+          throw new Error(`--host needs a host\n\n${USAGE}`);
+        }
+        host = value;
+        index += 1;
+        break;
+      }
+      case '--no-open':
+        open = false;
+        break;
+      default:
+        throw new Error(`unknown option: ${arg}\n\n${USAGE}`);
+    }
+  }
+  return { port, host, open };
+}
+
 /**
  * The CLI is a thin shell over the analyzer seam. Keeping argument parsing here
  * means tests can drive the same behavior without spawning a process.
@@ -299,6 +343,19 @@ export async function runCli(argv: string[], io: CliIO): Promise<number> {
   if (argv.length === 0 || argv[0] === '--help' || argv[0] === 'help') {
     io.stdout(USAGE.trimEnd());
     return 0;
+  }
+
+  if (argv[0] === 'doctor') {
+    return runDoctor({}, io);
+  }
+
+  if (argv[0] === 'serve') {
+    try {
+      return await runServe(parseServeArgs(argv.slice(1)), io);
+    } catch (error) {
+      io.stderr(error instanceof Error ? error.message : String(error));
+      return 2;
+    }
   }
 
   if (argv[0] === 'author') {

@@ -53,6 +53,11 @@ export {
   type AskQuestionInput,
   type AskQuestionResult,
 } from './ask.js';
+export {
+  generateDrilldown,
+  type DrilldownInput,
+  type DrilldownResult,
+} from './drilldown.js';
 export { assembleDocument, totalDurationMs } from './assemble.js';
 export { loadPrompt, renderPrompt, PROMPT_VERSION } from './prompts.js';
 export { validateChapterDraft, validatePlan } from './validate.js';

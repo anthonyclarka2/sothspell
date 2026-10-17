@@ -92,6 +92,7 @@ Bunbun tree or to another agent's worktree.
 | --- | --- | --- | --- |
 | Narration package | `phase-5-a-narration` / `.worktrees/phase-5-a-narration` | `packages/narration/**` only: sentence splitting, alignment, browser speech, ElevenLabs client, file asset store, tests | `ses_eb653ebb7ffeGazvoXzSytxXwM` |
 | API audio/narration | `phase-5-b-api-audio` / `.worktrees/phase-5-b-api-audio` | `apps/api/**` only: narration service, `POST /api/narration`, `GET /api/audio/:hash` with range support, tests | `ses_eb653ebb7ffdGB5uz1mPyW6YC2` |
+| OpenCode V2 plugin | `phase-7-a-opencode-plugin` / `.worktrees/phase-7-a-opencode-plugin` | `packages/opencode-plugin/**` only: V2 plugin, commands, tools, RPC, default runtime, OpenCode model adapter, tests | `ses_eb642b477ffeRkFGjnWK7KpoiW` |
 
 Main owns `apps/web/**`, `packages/player/**`, `packages/core/**`, plans, docs,
 and the final player integration. The narration contract lives in

@@ -8,7 +8,9 @@
   },
   "types": "./src/index.ts",
   "dependencies": {
+    "@hono/node-server": "2.1.5",
     "@sothspell/analyzer": "workspace:*",
+    "@sothspell/api": "workspace:*",
     "@sothspell/authoring": "workspace:*",
     "@sothspell/core": "workspace:*"
   }
