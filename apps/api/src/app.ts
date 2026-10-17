@@ -15,6 +15,7 @@ import {
   type CompiledTour,
 } from '@sothspell/core';
 import { createDeferredNarrationAssetStore, registerAudioRoutes } from './audio.js';
+import { registerImportRoutes } from './imports.js';
 import {
   NarrationBodySchema,
   NarrationUnavailableError,
@@ -24,6 +25,7 @@ import {
 import { createRunStore, RunBodySchema, type RunRecord } from './runs.js';
 import { AskUnavailableError, createAskService, type AskService } from './ask-service.js';
 import { createDrilldownService, type DrilldownService } from './drilldown-service.js';
+import { createImportService, type ImportService } from '@sothspell/import';
 
 const AskBodySchema = z.object({
   beatId: z.string().min(1).max(128),
@@ -60,6 +62,8 @@ export interface AppOptions {
   askService?: AskService | null;
   /** Drilldown service; tests inject a fake. */
   drilldownService?: DrilldownService | null;
+  /** Import service; tests inject a fake instead of git and disk. */
+  importService?: ImportService;
 }
 
 const DEFAULT_TOUR_PATH = new URL(
@@ -297,9 +301,12 @@ export function createApp(options: AppOptions = {}): Hono {
           modelId: process.env.SOTHSPELL_MODEL ?? null,
         })
       : options.drilldownService;
+  const importService =
+    options.importService ?? createImportService({ home: sothspellHome() });
   const app = new Hono();
 
   registerAudioRoutes(app, { assetStore });
+  registerImportRoutes(app, { service: importService });
 
   app.get('/api/health', (context) =>
     context.json({

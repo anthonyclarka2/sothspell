@@ -262,6 +262,9 @@ importers:
       '@sothspell/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@sothspell/import':
+        specifier: workspace:*
+        version: link:../../packages/import
       '@sothspell/narration':
         specifier: workspace:*
         version: link:../../packages/narration
@@ -299,6 +302,9 @@ importers:
       '@sothspell/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@sothspell/import':
+        specifier: workspace:*
+        version: link:../../packages/import
 
   apps/web:
     dependencies:
@@ -432,6 +438,8 @@ importers:
         version: 4.6.7
 
   packages/harness: {}
+
+  packages/import: {}
 
   packages/narration: {}
 

@@ -8,6 +8,7 @@ import {
 import { HomePage } from './routes/HomePage.js';
 import { PlayerPage } from './routes/PlayerPage.js';
 import { CodePage } from './routes/CodePage.js';
+import { ImportPage } from './routes/ImportPage.js';
 import { NotFoundPage } from './routes/NotFoundPage.js';
 
 function RootLayout() {
@@ -56,14 +57,20 @@ const codeRoute = createRoute({
   component: CodePage,
 });
 
-const routeTree = rootRoute.addChildren([homeRoute, playerRoute, codeRoute]);
+const importRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/import',
+  component: ImportPage,
+});
+
+const routeTree = rootRoute.addChildren([homeRoute, playerRoute, codeRoute, importRoute]);
 
 export const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
 });
 
-export { codeRoute, homeRoute, playerRoute };
+export { codeRoute, homeRoute, importRoute, playerRoute };
 
 declare module '@tanstack/react-router' {
   interface Register {
