@@ -13,7 +13,8 @@ resume later.
 
 ## Status
 
-**Phase 4 implemented (2026-10-17).** The repository contains:
+**Phase 6 implemented (2026-10-17); Phase 7 plugin integration in progress.**
+The repository contains:
 
 - a pnpm workspace on TypeScript 7.0.2, React 19, Vite 8, and Hono 4;
 - the versioned Sóþspell schema, a generated JSON Schema, and a compiler that
@@ -31,12 +32,15 @@ resume later.
   mode, completed-beat tracking, keyboard control, a virtualized full-file code
   browser with stale badges and anchor outlines, and local-first run progress
   mirrored to a local SQLite table;
+- narration: browser speech and opt-in ElevenLabs cloud narration with aligned
+  timings, content-addressed audio, range serving, and fallback;
+- in-tour questions with cited answers, drilldown generation, and a `sothspell
+serve`/`doctor` local runtime;
 - unit, browser, and accessibility tests, including the Bunbun acceptance pass.
 
-Narration (Phase 5), Q&A (Phase 6), the OpenCode plugin (Phase 7), and release
-hardening (Phase 8) are planned but not built yet. A reviewed real-model Bunbun
-tour is owner-gated on provider credentials; the fixture model verifies the
-pipeline offline.
+The OpenCode V2 plugin (Phase 7) and final release hardening (Phase 8) are in
+progress. A reviewed real-model Bunbun tour and live cloud narration are
+owner-gated on provider credentials; fixture and browser paths are verified.
 
 ## Quick start
 
@@ -95,6 +99,10 @@ stores only small, attributed excerpts.
 
 - [Roadmap](plans/ROADMAP.md) — product definition, architecture, format, stack,
   security, testing, risks, and phase sequence.
+- [Architecture](docs/architecture.md) — packages, pipeline, trust boundaries,
+  and storage.
+- [Tour format](docs/tour-format.md) — the document, anchors, diagrams, and
+  versioning.
 - [Phase 1](plans/PHASE-1.md) — foundation, schema, compiler, golden tour,
   minimal player.
 - [Phase 2](plans/PHASE-2.md) — repository intelligence and symbol graph.
@@ -112,6 +120,15 @@ stores only small, attributed excerpts.
   validation, repair, quality reports, and the author CLI.
 - [Player and code browser](docs/player.md) — playback controls, keyboard map,
   virtualized code pages, stale badges, and progress.
+- [Narration](docs/narration.md) — browser and cloud speech, synchronization,
+  caching, and privacy.
+- [Guide and interludes](docs/guide.md) — in-tour questions, citations,
+  drilldown, and progress.
+- [Self-hosting](docs/self-hosting.md) — install, serve, storage, and upgrades.
+- [Privacy](docs/privacy.md) — what stays local and what cloud choices send.
+- [Accessibility](docs/accessibility.md) — the axe gate and keyboard map.
+- [Troubleshooting](docs/troubleshooting.md) — common local failures.
+- [Release notes](docs/release-notes.md) — the first release and limitations.
 - [Authoring skill](skills/sothspell-author/SKILL.md) — the checklist an agent
   uses to author or review a tour.
 - [Domain context](CONTEXT.md) — the project glossary.

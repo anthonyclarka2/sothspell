@@ -28,6 +28,8 @@ docs.
 - [Accessibility](./accessibility.md) — the axe gate, keyboard map, and known
   gaps.
 - [Troubleshooting](./troubleshooting.md) — common local runtime failures.
+- [Release notes](./release-notes.md) — the first local-first release and its
+  known limitations.
 
 ## Planned guides
 
