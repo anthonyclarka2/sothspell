@@ -7,12 +7,13 @@
   codebase with synchronized narration, diagrams, and highlighted code anchors.
   The website shipped first; the OpenCode V2 plugin is complete; Claude Code,
   Codex, and other harness adapters are Phase 10 of the next stage.
-- **Repository status: v1 release complete (2026-10-17); next stage planned.**
-  The workspace, schema, compiler, analyzer, authoring pipeline, cinematic
-  player, narration, ask/interlude UI, local progress, CLI, local server, and
-  OpenCode V2 plugin exist. The v1 plans are archived in `plans/archive/`; the
-  next-stage roadmap and Phases 9–16 live in `plans/ROADMAP.md` and
-  `plans/PHASE-9.md` through `plans/PHASE-16.md`.
+- **Repository status: v1 release complete (2026-10-17); next stage in
+  progress.** Phases 9–13 and 16 are complete: preferences, harness plugins,
+  GitHub import, accounts and sync, language analyzers, and the embeddable
+  player. Phase 14 (translation) and Phase 15 (review UI) are active. The v1
+  plans are archived in `plans/archive/`; the next-stage roadmap and Phases
+  9–16 live in `plans/ROADMAP.md` and `plans/PHASE-9.md` through
+  `plans/PHASE-16.md`.
 - **Example project:** Bunbun at `/Users/ajc/Projects/codegens/bunbun`, pinned to
   commit `9fef24d`. It is **read-only**. No command may create, modify, or delete
   anything inside that tree. All snapshots, tours, audio, logs, and runs live
@@ -113,11 +114,11 @@ verification. The narration contract lives in
 | 14    | `phase-14-a-translation`  | Schema locale/translations, translation pipeline, locale UI, per-locale narration       | `ses_eb5ed20a8ffeBEXMbEr0EbcVqY` |
 | 15    | `phase-15-a-review`       | `packages/review/**`, review API/UI/CLI, regeneration and approval gating               | `ses_eb5ed20a8ffdR416C2wSJRn0Ol` |
 
-Phase 14 (translation) follows Phase 9 and Phase 10. Phase 15 (review UI)
-follows Phase 9. Main owns integration, `plans/**`, `docs/**`, `CONTEXT.md`,
-and the final verification for every track. Shared-file edits (`app.ts`,
-`router.tsx`, `cli.ts`) are kept minimal by each track and resolved by main at
-merge.
+Phases 9–13 and 16 are merged and their worktrees and branches were removed after
+verification. Phase 14 (translation) and Phase 15 (review UI) are active. Main
+owns integration, `plans/**`, `docs/**`, `CONTEXT.md`, and the final
+verification for every track. Shared-file edits (`app.ts`, `router.tsx`,
+`cli.ts`) were resolved by main at merge.
 
 ## Verification
 
