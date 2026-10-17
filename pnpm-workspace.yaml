@@ -17,8 +17,11 @@ catalog:
   'zod': 4.6.7
 
 allowBuilds:
-  esbuild: true
+  '@parcel/watcher': false
   better-sqlite3: true
+  esbuild: true
+  tree-sitter-bash: false
+  tree-sitter-powershell: false
 
 minimumReleaseAgeExclude:
   - '@tanstack/react-router@1.170.45'
@@ -29,3 +32,15 @@ minimumReleaseAgeExclude:
   - '@ai-sdk/provider-utils@5.0.62'
   - '@ai-sdk/provider@4.0.29'
   - ai@7.0.143
+  - '@opencode/ai@2.0.32'
+  - '@opencode/client@2.0.32'
+  - '@opencode/codemode@2.0.32'
+  - '@opencode/core@2.0.32'
+  - '@opencode/plugin-browser@2.0.32'
+  - '@opencode/plugin@2.0.32'
+  - '@opencode/protocol@2.0.32'
+  - '@opencode/schema@2.0.32'
+  - '@opencode/sdk@2.0.32'
+  - '@opencode/server@2.0.32'
+  - '@opencode/simulation@2.0.32'
+  - '@opencode/util@2.0.32'
