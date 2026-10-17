@@ -180,9 +180,7 @@ describe('generateDrilldown', () => {
       model,
     });
 
-    expect(
-      result.document.chapters[0]?.beats[0]?.anchors[0]?.symbol,
-    ).toBeUndefined();
+    expect(result.document.chapters[0]?.beats[0]?.anchors[0]?.symbol).toBeUndefined();
     expect(result.document.chapters[0]?.beats[0]?.anchors[0]?.path).toBe(
       'src/service.ts',
     );
