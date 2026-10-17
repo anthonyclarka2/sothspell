@@ -1,0 +1,30 @@
+{
+  "name": "@sothspell/embed",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./element": "./src/element.ts",
+    "./export": "./src/export/index.ts",
+    "./protocol": "./src/protocol.ts"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@sothspell/core": "workspace:*",
+    "@sothspell/diagram": "workspace:*",
+    "@sothspell/narration": "workspace:*",
+    "@sothspell/player": "workspace:*",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "vite": "8.3.4"
+  }
+}

@@ -14,6 +14,7 @@
     "@sothspell/api": "workspace:*",
     "@sothspell/authoring": "workspace:*",
     "@sothspell/core": "workspace:*",
+    "@sothspell/embed": "workspace:*",
     "@sothspell/import": "workspace:*",
     "@sothspell/settings": "workspace:*"
   }

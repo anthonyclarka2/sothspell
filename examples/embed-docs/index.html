@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Embed docs fixture — Sóþspell</title>
+    <link rel="stylesheet" href="./docs.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Embedding a Sóþspell tour</h1>
+      <p>
+        This static page is the Phase 16 docs fixture. It embeds the golden Bunbun tour
+        with the custom element and with the iframe fallback, and it deliberately uses
+        opinionated host CSS to prove the player cannot collide with a docs site.
+      </p>
+
+      <section aria-labelledby="element-heading">
+        <h2 id="element-heading">Custom element</h2>
+        <p>
+          <code>&lt;sothspell-tour&gt;</code> renders in a shadow root and stores local
+          progress under <code>sothspell:embed:&lt;tour&gt;</code>.
+        </p>
+        <sothspell-tour
+          id="element-embed"
+          tour="./dist/sothspell/tour.json"
+          locale="en"
+          progress="on"
+          style="min-height: 460px"
+        ></sothspell-tour>
+      </section>
+
+      <section aria-labelledby="iframe-heading">
+        <h2 id="iframe-heading">Iframe fallback</h2>
+        <p>
+          The same bundle runs inside <code>embed.html</code> and speaks the
+          <code>postMessage</code> protocol.
+        </p>
+        <div id="iframe-slot"></div>
+      </section>
+
+      <section aria-labelledby="optout-heading">
+        <h2 id="optout-heading">Progress opt-out</h2>
+        <p>
+          The <code>opt-out.html</code> page in this fixture embeds the same tour with
+          <code>progress="off"</code>; the browser test asserts that nothing is written to
+          storage there.
+        </p>
+      </section>
+    </main>
+
+    <script type="module" src="./dist/sothspell/player.js"></script>
+    <script type="module" src="./docs.js"></script>
+  </body>
+</html>

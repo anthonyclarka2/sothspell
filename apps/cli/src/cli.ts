@@ -23,6 +23,7 @@ import {
 } from '@sothspell/settings';
 import { runDoctor } from './doctor.js';
 import { parseImportArgs, runImport } from './import.js';
+import { parseExportArgs, runExport } from './export.js';
 import { runServe, type ServeArgs } from './serve.js';
 import { runAccountCommand } from './account.js';
 
@@ -42,6 +43,7 @@ const USAGE = `Usage:
                           [--audience new-contributor|technical-evaluator|maintainer]
                           [--max-minutes <n>] [--no-cache]
   sothspell import <url> [--ref <ref>] [--json]
+  sothspell export <tour.json> --embed --out <dir> [--source-root <path>]
   sothspell serve [--port <n>] [--host <host>] [--no-open]
   sothspell doctor
 
@@ -49,6 +51,7 @@ Commands:
   analyze <path>    Build a read-only project snapshot.
   author <path>     Plan and write a Sóþspell tour from the snapshot.
   import <url>      Shallow-clone a public GitHub repository into SOTHSPELL_HOME.
+  export <tour>     Write a self-contained embed bundle for a docs page.
   serve             Start the local API and web player.
   doctor            Check the local runtime and optional integrations.
 
@@ -63,6 +66,8 @@ Options:
   --audience <kind> new-contributor, technical-evaluator, or maintainer.
   --max-minutes <n> Target tour runtime for the curriculum planner.
   --ref <ref>       Branch or tag to import (import).
+  --embed           Export the embed bundle (required for export).
+  --source-root <p> Read excerpts for anchors without embedded text (export).
   --port <n>        Port for serve (default 4319).
   --host <host>     Host for serve (default 127.0.0.1).
   --no-open         Do not open the browser from serve.
@@ -412,6 +417,15 @@ export async function runCli(
   if (argv[0] === 'import') {
     try {
       return await runImport(parseImportArgs(argv.slice(1)), io);
+    } catch (error) {
+      io.stderr(error instanceof Error ? error.message : String(error));
+      return 2;
+    }
+  }
+
+  if (argv[0] === 'export') {
+    try {
+      return await runExport(parseExportArgs(argv.slice(1)), io);
     } catch (error) {
       io.stderr(error instanceof Error ? error.message : String(error));
       return 2;
