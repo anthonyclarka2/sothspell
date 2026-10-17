@@ -86,7 +86,7 @@ conflicts in favor of the agreed contract, reruns the full gate, and deletes the
 worktree only after the merge is verified. A subagent must never write to the
 Bunbun tree or to another agent's worktree.
 
-### Phase 5 dispatches (2026-10-17)
+### Subagent dispatches (2026-10-17)
 
 | Track               | Branch / worktree                                                    | Owner scope                                                                                                             | Session                          |
 | ------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
@@ -94,9 +94,11 @@ Bunbun tree or to another agent's worktree.
 | API audio/narration | `phase-5-b-api-audio` / `.worktrees/phase-5-b-api-audio`             | `apps/api/**` only: narration service, `POST /api/narration`, `GET /api/audio/:hash` with range support, tests          | `ses_eb653ebb7ffdGB5uz1mPyW6YC2` |
 | OpenCode V2 plugin  | `phase-7-a-opencode-plugin` / `.worktrees/phase-7-a-opencode-plugin` | `packages/opencode-plugin/**` only: V2 plugin, commands, tools, RPC, default runtime, OpenCode model adapter, tests     | `ses_eb642b477ffeRkFGjnWK7KpoiW` |
 
-Main owns `apps/web/**`, `packages/player/**`, `packages/core/**`, plans, docs,
-and the final player integration. The narration contract lives in
-`packages/narration/src/types.ts` and is frozen for both tracks.
+The Phase 5 narration and API tracks are merged; their branches remain until
+the worktrees are cleaned up. The Phase 7 plugin track is active. Main owns
+`apps/web/**`, `packages/player/**`, `packages/core/**`, plans, docs, and the
+final player integration. The narration contract lives in
+`packages/narration/src/types.ts` and is frozen for both Phase 5 tracks.
 
 ## Verification
 
