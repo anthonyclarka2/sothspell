@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { compileSothspell, parseSothspell } from '@sothspell/core';
+import { createSettingsService } from '@sothspell/settings';
 import { runCli } from './cli.js';
 
 const roots: string[] = [];
@@ -73,18 +74,50 @@ describe('sothspell author CLI', () => {
     expect(output.stdout.join('\n')).toContain('Wrote');
   });
 
-  it('requires a model when SOTHSPELL_MODEL is unset', async () => {
+  it('requires a model when SOTHSPELL_MODEL is unset and no profile is active', async () => {
     const root = await makeProject();
+    const home = await mkdtemp(path.join(tmpdir(), 'sothspell-author-home-'));
+    roots.push(home);
     const previous = process.env.SOTHSPELL_MODEL;
     delete process.env.SOTHSPELL_MODEL;
     const output = capture();
 
     try {
-      const code = await runCli(['author', root, '--no-cache'], output.io);
+      const code = await runCli(['author', root, '--no-cache'], output.io, {
+        settings: createSettingsService({ homeDirectory: home }),
+      });
       expect(code).toBe(2);
       expect(output.stderr.join('\n')).toMatch(/no model selected/i);
     } finally {
       if (previous !== undefined) {
+        process.env.SOTHSPELL_MODEL = previous;
+      }
+    }
+  });
+
+  it('authors through the settings resolver when SOTHSPELL_MODEL is set', async () => {
+    const root = await makeProject();
+    const out = await mkdtemp(path.join(tmpdir(), 'sothspell-author-out-'));
+    const home = await mkdtemp(path.join(tmpdir(), 'sothspell-author-home-'));
+    roots.push(out, home);
+    const previous = process.env.SOTHSPELL_MODEL;
+    process.env.SOTHSPELL_MODEL = 'fixture';
+    const output = capture();
+
+    try {
+      const code = await runCli(['author', root, '--out', out, '--no-cache'], output.io, {
+        settings: createSettingsService({ homeDirectory: home }),
+      });
+      expect(code).toBe(0);
+      const quality = JSON.parse(
+        await readFile(path.join(out, 'quality.json'), 'utf8'),
+      ) as { modelId: string; profileName?: string };
+      expect(quality.modelId).toBe('fixture');
+      expect(quality.profileName).toBeUndefined();
+    } finally {
+      if (previous === undefined) {
+        delete process.env.SOTHSPELL_MODEL;
+      } else {
         process.env.SOTHSPELL_MODEL = previous;
       }
     }

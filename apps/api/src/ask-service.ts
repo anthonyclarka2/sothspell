@@ -35,6 +35,12 @@ export interface CreateAskServiceOptions {
   sourceRoot: string | null;
   modelId?: string | null;
   model?: GuideModel;
+  /**
+   * Profile-aware resolution seam. The settings-backed resolver returns the
+   * active connection's model; when it returns null the service falls back to
+   * `modelId`/`SOTHSPELL_MODEL` so environment behavior is unchanged.
+   */
+  resolveModel?: () => Promise<GuideModel | null>;
 }
 
 /**
@@ -62,14 +68,21 @@ export function createAskService(options: CreateAskServiceOptions): AskService {
     return promise;
   };
 
-  const resolveModel = (): GuideModel => {
+  const resolveModel = async (): Promise<GuideModel> => {
     if (model) {
       return model;
+    }
+    if (options.resolveModel) {
+      const resolved = await options.resolveModel();
+      if (resolved) {
+        model = resolved;
+        return resolved;
+      }
     }
     const modelId = options.modelId ?? process.env.SOTHSPELL_MODEL ?? null;
     if (!modelId || modelId === 'fixture' || modelId === 'fake') {
       throw new AskUnavailableError(
-        'no model configured for in-tour questions; set SOTHSPELL_MODEL to a provider/model id',
+        'no model configured for in-tour questions; set SOTHSPELL_MODEL to a provider/model id or activate an authoring profile in /settings',
       );
     }
     model = createAiSdkGuideModel(modelId);
@@ -79,7 +92,7 @@ export function createAskService(options: CreateAskServiceOptions): AskService {
   return {
     async answer(request) {
       const document = await loadDocument(request.tourId);
-      const guide = resolveModel();
+      const guide = await resolveModel();
       const result = await answerQuestion({
         question: request.question,
         tour: document,

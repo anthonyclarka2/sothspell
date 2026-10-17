@@ -18,6 +18,11 @@ export interface CreateDrilldownServiceOptions {
   sourceRoot: string;
   modelId?: string | null;
   model?: GuideModel;
+  /**
+   * Profile-aware resolution seam; see `createAskService`. A null result keeps
+   * the existing `modelId`/`SOTHSPELL_MODEL` fallback.
+   */
+  resolveModel?: () => Promise<GuideModel | null>;
 }
 
 export function createDrilldownService(
@@ -27,14 +32,21 @@ export function createDrilldownService(
   let snapshotPromise: ReturnType<typeof analyzeProject> | null = null;
   let model: GuideModel | null = options.model ?? null;
 
-  const resolveModel = (): GuideModel => {
+  const resolveModel = async (): Promise<GuideModel> => {
     if (model) {
       return model;
+    }
+    if (options.resolveModel) {
+      const resolved = await options.resolveModel();
+      if (resolved) {
+        model = resolved;
+        return resolved;
+      }
     }
     const modelId = options.modelId ?? process.env.SOTHSPELL_MODEL ?? null;
     if (!modelId || modelId === 'fixture' || modelId === 'fake') {
       throw new AskUnavailableError(
-        'no model configured for drilldown; set SOTHSPELL_MODEL to a provider/model id',
+        'no model configured for drilldown; set SOTHSPELL_MODEL to a provider/model id or activate an authoring profile in /settings',
       );
     }
     model = createAiSdkGuideModel(modelId);
@@ -70,7 +82,7 @@ export function createDrilldownService(
         anchorId,
         snapshot,
         sourceRoot: options.sourceRoot,
-        model: resolveModel(),
+        model: await resolveModel(),
       });
     },
   };

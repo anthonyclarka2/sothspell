@@ -37,6 +37,7 @@ export interface CloudSynthesisRequest {
   text: string;
   voiceId: string;
   modelId?: string;
+  outputFormat?: string;
   beatId: string;
   fetchImpl?: typeof fetch;
 }
