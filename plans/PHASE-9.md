@@ -1,6 +1,6 @@
 # Phase 9 — Preferences UI
 
-**Status: in progress (2026-10-17).** Depends on: the v1 release (archived plans). This is the
+**Status: complete (2026-10-17).** Depends on: the v1 release (archived plans). This was the
 foundation phase for the next stage.
 
 ## Goal
@@ -140,3 +140,42 @@ connection profile is named, testable, and switchable; secrets stay server-side.
 - Use the `design-taste-frontend` guardrails for the settings page.
 - Keep secrets out of fixtures, snapshots, and logs.
 - Record the profile resolution rules in `CONTEXT.md` when they land.
+
+## Shipped (closure, 2026-10-17)
+
+- **`packages/settings`** — `ConnectionProfileSchema` for authoring and
+  narration profiles, atomic 0600 file storage for profiles and secrets, a
+  `SecretStore` port with a file adapter, corrupted-file quarantine, CRUD and
+  activation, env-precedence resolution, and redaction.
+- **Settings API** — list/create/update/delete/activate/test routes with
+  400/404/409/502 mapping, write-only secrets, and a provider test seam.
+- **`/settings` UI** — authoring and narration sections, create/edit/delete/
+  activate/test, inline validation, live-region test results, and a
+  keyboard-only path.
+- **Pipeline integration** — authoring, in-tour questions, drilldown, and
+  narration resolve the active profile with the existing env fallback; quality
+  reports record the profile name and model id, never the secret.
+- **Docs** — `docs/settings.md`.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- Track: 7 files / 97 focused tests; `pnpm test` 41 files / 272 tests;
+  `pnpm test:browser` 23 passed including three new settings axe states.
+- After merge on main: `pnpm typecheck` clean, `pnpm lint` clean,
+  `pnpm test` 69 files / 540 tests, `pnpm build` clean, and
+  `CI=1 pnpm test:browser` 38 passed (settings, import, accounts, tour, and
+  ten axe states) at 0 critical/serious.
+- Live Chrome check: profiles and secrets written 0600, no secret in page text,
+  and the browser-speech narration test needs no key.
+- Bunbun remains read-only.
+
+### Follow-ups
+
+- The file secret store is the v2 default; a keychain adapter remains future
+  work.
+- The home-page first-run nudge is not implemented; the settings link is in the
+  topbar.
+- Real provider round trips remain owner-gated; the test seam covers them with
+  fakes.
+- The Phase 9 track found a pre-existing drilldown bug for symbol-less anchors;
+  it was fixed on main in commit `29a2d5d` with a regression test.
