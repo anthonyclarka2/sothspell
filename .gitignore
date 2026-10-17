@@ -5,6 +5,7 @@ coverage/
 playwright-report/
 test-results/
 .tmp-ui/
+.worktrees/
 *.local
 .DS_Store
 .env
