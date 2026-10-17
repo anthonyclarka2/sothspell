@@ -1,8 +1,8 @@
 # Phase 7 — OpenCode V2 Plugin
 
-**Status: planned.** Depends on: Phase 3 (authoring), Phase 4 (player), Phase 6
-(runs and answers). The Phase 8 local-server packaging may start during Phase 7
-and is part of the plugin's launch path.
+**Status: in progress (2026-10-17).** Depends on: Phase 3 (authoring), Phase 4
+(player), Phase 6 (runs and answers). The Phase 8 local-server packaging may start
+during Phase 7 and is part of the plugin's launch path.
 
 **Deliverable:** an OpenCode V2 plugin that generates and opens a Sóþspell for the
 current project, answers questions through the same guide, and shares progress

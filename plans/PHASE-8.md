@@ -1,7 +1,7 @@
 # Phase 8 — Self-Hosted Release & Hardening
 
-**Status: planned.** Depends on: Phases 1–7; packaging work may start during
-Phase 7.
+**Status: in progress (2026-10-17).** Depends on: Phases 1–7; packaging work may
+start during Phase 7.
 
 **Deliverable:** a reproducible self-hosted release: one command to install and
 serve, a packaged CLI and OpenCode plugin, a secure loopback server, performance
