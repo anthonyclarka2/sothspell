@@ -21,7 +21,9 @@ import {
   type AuthoringConnection,
   type SettingsService,
 } from '@sothspell/settings';
+import type { ReviewService } from '@sothspell/review';
 import { runDoctor } from './doctor.js';
+import { runReview } from './review.js';
 import { runServe, type ServeArgs } from './serve.js';
 
 export interface CliIO {
@@ -32,6 +34,8 @@ export interface CliIO {
 export interface CliDependencies {
   /** Injected settings service; tests keep the real SOTHSPELL_HOME untouched. */
   settings?: SettingsService;
+  /** Injected review service; tests keep the real database untouched. */
+  review?: ReviewService;
 }
 
 const USAGE = `Usage:
@@ -41,12 +45,14 @@ const USAGE = `Usage:
                           [--max-minutes <n>] [--no-cache]
   sothspell serve [--port <n>] [--host <host>] [--no-open]
   sothspell doctor
+  sothspell review list|show|approve|reject [<reviewId>] [--reason <text>]
 
 Commands:
   analyze <path>    Build a read-only project snapshot.
   author <path>     Plan and write a Sóþspell tour from the snapshot.
   serve             Start the local API and web player.
   doctor            Check the local runtime and optional integrations.
+  review            List, show, approve, or reject a stored review session.
 
 Options:
   --json            Print the snapshot JSON (analyze).
@@ -402,6 +408,10 @@ export async function runCli(
       io.stderr(error instanceof Error ? error.message : String(error));
       return 2;
     }
+  }
+
+  if (argv[0] === 'review') {
+    return runReview(argv.slice(1), io, { service: dependencies.review });
   }
 
   if (argv[0] !== 'analyze') {

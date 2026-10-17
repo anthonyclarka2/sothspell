@@ -13,6 +13,7 @@
     "@sothspell/api": "workspace:*",
     "@sothspell/authoring": "workspace:*",
     "@sothspell/core": "workspace:*",
+    "@sothspell/review": "workspace:*",
     "@sothspell/settings": "workspace:*"
   }
 }

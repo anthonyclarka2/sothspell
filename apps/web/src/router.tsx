@@ -10,6 +10,7 @@ import { PlayerPage } from './routes/PlayerPage.js';
 import { CodePage } from './routes/CodePage.js';
 import { NotFoundPage } from './routes/NotFoundPage.js';
 import { SettingsPage } from './routes/SettingsPage.js';
+import { ReviewPage } from './routes/ReviewPage.js';
 
 function RootLayout() {
   return (
@@ -66,11 +67,18 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
+const reviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/review/$tourId',
+  component: ReviewPage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   settingsRoute,
   playerRoute,
   codeRoute,
+  reviewRoute,
 ]);
 
 export const router = createRouter({
@@ -78,7 +86,7 @@ export const router = createRouter({
   defaultPreload: 'intent',
 });
 
-export { codeRoute, homeRoute, playerRoute, settingsRoute };
+export { codeRoute, homeRoute, playerRoute, reviewRoute, settingsRoute };
 
 declare module '@tanstack/react-router' {
   interface Register {

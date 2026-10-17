@@ -265,6 +265,9 @@ importers:
       '@sothspell/narration':
         specifier: workspace:*
         version: link:../../packages/narration
+      '@sothspell/review':
+        specifier: workspace:*
+        version: link:../../packages/review
       '@sothspell/settings':
         specifier: workspace:*
         version: link:../../packages/settings
@@ -302,6 +305,9 @@ importers:
       '@sothspell/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@sothspell/review':
+        specifier: workspace:*
+        version: link:../../packages/review
       '@sothspell/settings':
         specifier: workspace:*
         version: link:../../packages/settings
@@ -511,6 +517,25 @@ importers:
       '@sothspell/narration':
         specifier: workspace:*
         version: link:../narration
+
+  packages/review:
+    dependencies:
+      '@sothspell/authoring':
+        specifier: workspace:*
+        version: link:../authoring
+      '@sothspell/core':
+        specifier: workspace:*
+        version: link:../core
+      better-sqlite3:
+        specifier: 13.0.3
+        version: 13.0.3
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/better-sqlite3':
+        specifier: 9.6.0
+        version: 9.6.0
 
   packages/settings:
     dependencies:

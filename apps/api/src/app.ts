@@ -11,6 +11,12 @@ import {
   type SettingsService,
 } from '@sothspell/settings';
 import {
+  createFileTourSource,
+  createReviewService,
+  createReviewStore,
+  type ReviewService,
+} from '@sothspell/review';
+import {
   compileSothspell,
   highlightCodeLines,
   languageForPath,
@@ -30,6 +36,7 @@ import { createRunStore, RunBodySchema, type RunRecord } from './runs.js';
 import { AskUnavailableError, createAskService, type AskService } from './ask-service.js';
 import { createDrilldownService, type DrilldownService } from './drilldown-service.js';
 import { registerSettingsRoutes } from './settings.js';
+import { registerReviewRoutes } from './reviews.js';
 import { createConnectionGuideModel, createProfileTester } from './settings-tester.js';
 
 const AskBodySchema = z.object({
@@ -71,6 +78,8 @@ export interface AppOptions {
   settingsService?: SettingsService;
   /** Provider-test seam; tests inject a fake, `null` disables the test route. */
   profileTester?: ProfileTester | null;
+  /** Review service; tests inject one over a temp store and a fake model. */
+  reviewService?: ReviewService;
 }
 
 const DEFAULT_TOUR_PATH = new URL(
@@ -330,10 +339,25 @@ export function createApp(options: AppOptions = {}): Hono {
           resolveModel: resolveAuthoringModel,
         })
       : options.drilldownService;
+  // Reviews share the run database; the audit trail and progress are both
+  // local-first records under SOTHSPELL_HOME.
+  const reviewService =
+    options.reviewService ??
+    createReviewService({
+      store: createReviewStore(options.databasePath ?? defaultDatabasePath()),
+      tours: createFileTourSource({
+        homeDirectory: sothspellHome(),
+        goldenTourPath: DEFAULT_TOUR_PATH.pathname,
+        goldenTourIds: [GOLDEN_TOUR_ID, 'bunbun-golden'],
+      }),
+      sourceRoot: projectRoot,
+      resolveModel: resolveAuthoringModel,
+    });
   const app = new Hono();
 
   registerAudioRoutes(app, { assetStore });
   registerSettingsRoutes(app, { service: settingsService, tester: profileTester });
+  registerReviewRoutes(app, { service: reviewService });
 
   app.get('/api/health', (context) =>
     context.json({
