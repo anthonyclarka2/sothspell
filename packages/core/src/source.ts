@@ -36,6 +36,11 @@ const LANGUAGE_BY_EXTENSION: Record<string, string> = {
   '.sql': 'sql',
   '.yaml': 'yaml',
   '.yml': 'yaml',
+  '.py': 'python',
+  '.pyi': 'python',
+  '.go': 'go',
+  '.rs': 'rust',
+  '.java': 'java',
 };
 
 /** Maps a file extension to the Shiki language id used by the compiler. */

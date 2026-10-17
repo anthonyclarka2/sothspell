@@ -28,4 +28,14 @@ describe('highlightCodeLines', () => {
     expect(highlighted.html).not.toContain('<script>');
     expect(highlighted.html).toContain('&lt;script&gt;');
   });
+
+  it('highlights the analyzer languages', async () => {
+    const highlighted = await highlightCodeLines(
+      'def greet(name):\n    return name\n',
+      'python',
+    );
+
+    expect(highlighted.lines).toHaveLength(3);
+    expect(highlighted.html).toContain('--shiki-light');
+  });
 });

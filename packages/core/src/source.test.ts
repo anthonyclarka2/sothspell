@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   hashText,
+  languageForPath,
   readSourceFile,
   readSourceRange,
   resolveContainedPath,
@@ -73,5 +74,13 @@ describe('read-only source access', () => {
     await expect(readSourceRange(root, 'src/example.ts', 1, 99)).rejects.toThrow(
       /range/i,
     );
+  });
+
+  it('maps the analyzer languages to Shiki languages', () => {
+    expect(languageForPath('src/app.py')).toBe('python');
+    expect(languageForPath('cmd/main.go')).toBe('go');
+    expect(languageForPath('src/lib.rs')).toBe('rust');
+    expect(languageForPath('src/Main.java')).toBe('java');
+    expect(languageForPath('src/unknown.zzz')).toBe('plaintext');
   });
 });

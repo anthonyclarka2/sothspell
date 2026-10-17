@@ -33,6 +33,10 @@ export function getHighlighter(): Promise<Highlighter> {
       'bash',
       'sql',
       'yaml',
+      'python',
+      'go',
+      'rust',
+      'java',
       'plaintext',
     ],
   });
