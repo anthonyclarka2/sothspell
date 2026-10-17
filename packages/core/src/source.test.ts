@@ -2,7 +2,12 @@ import { mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { hashText, readSourceRange, resolveContainedPath } from './source.js';
+import {
+  hashText,
+  readSourceFile,
+  readSourceRange,
+  resolveContainedPath,
+} from './source.js';
 
 const temporaryRoots: string[] = [];
 
@@ -31,6 +36,15 @@ describe('read-only source access', () => {
 
     expect(range.text).toBe('const first = 1;\nconst second = 2;');
     expect(range.contentHash).toBe(hashText(range.text));
+  });
+
+  it('reads a whole file with a line count', async () => {
+    const root = await makeProject();
+    const file = await readSourceFile(root, 'src/example.ts');
+
+    expect(file.text.split('\n')).toHaveLength(3);
+    expect(file.lineCount).toBe(3);
+    expect(file.contentHash).toBe(hashText(file.text));
   });
 
   it('rejects absolute paths and parent traversal', async () => {

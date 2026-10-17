@@ -873,7 +873,7 @@ Phase 7. Phase 8 is the release gate.
 | 1     | complete (2026-10-17) | Toolchain, schema, compiler, hand-authored Bunbun tour, minimal player ([closure record](PHASE-1.md#shipped-closure-2026-10-17))                    |
 | 2     | complete (2026-10-17) | Read-only snapshot, TS/JS symbol graph, project brief, CLI ([closure record](PHASE-2.md#shipped-closure-2026-10-17))                                |
 | 3     | complete (2026-10-17) | GuideModel, context packs, curriculum, chapter generation, validation, repair, author CLI ([closure record](PHASE-3.md#shipped-closure-2026-10-17)) |
-| 4     | planned               | Movie-like player, code browser, diagrams, local progress                                                                                           |
+| 4     | complete (2026-10-17) | Cinematic player, virtualized code browser, local run persistence ([closure record](PHASE-4.md#shipped-closure-2026-10-17))                         |
 | 5     | planned               | Browser + cloud narration, captions, accessibility gate                                                                                             |
 | 6     | planned               | Q&A interludes, drilldown, resumable runs                                                                                                           |
 | 7     | planned               | OpenCode V2 command/tools/RPC, local player launch                                                                                                  |
@@ -900,6 +900,12 @@ CLI, and the `sothspell-author` skill. The pipeline is verified end to end with
 the deterministic fixture model; a reviewed real-model Bunbun tour is owner-gated
 on provider credentials. The full evidence lives in
 [`PHASE-3.md`](PHASE-3.md#shipped-closure-2026-10-17).
+
+Phase 4 shipped the cinematic player: speed control, scrubber, theater mode,
+completed-beat tracking, keyboard control, diagram keyboard/focus interaction,
+sequence-diagram rendering, a virtualized full-file code browser with anchor
+outlines and stale badges, and local-first run persistence with a SQLite mirror.
+The full evidence lives in [`PHASE-4.md`](PHASE-4.md#shipped-closure-2026-10-17).
 
 ## 20. Risks and open questions
 

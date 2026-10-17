@@ -12,6 +12,8 @@ docs.
   the CLI, and the project brief.
 - [Tour authoring](./authoring.md) — the authoring pipeline, models, quality
   reports, and the author CLI.
+- [Player and code browser](./player.md) — playback controls, keyboard map,
+  virtualized code pages, stale badges, and progress.
 
 ## Planned guides
 

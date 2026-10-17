@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Background,
   Controls,
@@ -12,6 +12,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import type { CompiledBeat, CompiledChapter } from '@sothspell/core';
+import { SequenceDiagram } from './SequenceDiagram.js';
 
 interface DiagramNodeData extends Record<string, unknown> {
   label: string;
@@ -19,6 +20,7 @@ interface DiagramNodeData extends Record<string, unknown> {
   focused: boolean;
   dimmed: boolean;
   anchorId?: string;
+  onOpen?: (anchorId: string) => void;
 }
 
 type DiagramFlowNode = Node<DiagramNodeData, 'sothspell'>;
@@ -30,6 +32,23 @@ function DiagramNodeView({ data }: NodeProps<DiagramFlowNode>) {
       data-kind={data.kind}
       data-focused={data.focused}
       data-dimmed={data.dimmed}
+      data-anchor-id={data.anchorId}
+      role="button"
+      tabIndex={0}
+      aria-label={`${data.label} — open code`}
+      onPointerDown={() => {
+        if (data.anchorId) {
+          data.onOpen?.(data.anchorId);
+        }
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          if (data.anchorId) {
+            data.onOpen?.(data.anchorId);
+          }
+        }
+      }}
     >
       {data.label}
       <span className="node-kind">{data.kind}</span>
@@ -48,6 +67,7 @@ export interface DiagramStageProps {
 }
 
 export function DiagramStage({ chapter, beat, onOpenAnchor }: DiagramStageProps) {
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const diagram = chapter.diagrams.find(
     (candidate) => candidate.id === beat.stage.diagramId,
   );
@@ -72,9 +92,10 @@ export function DiagramStage({ chapter, beat, onOpenAnchor }: DiagramStageProps)
       data: {
         label: node.label,
         kind: node.type,
-        focused: focusedNodes.has(node.id),
+        focused: focusedNodes.has(node.id) || hoveredNode === node.id,
         dimmed: hasNodeFocus && !focusedNodes.has(node.id),
         ...(node.anchorId === undefined ? {} : { anchorId: node.anchorId }),
+        onOpen: onOpenAnchor,
       },
       style: { width: node.width },
     }));
@@ -96,12 +117,25 @@ export function DiagramStage({ chapter, beat, onOpenAnchor }: DiagramStageProps)
     });
 
     return { nodes: flowNodes, edges: flowEdges };
-  }, [beat.stage.edgeIds, beat.stage.nodeIds, diagram]);
+  }, [beat.stage.edgeIds, beat.stage.nodeIds, diagram, hoveredNode, onOpenAnchor]);
 
   if (!diagram) {
     return (
       <div className="panel-body" style={{ display: 'grid', placeItems: 'center' }}>
         <p className="notice">This beat has no diagram. The code is the stage.</p>
+      </div>
+    );
+  }
+
+  if (diagram.kind === 'sequence') {
+    return (
+      <div className="panel-body">
+        <SequenceDiagram
+          diagram={diagram}
+          focusedNodeIds={beat.stage.nodeIds}
+          focusedEdgeIds={beat.stage.edgeIds}
+          onOpenAnchor={onOpenAnchor}
+        />
       </div>
     );
   }
@@ -115,14 +149,17 @@ export function DiagramStage({ chapter, beat, onOpenAnchor }: DiagramStageProps)
       nodesDraggable={false}
       nodesConnectable={false}
       elementsSelectable={false}
-      fitView
-      fitViewOptions={{ padding: 0.2, maxZoom: 1.4 }}
+      onInit={(instance) => {
+        void instance.fitView({ padding: 0.2, maxZoom: 1.4 });
+      }}
       onNodeClick={(_event, node) => {
         const anchorId = node.data.anchorId;
         if (typeof anchorId === 'string') {
           onOpenAnchor(anchorId);
         }
       }}
+      onNodeMouseEnter={(_event, node) => setHoveredNode(node.id)}
+      onNodeMouseLeave={() => setHoveredNode(null)}
     >
       <Background gap={18} size={1.2} />
       <Controls showInteractive={false} />

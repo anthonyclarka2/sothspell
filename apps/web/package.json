@@ -16,6 +16,7 @@
     "@sothspell/diagram": "workspace:*",
     "@sothspell/player": "workspace:*",
     "@tanstack/react-router": "1.170.45",
+    "@tanstack/react-virtual": "3.14.21",
     "@xyflow/react": "12.12.0",
     "idb": "8.0.4",
     "motion": "14.3.0",

@@ -1,15 +1,35 @@
-import { CaretLeft, CaretRight, Pause, Play } from '@phosphor-icons/react';
+import {
+  ArrowsIn,
+  ArrowsOut,
+  CaretLeft,
+  CaretRight,
+  Pause,
+  Play,
+} from '@phosphor-icons/react';
 import type { PlaybackSnapshot } from '@sothspell/player';
 import { formatDuration } from '../lib/api.js';
 
 export interface TransportProps {
   snapshot: PlaybackSnapshot;
+  theater: boolean;
   onToggle: () => void;
   onNext: () => void;
   onPrevious: () => void;
+  onSeek: (fraction: number) => void;
+  onSpeed: (speed: number) => void;
+  onToggleTheater: () => void;
 }
 
-export function Transport({ snapshot, onToggle, onNext, onPrevious }: TransportProps) {
+export function Transport({
+  snapshot,
+  theater,
+  onToggle,
+  onNext,
+  onPrevious,
+  onSeek,
+  onSpeed,
+  onToggleTheater,
+}: TransportProps) {
   const playing = snapshot.status === 'playing';
 
   return (
@@ -35,23 +55,47 @@ export function Transport({ snapshot, onToggle, onNext, onPrevious }: TransportP
         <CaretRight size={18} weight="bold" />
       </button>
 
-      <div
-        className="progress-track"
-        role="progressbar"
-        aria-label="Tour progress"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(snapshot.progress * 100)}
-      >
-        <div
-          className="progress-fill"
-          style={{ width: `${Math.round(snapshot.progress * 100)}%` }}
+      <label className="transport-scrubber">
+        <span className="visually-hidden">Seek through the tour</span>
+        <input
+          type="range"
+          min={0}
+          max={1000}
+          step={1}
+          value={Math.round(snapshot.progress * 1000)}
+          aria-valuetext={`${formatDuration(snapshot.elapsedMs)} of ${formatDuration(snapshot.totalDurationMs)}`}
+          onChange={(event) => onSeek(Number(event.target.value) / 1000)}
         />
-      </div>
+      </label>
 
       <div className="transport-meta">
-        {snapshot.beatIndex + 1}/{snapshot.beatCount} ·{' '}
-        {formatDuration(snapshot.elapsedMs)} / {formatDuration(snapshot.totalDurationMs)}
+        <span>
+          {snapshot.beatIndex + 1}/{snapshot.beatCount} ·{' '}
+          {formatDuration(snapshot.elapsedMs)} /{' '}
+          {formatDuration(snapshot.totalDurationMs)}
+        </span>
+        <label className="transport-speed">
+          <span className="visually-hidden">Playback speed</span>
+          <select
+            value={String(snapshot.speed)}
+            onChange={(event) => onSpeed(Number(event.target.value))}
+          >
+            {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
+              <option key={speed} value={speed}>
+                {speed}×
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          className="transport-theater"
+          onClick={onToggleTheater}
+          aria-label={theater ? 'Exit theater mode' : 'Enter theater mode'}
+          title={theater ? 'Exit theater mode' : 'Enter theater mode'}
+        >
+          {theater ? <ArrowsIn size={18} /> : <ArrowsOut size={18} />}
+        </button>
       </div>
     </div>
   );

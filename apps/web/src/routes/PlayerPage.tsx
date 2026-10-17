@@ -4,7 +4,16 @@ import { createPlayback, type PlaybackSnapshot } from '@sothspell/player';
 import type { CompiledBeat, CompiledTour } from '@sothspell/core';
 import { fetchTour } from '../lib/api.js';
 import { useAsync } from '../lib/use-async.js';
-import { clearRun, loadRun, saveRun, type StoredRun } from '../lib/run-store.js';
+import {
+  clearRun,
+  getOrCreateClientId,
+  loadRun,
+  loadServerRun,
+  mergeRuns,
+  saveRun,
+  saveServerRun,
+  type StoredRun,
+} from '../lib/run-store.js';
 import { ChapterRail } from '../components/ChapterRail.js';
 import { CodePane } from '../components/CodePane.js';
 import { DiagramStage } from '../components/DiagramStage.js';
@@ -45,6 +54,7 @@ function findBeat(tour: CompiledTour, beatId: string): CompiledBeat | null {
 export function PlayerPage() {
   const params = useParams({ strict: false }) as PlayerParams;
   const navigate = useNavigate();
+  const clientId = useMemo(() => getOrCreateClientId(), []);
   const tourState = useAsync(() => fetchTour(params.tourId), [params.tourId]);
 
   const playback = useMemo(
@@ -55,6 +65,8 @@ export function PlayerPage() {
   const [snapshot, setSnapshot] = useState<PlaybackSnapshot | null>(null);
   const [resume, setResume] = useState<StoredRun | null>(null);
   const [hasResumed, setHasResumed] = useState(false);
+  const [completedBeatIds, setCompletedBeatIds] = useState<string[]>([]);
+  const [theater, setTheater] = useState(false);
 
   useEffect(() => {
     if (!playback) {
@@ -62,7 +74,16 @@ export function PlayerPage() {
     }
 
     setSnapshot(playback.getSnapshot());
-    const unsubscribe = playback.subscribe((event) => setSnapshot(event.snapshot));
+    const unsubscribe = playback.subscribe((event) => {
+      if (event.type === 'beat.completed') {
+        setCompletedBeatIds((current) =>
+          current.includes(event.snapshot.beatId)
+            ? current
+            : [...current, event.snapshot.beatId],
+        );
+      }
+      setSnapshot(event.snapshot);
+    });
     const timer = window.setInterval(() => playback.tick(250), 250);
 
     return () => {
@@ -104,13 +125,15 @@ export function PlayerPage() {
 
   useEffect(() => {
     let cancelled = false;
-    loadRun(params.tourId)
-      .then((run) => {
+    Promise.all([loadRun(params.tourId), loadServerRun(params.tourId)])
+      .then(([local, server]) => {
         if (cancelled) {
           return;
         }
-        if (run) {
-          setResume(run);
+        const merged = mergeRuns(local, server);
+        if (merged) {
+          setResume(merged);
+          setCompletedBeatIds(merged.completedBeatIds);
         } else {
           setHasResumed(true);
         }
@@ -133,13 +156,71 @@ export function PlayerPage() {
       void clearRun(params.tourId);
       return;
     }
-    void saveRun({
+    const run: StoredRun = {
+      clientId,
       tourId: params.tourId,
       beatId: snapshot.beatId,
       offsetMs: playback.getSnapshot().offsetMs,
+      completedBeatIds,
+      mode: 'read',
+      speed: snapshot.speed,
       updatedAt: Date.now(),
-    }).catch(() => undefined);
-  }, [params.tourId, playback, snapshot?.beatId, snapshot?.status, hasResumed]);
+    };
+    void saveRun(run);
+    void saveServerRun(run);
+  }, [
+    clientId,
+    completedBeatIds,
+    hasResumed,
+    params.tourId,
+    playback,
+    snapshot?.beatId,
+    snapshot?.status,
+    snapshot?.speed,
+  ]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName ?? '';
+      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') {
+        return;
+      }
+      switch (event.key) {
+        case ' ':
+          event.preventDefault();
+          playback?.toggle();
+          break;
+        case 'ArrowRight':
+          if (event.shiftKey) {
+            playback?.seekOffset((playback?.getSnapshot().offsetMs ?? 0) + 5000);
+          } else {
+            playback?.next();
+          }
+          break;
+        case 'ArrowLeft':
+          if (event.shiftKey) {
+            playback?.seekOffset(
+              Math.max(0, (playback?.getSnapshot().offsetMs ?? 0) - 5000),
+            );
+          } else {
+            playback?.previous();
+          }
+          break;
+        case 't':
+        case 'T':
+          setTheater((current) => !current);
+          break;
+        case 'Escape':
+          setTheater(false);
+          break;
+        default:
+          break;
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [playback]);
 
   if (tourState.status === 'loading') {
     return (
@@ -193,6 +274,8 @@ export function PlayerPage() {
     try {
       playback.seekBeat(resume.beatId);
       playback.seekOffset(resume.offsetMs);
+      playback.setSpeed(resume.speed);
+      setCompletedBeatIds(resume.completedBeatIds);
       setHasResumed(true);
     } catch {
       void clearRun(params.tourId);
@@ -204,6 +287,7 @@ export function PlayerPage() {
   const startOver = () => {
     void clearRun(params.tourId);
     setResume(null);
+    setCompletedBeatIds([]);
     setHasResumed(true);
     const firstBeat = tour.chapters[0]?.beats[0];
     if (firstBeat) {
@@ -212,14 +296,22 @@ export function PlayerPage() {
     playback?.seekOffset(0);
   };
 
+  const seek = (fraction: number) => {
+    playback?.pause();
+    playback?.seekProgress(fraction);
+  };
+
   return (
-    <div className="player-page">
+    <div className={`player-page${theater ? ' player-page--theater' : ''}`}>
       {resume && !hasResumed ? (
         <div className="page" style={{ paddingBottom: 0 }}>
           <div className="notice resume-banner">
             <span>
               You have progress in this tour:{' '}
-              {findBeat(tour, resume.beatId)?.title ?? resume.beatId}.
+              {findBeat(tour, resume.beatId)?.title ?? resume.beatId}.{' '}
+              {resume.completedBeatIds.length > 0
+                ? `${resume.completedBeatIds.length} beats completed.`
+                : ''}
             </span>
             <span style={{ display: 'flex', gap: 8 }}>
               <button type="button" className="primary-action" onClick={resumeRun}>
@@ -238,6 +330,7 @@ export function PlayerPage() {
           chapters={tour.chapters}
           activeChapterId={chapter.id}
           activeBeatId={beat.id}
+          completedBeatIds={completedBeatIds}
           onSeekBeat={(beatId) => playback?.seekBeat(beatId)}
         />
 
@@ -266,9 +359,13 @@ export function PlayerPage() {
 
       <Transport
         snapshot={snapshot}
+        theater={theater}
         onToggle={() => playback?.toggle()}
         onNext={() => playback?.next()}
         onPrevious={() => playback?.previous()}
+        onSeek={seek}
+        onSpeed={(speed) => playback?.setSpeed(speed)}
+        onToggleTheater={() => setTheater((current) => !current)}
       />
     </div>
   );

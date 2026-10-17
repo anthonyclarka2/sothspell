@@ -21,7 +21,7 @@ test('plays the golden tour and opens code from a beat', async ({ page }) => {
 
   await page.getByRole('link', { name: 'Open code page' }).click();
   await expect(page.getByRole('heading', { name: 'Repository layout' })).toBeVisible();
-  await expect(page.locator('.code-card .shiki')).toBeVisible();
+  await expect(page.getByTestId('code-viewport')).toBeVisible();
 
   await page.getByRole('link', { name: /back to the beat/i }).click();
   await expect(
@@ -37,7 +37,62 @@ test('opens code from a diagram node', async ({ page }) => {
 
   await page.locator('.diagram-node', { hasText: 'ATProto PDS' }).click();
   await expect(page.getByRole('heading', { name: 'What Bunbun is' })).toBeVisible();
-  await expect(page.locator('.code-card .shiki')).toBeVisible();
+  await expect(page.getByTestId('code-viewport')).toBeVisible();
+});
+
+test('renders a full file with the focused line mounted', async ({ page }) => {
+  await page.goto(
+    '/p/bunbun/source/apps/api/src/main.ts?anchor=anchor_main_bootstrap&beat=beat_request_01',
+  );
+
+  await expect(page.getByRole('heading', { name: 'bootstrap()' })).toBeVisible();
+  await expect(page.getByTestId('code-viewport')).toBeVisible();
+  await expect(page.locator('.code-line[data-line="37"]')).toHaveClass(
+    /code-line--focus/,
+  );
+  await expect(page.getByText('Anchors', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(/Matches the pinned snapshot|Source changed since this tour/),
+  ).toBeVisible();
+});
+
+test('supports the keyboard-only playback journey', async ({ page }) => {
+  await page.goto('/t/tour_bunbun_golden/beat_purpose_01');
+  await expect(
+    page.getByRole('heading', { name: 'Two sources, one conversation' }),
+  ).toBeVisible();
+
+  await page.keyboard.press('Space');
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
+
+  await page.keyboard.press('ArrowRight');
+  await expect(
+    page.getByRole('heading', { name: 'Three application surfaces' }),
+  ).toBeVisible();
+
+  await page.keyboard.press('t');
+  await expect(page.locator('.chapter-rail')).toBeHidden();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.chapter-rail')).toBeVisible();
+});
+
+test('scrubs across a beat boundary', async ({ page }) => {
+  await page.goto('/t/tour_bunbun_golden/beat_purpose_01');
+  const slider = page.locator('input[type="range"]');
+  await slider.evaluate((element) => {
+    const input = element as HTMLInputElement;
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      'value',
+    )?.set;
+    setter?.call(input, '60');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+
+  await expect(
+    page.getByRole('heading', { name: 'Three application surfaces' }),
+  ).toBeVisible();
 });
 
 test('remembers a paused position across a reload', async ({ page }) => {
@@ -56,4 +111,18 @@ test('remembers a paused position across a reload', async ({ page }) => {
   await expect(
     page.getByRole('heading', { name: 'Three application surfaces' }),
   ).toBeVisible();
+});
+
+test('does not overflow at mobile and tablet widths', async ({ page }) => {
+  for (const width of [375, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/t/tour_bunbun_golden/beat_purpose_01');
+    await expect(
+      page.getByRole('heading', { name: 'Two sources, one conversation' }),
+    ).toBeVisible();
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    );
+    expect(overflow, `overflow at ${width}px`).toBeLessThanOrEqual(1);
+  }
 });

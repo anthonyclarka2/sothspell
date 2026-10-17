@@ -1,9 +1,11 @@
+import { CheckCircle } from '@phosphor-icons/react';
 import type { CompiledChapter } from '@sothspell/core';
 
 export interface ChapterRailProps {
   chapters: CompiledChapter[];
   activeChapterId: string;
   activeBeatId: string;
+  completedBeatIds: string[];
   onSeekBeat: (beatId: string) => void;
 }
 
@@ -11,8 +13,11 @@ export function ChapterRail({
   chapters,
   activeChapterId,
   activeBeatId,
+  completedBeatIds,
   onSeekBeat,
 }: ChapterRailProps) {
+  const completed = new Set(completedBeatIds);
+
   return (
     <aside className="chapter-rail" aria-label="Chapters and beats">
       <h2>Chapters</h2>
@@ -29,7 +34,16 @@ export function ChapterRail({
                     aria-current={beat.id === activeBeatId}
                     onClick={() => onSeekBeat(beat.id)}
                   >
-                    <span className="beat-dot" aria-hidden="true" />
+                    {completed.has(beat.id) ? (
+                      <CheckCircle
+                        size={12}
+                        weight="fill"
+                        className="beat-complete"
+                        aria-label="completed"
+                      />
+                    ) : (
+                      <span className="beat-dot" aria-hidden="true" />
+                    )}
                     {beat.title}
                   </button>
                 </li>

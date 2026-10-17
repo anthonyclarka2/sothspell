@@ -28,7 +28,16 @@ export {
 export {
   hashText,
   languageForPath,
+  readSourceFile,
   readSourceRange,
   resolveContainedPath,
+  type SourceFile,
   type SourceRange,
 } from './source.js';
+
+export {
+  getHighlighter,
+  highlightCodeLines,
+  type HighlightedCode,
+  type HighlightedLine,
+} from './highlight.js';

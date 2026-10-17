@@ -7,10 +7,10 @@
   codebase with synchronized narration, diagrams, and highlighted code anchors.
   The website is first; an OpenCode V2 plugin follows; other harness adapters
   are a future track.
-- **Repository status: Phase 3 implemented (2026-10-17).** The workspace,
-  schema, compiler, golden tour, API, minimal player, read-only analyzer,
-  `sothspell analyze`, and the authoring pipeline with `sothspell author` exist.
-  Narration and the OpenCode plugin are placeholders until their phases land.
+- **Repository status: Phase 4 implemented (2026-10-17).** The workspace,
+  schema, compiler, golden tour, analyzer, authoring pipeline, cinematic player,
+  virtualized code browser, and local run persistence exist. Narration and the
+  OpenCode plugin are placeholders until their phases land.
 - **Example project:** Bunbun at `/Users/ajc/Projects/codegens/bunbun`, pinned to
   commit `9fef24d`. It is **read-only**. No command may create, modify, or delete
   anything inside that tree. All snapshots, tours, audio, logs, and runs live
@@ -84,9 +84,9 @@ Do not claim completion without fresh verification output.
 
 ## Repository layout
 
-- `apps/web/` — React player and code browser (Phase 1: minimal player).
-- `apps/api/` — Hono API and static web host (Phase 1: compiled tour and anchors;
-  SQLite persistence lands with the run sync phase).
+- `apps/web/` — React player and virtualized code browser.
+- `apps/api/` — Hono API, static web host, full-file source route, and the
+  local SQLite run store.
 - `apps/cli/` — `sothspell` CLI (`analyze` and `author` now; `serve` and
   `doctor` as their phases land).
 - `packages/core/` — tour schema, compiler, source access, validation, IDs.

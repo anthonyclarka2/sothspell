@@ -218,3 +218,10 @@ export async function layoutDiagram(
     })),
   };
 }
+
+export {
+  buildSequenceModel,
+  type SequenceActor,
+  type SequenceMessage,
+  type SequenceModel,
+} from './sequence.js';

@@ -10,6 +10,13 @@ export interface SourceRange {
   contentHash: string;
 }
 
+export interface SourceFile {
+  path: string;
+  text: string;
+  contentHash: string;
+  lineCount: number;
+}
+
 const LANGUAGE_BY_EXTENSION: Record<string, string> = {
   '.ts': 'typescript',
   '.tsx': 'tsx',
@@ -88,6 +95,21 @@ export async function resolveContainedPath(
     // on the read if it truly is missing.
     return resolved;
   }
+}
+
+/** Reads a whole project file read-only. */
+export async function readSourceFile(
+  root: string,
+  relativePath: string,
+): Promise<SourceFile> {
+  const absolute = await resolveContainedPath(root, relativePath);
+  const fileText = await readFile(absolute, 'utf8');
+  return {
+    path: relativePath,
+    text: fileText,
+    contentHash: hashText(fileText),
+    lineCount: fileText.length === 0 ? 0 : fileText.split('\n').length,
+  };
 }
 
 /** Reads a 1-based inclusive line range from a project file. */

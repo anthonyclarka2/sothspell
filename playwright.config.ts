@@ -18,6 +18,11 @@ export default defineConfig({
       url: 'http://127.0.0.1:4319/api/health',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
+      env: {
+        ...process.env,
+        SOTHSPELL_PROJECT_ROOT:
+          process.env.SOTHSPELL_PROJECT_ROOT ?? '/Users/ajc/Projects/codegens/bunbun',
+      },
     },
     {
       command: 'pnpm --filter @sothspell/web dev',

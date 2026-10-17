@@ -32,6 +32,7 @@ export interface PlaybackSnapshot {
   elapsedMs: number;
   totalDurationMs: number;
   progress: number;
+  speed: number;
 }
 
 export interface PlaybackEvent {
@@ -54,6 +55,10 @@ export interface Playback {
   previous(): void;
   seekBeat(beatId: string): void;
   seekOffset(offsetMs: number): void;
+  /** Seeks to a fraction of the whole tour (0–1). */
+  seekProgress(fraction: number): void;
+  /** Playback speed multiplier; 1 is normal. */
+  setSpeed(speed: number): void;
   /** Advances the clock. The UI owns the real timer; tests call this directly. */
   tick(deltaMs: number): void;
   subscribe(listener: PlaybackListener): () => void;
@@ -93,6 +98,7 @@ export function createPlayback(tour: PlaybackTour): Playback {
   let status: PlaybackStatus = 'idle';
   let index = 0;
   let offsetMs = 0;
+  let speed = 1;
 
   const listeners = new Set<PlaybackListener>();
 
@@ -133,6 +139,7 @@ export function createPlayback(tour: PlaybackTour): Playback {
       elapsedMs: elapsedMs(),
       totalDurationMs,
       progress: Math.min(1, elapsedMs() / totalDurationMs),
+      speed,
     };
   };
 
@@ -226,12 +233,30 @@ export function createPlayback(tour: PlaybackTour): Playback {
       emit('status.changed');
     },
 
+    seekProgress(fraction: number): void {
+      const target = Math.min(Math.max(fraction, 0), 1) * totalDurationMs;
+      let remaining = target;
+      let nextIndex = 0;
+      while (nextIndex < flat.length - 1 && remaining >= durationOf(flat[nextIndex])) {
+        remaining -= durationOf(flat[nextIndex]);
+        nextIndex += 1;
+      }
+      index = nextIndex;
+      offsetMs = Math.min(remaining, durationOf(current()));
+      emit('beat.started');
+    },
+
+    setSpeed(nextSpeed: number): void {
+      speed = Math.min(Math.max(nextSpeed, 0.5), 3);
+      emit('status.changed');
+    },
+
     tick(deltaMs: number): void {
       if (status !== 'playing' || deltaMs <= 0) {
         return;
       }
 
-      offsetMs += deltaMs;
+      offsetMs += deltaMs * speed;
 
       while (offsetMs >= durationOf(current())) {
         const overflow = offsetMs - durationOf(current());

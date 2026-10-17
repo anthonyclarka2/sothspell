@@ -1,4 +1,3 @@
-import { createHighlighter, type Highlighter } from 'shiki';
 import { layoutDiagram, type PositionedDiagram } from '@sothspell/diagram';
 import {
   parseSothspell,
@@ -7,6 +6,7 @@ import {
   type SothspellDocument,
 } from './schema.js';
 import { hashText, languageForPath, readSourceRange } from './source.js';
+import { highlightCodeLines } from './highlight.js';
 
 export interface CompiledAnchor {
   id: string;
@@ -62,33 +62,6 @@ export interface CompileOptions {
   sourceRoot?: string;
 }
 
-let highlighterPromise: Promise<Highlighter> | undefined;
-
-function getHighlighter(): Promise<Highlighter> {
-  highlighterPromise ??= createHighlighter({
-    themes: ['github-light-high-contrast', 'github-dark-high-contrast'],
-    langs: [
-      'typescript',
-      'tsx',
-      'javascript',
-      'jsx',
-      'svelte',
-      'json',
-      'jsonc',
-      'markdown',
-      'mdx',
-      'prisma',
-      'css',
-      'html',
-      'bash',
-      'sql',
-      'yaml',
-      'plaintext',
-    ],
-  });
-  return highlighterPromise;
-}
-
 function estimateDurationMs(narration: string): number {
   const words = narration.trim().split(/\s+/u).filter(Boolean).length;
   const seconds = words / 2.5;
@@ -124,27 +97,11 @@ async function resolveAnchor(
   }
 
   const language = anchor.language ?? languageForPath(anchor.path);
-  const highlighter = await getHighlighter();
-  const html = highlighter.codeToHtml(excerpt, {
-    lang: language as Parameters<Highlighter['codeToHtml']>[1]['lang'],
-    themes: {
-      light: 'github-light-high-contrast',
-      dark: 'github-dark-high-contrast',
-    },
-    defaultColor: false,
-    transformers: [
-      {
-        pre(node) {
-          node.properties['data-start-line'] = String(anchor.lines.start);
-          node.properties['data-language'] = language;
-        },
-        line(node, lineNumber) {
-          node.properties['data-line'] = String(anchor.lines.start + lineNumber - 1);
-          this.addClassToHast(node, 'sothspell-line');
-        },
-      },
-    ],
+  const highlighted = await highlightCodeLines(excerpt, language, {
+    startLine: 1,
+    endLine: excerpt.split('\n').length,
   });
+  const html = highlighted.html;
 
   return {
     id: anchor.id,

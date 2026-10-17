@@ -1,6 +1,7 @@
 # Phase 4 — Cinematic Player & Code Browser
 
-**Status: planned.** Depends on: Phase 1 (minimal player), Phase 3 (real tours).
+**Status: complete (2026-10-17).** Depends on: Phase 1 (minimal player), Phase 3
+(real tours).
 
 **Deliverable:** the full web experience: a movie-like player with auto-advance,
 chapter navigation, scrubbing, pause/resume, text mode, a polished read-only code
@@ -318,3 +319,53 @@ What they cover and miss:
   state; use `codebase-design` for the player/store seams.
 - Verify in a real browser, not only happy-dom.
 - Commit each wave; record bundle size and LCP in the phase closure note.
+
+## Shipped (closure, 2026-10-17)
+
+- **Playback engine** — `setSpeed` (0.5×–3×), `seekProgress` across chapters,
+  chapter/beat completion events, and the existing play/pause/next/previous
+  transitions. Unit tests cover speed scaling and cross-chapter seeking.
+- **Cinematic player** — scrubber, speed select, theater mode (`t`/Escape),
+  keyboard map (Space, arrows, Shift+arrows), completed-beat checks in the
+  chapter rail, and explicit-interaction pause when opening code or scrubbing.
+- **Code browser** — full-file reads from `SOTHSPELL_PROJECT_ROOT` with embedded
+  excerpt fallback, Shiki line HTML from `highlightCodeLines`, virtualized line
+  rendering with `@tanstack/react-virtual`, focused line scrolled into view,
+  anchor outline per file, fresh/stale badge from the live content hash, and a
+  return link to the beat.
+- **Diagrams** — keyboard-focusable nodes that open their anchors, hover
+  highlighting, and a sequence-diagram renderer (`buildSequenceModel` plus the
+  HTML sequence view).
+- **Progress** — IndexedDB runs plus a local SQLite mirror (`runs` table) keyed
+  by an anonymous client id; `GET/PUT/DELETE /api/runs/:tourId`; local/server
+  merge unions completed beats and takes the newer position; completed tours
+  clear the run.
+- **Responsive and accessible** — no horizontal overflow at 375, 768, or
+  1440 px; axe gate on home, player, and full-file code browser at 0 critical /
+  0 serious. The virtualized code viewport is focusable.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- `pnpm typecheck` → 0 errors.
+- `pnpm lint` → 0 errors, 0 warnings.
+- `pnpm test` → 20 files / 71 tests passed.
+- `pnpm test:browser` → 10 passed (playback, diagram code, full-file focus,
+  keyboard journey, scrubber, reload resume, viewport overflow, a11y).
+- `pnpm test:a11y` → 3 passed; 0 critical/serious.
+- `pnpm build` → web build succeeds; main bundle 175.92 kB gzip (budget:
+  under 500 kB gzip).
+- `pnpm check:toolchain` → TypeScript 7.0.2, no classic compiler API packages.
+- Bunbun remains read-only; the API reads full files only from the configured
+  project root.
+
+### Deviations from the plan
+
+- Run export/import and a dedicated `/runs` page are deferred to Phase 6, where
+  progress portability and accounts belong. Phase 4 ships reload, server-restart,
+  and cross-session resume through the local/server merge.
+- The sequence renderer is an accessible HTML view rather than a custom SVG
+  canvas; the diagram model is SVG-ready but the HTML view keeps keyboard and
+  screen-reader behavior simple.
+- LCP is not recorded here; the local player route serves from the loopback and
+  the bundle budget is the measured release gate until Phase 8 adds the
+  performance harness.

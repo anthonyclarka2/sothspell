@@ -110,4 +110,28 @@ describe('playback engine', () => {
 
     expect(playback.getSnapshot().progress).toBeCloseTo(5_000 / 23_000, 4);
   });
+
+  it('scales the clock by the playback speed', () => {
+    const playback = createPlayback(tour);
+
+    playback.setSpeed(2);
+    playback.play();
+    playback.tick(1_000);
+
+    const snapshot = playback.getSnapshot();
+    expect(snapshot.speed).toBe(2);
+    expect(snapshot.offsetMs).toBe(2_000);
+    expect(snapshot.elapsedMs).toBe(2_000);
+  });
+
+  it('seeks to a global progress fraction across chapters', () => {
+    const playback = createPlayback(tour);
+
+    playback.seekProgress(0.5);
+    const snapshot = playback.getSnapshot();
+
+    expect(snapshot.elapsedMs).toBeGreaterThanOrEqual(11_500);
+    expect(snapshot.beatId).toBe('beat_two');
+    expect(snapshot.offsetMs).toBe(1_500);
+  });
 });

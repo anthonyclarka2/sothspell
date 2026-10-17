@@ -3,9 +3,25 @@ import type { CompiledTour } from '@sothspell/core';
 export const GOLDEN_TOUR_ID = 'tour_bunbun_golden';
 export const GOLDEN_PROJECT_ID = 'bunbun';
 
+export interface AnchorLine {
+  number: number;
+  html: string;
+  focus: boolean;
+}
+
+export interface AnchorOutlineEntry {
+  anchorId: string;
+  label: string;
+  startLine: number;
+  endLine: number;
+  beatId: string;
+  beatTitle: string;
+}
+
 export interface AnchorResponse {
   projectId: string;
   tourId: string;
+  anchorId: string;
   path: string;
   symbol: string | null;
   label: string | null;
@@ -13,10 +29,17 @@ export interface AnchorResponse {
   endLine: number;
   language: string;
   contentHash: string;
+  liveContentHash: string;
+  stale: boolean;
+  totalLines: number;
   excerpt: string;
   html: string;
+  lines: AnchorLine[];
   beatId: string;
+  beatTitle: string;
   chapterId: string;
+  chapterTitle: string;
+  outline: AnchorOutlineEntry[];
 }
 
 async function readJson<T>(response: Response): Promise<T> {

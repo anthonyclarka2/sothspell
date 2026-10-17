@@ -13,15 +13,13 @@ resume later.
 
 ## Status
 
-**Phase 3 implemented (2026-10-17).** The repository contains:
+**Phase 4 implemented (2026-10-17).** The repository contains:
 
 - a pnpm workspace on TypeScript 7.0.2, React 19, Vite 8, and Hono 4;
 - the versioned Sóþspell schema, a generated JSON Schema, and a compiler that
   resolves anchors, hashes excerpts, highlights code with Shiki, and lays out
   diagrams with ELK;
 - a checked-in golden Bunbun tour pinned to commit `9fef24d`;
-- a local API and a minimal web player with chapter navigation, auto-advance,
-  pause/resume, code pages, diagram-to-code links, and IndexedDB progress;
 - a read-only repository analyzer with `oxc-parser`: deterministic snapshots,
   symbol extraction, import/reference graphs, NestJS/Prisma signals, a project
   brief, a per-file cache, and the `sothspell analyze` CLI;
@@ -29,12 +27,16 @@ resume later.
   fixture model, context packs, curriculum planning, chapter/diagram generation,
   validation, bounded repair, caching, quality reports, and the
   `sothspell author` CLI;
+- the cinematic player: auto-advance, pause/resume, scrubber, speed, theater
+  mode, completed-beat tracking, keyboard control, a virtualized full-file code
+  browser with stale badges and anchor outlines, and local-first run progress
+  mirrored to a local SQLite table;
 - unit, browser, and accessibility tests, including the Bunbun acceptance pass.
 
-The narration phase (Phase 5), Q&A (Phase 6), the OpenCode plugin (Phase 7), and
-the release hardening (Phase 8) are planned but not built yet. A reviewed
-real-model Bunbun tour is owner-gated on provider credentials; the fixture model
-verifies the pipeline offline.
+Narration (Phase 5), Q&A (Phase 6), the OpenCode plugin (Phase 7), and release
+hardening (Phase 8) are planned but not built yet. A reviewed real-model Bunbun
+tour is owner-gated on provider credentials; the fixture model verifies the
+pipeline offline.
 
 ## Quick start
 
@@ -43,7 +45,9 @@ pnpm install
 pnpm dev            # API on 127.0.0.1:4319, web on 127.0.0.1:5173
 ```
 
-Open <http://127.0.0.1:5173> and play the golden tour.
+Open <http://127.0.0.1:5173> and play the golden tour. The API reads full files
+from `SOTHSPELL_PROJECT_ROOT` (default: the pinned Bunbun checkout) for the code
+browser.
 
 Analyze a local repository read-only and author a tour:
 
@@ -106,6 +110,8 @@ stores only small, attributed excerpts.
   CLI, and project brief.
 - [Tour authoring](docs/authoring.md) — model port, context packs, curriculum,
   validation, repair, quality reports, and the author CLI.
+- [Player and code browser](docs/player.md) — playback controls, keyboard map,
+  virtualized code pages, stale badges, and progress.
 - [Authoring skill](skills/sothspell-author/SKILL.md) — the checklist an agent
   uses to author or review a tour.
 - [Domain context](CONTEXT.md) — the project glossary.
