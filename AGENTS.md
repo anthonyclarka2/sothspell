@@ -110,6 +110,8 @@ verification. The narration contract lives in
 | 12    | `phase-12-a-accounts`     | `packages/accounts/**`, auth/account/sync API and UI, run user scope                    | `ses_eb608b85effezfutU5v30MDhau` |
 | 13    | `phase-13-a-analyzers`    | `packages/analyzer/**`, Python/Go/Rust/Java adapters and fixtures                       | `ses_eb608b85effdbBCIsoHfBwtSUY` |
 | 16    | `phase-16-a-embed`        | `packages/embed/**`, `examples/embed-docs/**`, `sothspell export`                       | `ses_eb608b85dffeAIjNC7nHDCGSde` |
+| 14    | `phase-14-a-translation`  | Schema locale/translations, translation pipeline, locale UI, per-locale narration       | `ses_eb5ed20a8ffeBEXMbEr0EbcVqY` |
+| 15    | `phase-15-a-review`       | `packages/review/**`, review API/UI/CLI, regeneration and approval gating               | `ses_eb5ed20a8ffdR416C2wSJRn0Ol` |
 
 Phase 14 (translation) follows Phase 9 and Phase 10. Phase 15 (review UI)
 follows Phase 9. Main owns integration, `plans/**`, `docs/**`, `CONTEXT.md`,

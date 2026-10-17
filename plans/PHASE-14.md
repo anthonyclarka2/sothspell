@@ -1,7 +1,7 @@
 # Phase 14 — Multi-language Narration and Translation
 
-**Status: planned.** Depends on: Phase 9 (voice profiles), Phase 10 (harness
-surfaces), and the v1 narration package.
+**Status: in progress (2026-10-17).** Depends on: Phase 9 (voice profiles), Phase 10
+(harness surfaces), and the v1 narration package.
 
 ## Goal
 

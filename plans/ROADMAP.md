@@ -71,8 +71,8 @@ and the tour format, not on accounts.
 | 11    | in progress (2026-10-17) | GitHub URL import, shallow clone sandbox, import UI               |
 | 12    | in progress (2026-10-17) | GitHub OAuth accounts, run sync, account export/delete            |
 | 13    | in progress (2026-10-17) | Python/Go/Rust/Java analyzer adapters and fixtures                |
-| 14    | planned                  | Locale-aware tours, translation pipeline, per-locale narration    |
-| 15    | planned                  | Review queue, beat comments, edit/regenerate, approval            |
+| 14    | in progress (2026-10-17) | Locale-aware tours, translation pipeline, per-locale narration    |
+| 15    | in progress (2026-10-17) | Review queue, beat comments, edit/regenerate, approval            |
 | 16    | in progress (2026-10-17) | Standalone embed bundle, export command, docs integration         |
 
 ## 1. Product direction

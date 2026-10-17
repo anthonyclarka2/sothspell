@@ -1,6 +1,6 @@
 # Phase 15 — Human Review UI
 
-**Status: planned.** Depends on: Phase 9 (profiles) and the v1 authoring and
+**Status: in progress (2026-10-17).** Depends on: Phase 9 (profiles) and the v1 authoring and
 quality reports. Can run in parallel with Phases 10–12 after Phase 9.
 
 ## Goal
