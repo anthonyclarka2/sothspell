@@ -44,6 +44,15 @@ export {
 } from './context.js';
 
 export { AuthoringCache } from './cache.js';
+export {
+  answerQuestion,
+  AskAnswerSchema,
+  mergeUsage,
+  type AskAnswer,
+  type AskHistoryEntry,
+  type AskQuestionInput,
+  type AskQuestionResult,
+} from './ask.js';
 export { assembleDocument, totalDurationMs } from './assemble.js';
 export { loadPrompt, renderPrompt, PROMPT_VERSION } from './prompts.js';
 export { validateChapterDraft, validatePlan } from './validate.js';
