@@ -256,6 +256,9 @@ importers:
       '@sothspell/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@sothspell/narration':
+        specifier: workspace:*
+        version: link:../../packages/narration
       better-sqlite3:
         specifier: 13.0.3
         version: 13.0.3

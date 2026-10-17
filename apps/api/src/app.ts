@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { Hono } from 'hono';
+import type { NarrationAssetStore } from '@sothspell/narration';
 import {
   compileSothspell,
   highlightCodeLines,
@@ -12,6 +13,13 @@ import {
   type CompiledAnchor,
   type CompiledTour,
 } from '@sothspell/core';
+import { createDeferredNarrationAssetStore, registerAudioRoutes } from './audio.js';
+import {
+  NarrationBodySchema,
+  NarrationUnavailableError,
+  createNarrationService,
+  type NarrationService,
+} from './narration.js';
 import { createRunStore, RunBodySchema, type RunRecord } from './runs.js';
 
 export interface AppOptions {
@@ -21,6 +29,16 @@ export interface AppOptions {
   projectRoot?: string | null;
   /** SQLite path; `:memory:` is used by tests. */
   databasePath?: string;
+  /** Narration cache root; defaults to `$SOTHSPELL_HOME/audio`. */
+  narrationAssetRoot?: string;
+  /** Asset store override for tests; avoids the file-backed store. */
+  narrationAssetStore?: NarrationAssetStore;
+  elevenLabsApiKey?: string;
+  elevenLabsVoiceId?: string;
+  elevenLabsModelId?: string;
+  fetchImpl?: typeof fetch;
+  /** Full service override for tests. */
+  narrationService?: NarrationService;
 }
 
 const DEFAULT_TOUR_PATH = new URL(
@@ -34,9 +52,17 @@ const GOLDEN_PROJECT_ID = 'bunbun';
 
 const compiledCache = new Map<string, Promise<CompiledTour>>();
 
+function sothspellHome(): string {
+  return process.env.SOTHSPELL_HOME ?? path.join(os.homedir(), '.sothspell');
+}
+
 function defaultDatabasePath(): string {
-  const home = process.env.SOTHSPELL_HOME ?? path.join(os.homedir(), '.sothspell');
-  return path.join(home, 'sothspell.db');
+  return path.join(sothspellHome(), 'sothspell.db');
+}
+
+/** Generated narration audio lives beside the run database, not in projects. */
+export function defaultNarrationAssetRoot(): string {
+  return path.join(sothspellHome(), 'audio');
 }
 
 function loadCompiledTour(tourJsonPath: string): Promise<CompiledTour> {
@@ -191,14 +217,31 @@ async function sourcePayload(input: {
 
 /**
  * The HTTP boundary for the local player. It returns compiled tours and code
- * anchors; full files are read only from the configured project root, and
- * progress is stored in a local anonymous run table.
+ * anchors; full files are read only from the configured project root, progress
+ * is stored in a local anonymous run table, and cloud narration is generated on
+ * request and cached under SOTHSPELL_HOME.
  */
 export function createApp(options: AppOptions = {}): Hono {
   const tourJsonPath = options.tourJsonPath ?? DEFAULT_TOUR_PATH.pathname;
   const projectRoot = options.projectRoot ?? process.env.SOTHSPELL_PROJECT_ROOT ?? null;
   const runStore = createRunStore(options.databasePath ?? defaultDatabasePath());
+  const assetStore =
+    options.narrationAssetStore ??
+    createDeferredNarrationAssetStore(
+      options.narrationAssetRoot ?? defaultNarrationAssetRoot(),
+    );
+  const narrationService =
+    options.narrationService ??
+    createNarrationService({
+      assetStore,
+      apiKey: options.elevenLabsApiKey ?? process.env.ELEVENLABS_API_KEY,
+      voiceId: options.elevenLabsVoiceId ?? process.env.ELEVENLABS_VOICE_ID,
+      modelId: options.elevenLabsModelId ?? process.env.ELEVENLABS_MODEL_ID,
+      fetchImpl: options.fetchImpl,
+    });
   const app = new Hono();
+
+  registerAudioRoutes(app, { assetStore });
 
   app.get('/api/health', (context) =>
     context.json({
@@ -291,6 +334,27 @@ export function createApp(options: AppOptions = {}): Hono {
     }
     runStore.remove(clientId, context.req.param('tourId'));
     return context.json({ ok: true });
+  });
+
+  app.post('/api/narration', async (context) => {
+    const body = await context.req.json().catch(() => null);
+    const parsed = NarrationBodySchema.safeParse(body);
+    if (!parsed.success) {
+      return context.json(
+        { error: 'invalid narration payload', issues: parsed.error.issues },
+        400,
+      );
+    }
+
+    try {
+      return context.json(await narrationService.synthesize(parsed.data));
+    } catch (error) {
+      // Cloud narration is optional; the player falls back to browser speech.
+      if (error instanceof NarrationUnavailableError) {
+        return context.json({ error: error.message }, 503);
+      }
+      throw error;
+    }
   });
 
   app.notFound((context) =>

@@ -1,8 +1,10 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { createApp } from './app.js';
+import { createApp, defaultNarrationAssetRoot } from './app.js';
+import { createNarrationService } from './narration.js';
+import { createMemoryAssetStore, testAlignment } from './test-support.js';
 
 const roots: string[] = [];
 
@@ -175,5 +177,125 @@ describe('API', () => {
     });
 
     expect(response.status).toBe(400);
+  });
+});
+
+function fakeNarration() {
+  const assetStore = createMemoryAssetStore();
+  const state = { providerCalls: 0 };
+  const service = createNarrationService({
+    assetStore,
+    apiKey: 'test-key',
+    voiceId: 'voice-1',
+    synthesize: async () => {
+      state.providerCalls += 1;
+      return {
+        audio: Buffer.from('app-mp3'),
+        mimeType: 'audio/mpeg',
+        durationMs: 500,
+        alignment: testAlignment,
+      };
+    },
+    normalizeAlignment: (text) => ({
+      sentences: [{ text, startMs: 0, endMs: 500, charStart: 0, charEnd: text.length }],
+      words: [],
+    }),
+  });
+  return { assetStore, service, state };
+}
+
+describe('narration API', () => {
+  it('synthesizes, caches, and serves narration audio through the app', async () => {
+    const { assetStore, service, state } = fakeNarration();
+    const app = createApp({
+      databasePath: ':memory:',
+      narrationAssetStore: assetStore,
+      narrationService: service,
+    });
+    const payload = {
+      beatId: 'beat_purpose_01',
+      text: 'Bunbun keeps discussion records.',
+    };
+
+    const first = await app.request('/api/narration', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    expect(first.status).toBe(200);
+    const firstBody = (await first.json()) as {
+      cached: boolean;
+      segment: { beatId: string; provider: string; audio: { url: string } };
+    };
+    expect(firstBody.cached).toBe(false);
+    expect(firstBody.segment).toMatchObject({
+      beatId: 'beat_purpose_01',
+      provider: 'elevenlabs',
+    });
+
+    const audio = await app.request(firstBody.segment.audio.url);
+    expect(audio.status).toBe(200);
+    expect(Buffer.from(await audio.arrayBuffer()).toString()).toBe('app-mp3');
+
+    const second = await app.request('/api/narration', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    expect(second.status).toBe(200);
+    await expect(second.json()).resolves.toMatchObject({ cached: true });
+    expect(state.providerCalls).toBe(1);
+  });
+
+  it('returns 503 when cloud narration is not configured', async () => {
+    const service = createNarrationService({
+      assetStore: createMemoryAssetStore(),
+      voiceId: 'voice-1',
+      synthesize: async () => {
+        throw new Error('the provider must not be called without a key');
+      },
+      normalizeAlignment: () => ({ sentences: [], words: [] }),
+    });
+    const app = createApp({ databasePath: ':memory:', narrationService: service });
+
+    const response = await app.request('/api/narration', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ beatId: 'beat_1', text: 'Hello there.' }),
+    });
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toMatchObject({
+      error: expect.stringContaining('API key'),
+    });
+  });
+
+  it('rejects an invalid narration payload', async () => {
+    const response = await appFor().request('/api/narration', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ beatId: 'beat_1', text: '' }),
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('defaults the narration asset root under SOTHSPELL_HOME', () => {
+    const previous = process.env.SOTHSPELL_HOME;
+    try {
+      process.env.SOTHSPELL_HOME = '/sothspell-test-home';
+      expect(defaultNarrationAssetRoot()).toBe('/sothspell-test-home/audio');
+
+      delete process.env.SOTHSPELL_HOME;
+      expect(defaultNarrationAssetRoot()).toBe(
+        path.join(homedir(), '.sothspell', 'audio'),
+      );
+    } finally {
+      if (previous === undefined) {
+        delete process.env.SOTHSPELL_HOME;
+      } else {
+        process.env.SOTHSPELL_HOME = previous;
+      }
+    }
   });
 });
