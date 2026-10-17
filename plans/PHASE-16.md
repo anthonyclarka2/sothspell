@@ -1,7 +1,7 @@
 # Phase 16 — Embeddable Player
 
-**Status: in progress (2026-10-17).** Depends on: the v1 player and tour format, Phase 15
-(approved tours). Can run in parallel with later phases.
+**Status: complete (2026-10-17).** Depends on: the v1 player and tour format; shipped in
+parallel with Phases 14–15.
 
 ## Goal
 
@@ -142,3 +142,42 @@ Sóþspell server, no provider keys, and no repository access.
   minimal and documentation-friendly.
 - Keep the embed free of Node-only imports; verify with a browser build.
 - Record the manifest and size budget in `docs/embed.md` and the phase closure.
+
+## Shipped (closure, 2026-10-17)
+
+- **`packages/embed`** — a standalone Vite library build with a custom element
+  (`<sothspell-tour>`) and iframe fallback, a host API, a `postMessage`
+  protocol, local progress with an opt-out, and shadow-root styles. The bundle
+  excludes the API client, SQLite, Shiki, ELK, and React Flow; it reuses
+  `packages/player` and the narration adapters.
+- **Export pipeline** — `sothspell export <tour> --embed --out <dir>` compiles
+  the tour, embeds excerpts, copies assets, and writes
+  `export-manifest.json` plus a README with the snippet and shipped-file list.
+  Validation rejects missing anchors, secrets, absolute paths, and oversized
+  excerpts.
+- **Docs fixture** — `examples/embed-docs/` embeds the golden Bunbun tour with
+  both host modes, a hostile stylesheet, and an opt-out page.
+- **Docs** — `docs/embed.md`.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- Track: `pnpm exec vitest run packages/embed` 6 files / 50 tests;
+  `pnpm test:browser:embed` 20 passed (play, pause, seek, progress, teardown,
+  no network, opt-out, iframe relay, axe 0 critical/serious on desktop and
+  mobile).
+- After merge with Phases 9–13: `pnpm test` 83 files / 674 tests;
+  `CI=1 pnpm test:browser` 38 passed; typecheck, lint, build, and the toolchain
+  guard clean.
+- Bundle: `player.js` 372.4 KiB minified / 90.1 KiB gzip within the 420 KiB
+  budget; `player.css` 0.5 KiB.
+- Golden export: 20 anchors, 27,392 excerpt bytes.
+- Bunbun remains read-only.
+
+### Follow-ups
+
+- The locale overlay is reconciled with the Phase 14 schema; until then the
+  embed shows the tour's own locale.
+- The embed has its own UI components rather than `apps/web` components, which
+  import the API client and router; playback logic is shared through
+  `packages/player`.
+- A published CDN/registry step is future work; the export is local.

@@ -1,7 +1,7 @@
 # Phase 13 — Language Analyzers
 
-**Status: in progress (2026-10-17).** Depends on: the v1 analyzer and Phase 11 (imported
-repositories). Can run in parallel with Phase 12 after Phase 9.
+**Status: complete (2026-10-17).** Depends on: the v1 analyzer and Phase 11 (imported
+repositories); shipped in parallel with Phases 14–16.
 
 ## Goal
 
@@ -139,3 +139,44 @@ language acceptance uses four fixture repositories:
   network or run project tools.
 - Record language decisions in `docs/analysis.md` and `CONTEXT.md`.
 - One adapter per wave; do not merge two new languages in one commit.
+
+## Shipped (closure, 2026-10-17)
+
+- **Port** — `LanguageAnalyzer` with detection claims, parse, import resolution,
+  entry points, manifests, docs, lazy grammar preparation, and risks. The
+  TypeScript/JavaScript adapter wraps the v1 `oxc-parser` path with no behavior
+  change.
+- **Adapters** — Python, Go, Rust, and Java over prebuilt WASM tree-sitter
+  grammars, loaded lazily per detected language; no language runtime and no
+  project execution.
+- **Manifests** — `pyproject.toml`/`requirements.txt`, `go.mod`, `Cargo.toml`,
+  `pom.xml`, `build.gradle(.kts)`; raw manifests stay anchorable.
+- **Snapshots and briefs** — per-file `languages` with `id` and one `primary`,
+  `manifests`, and `ProjectBrief.languageBriefs` with build systems, entry
+  points, module layout, notable symbols, and per-language limits.
+- **Fixtures** — tiny MIT-licensed Python, Go, Rust, and Java fixtures with
+  known symbol graphs.
+- **Integration on main** — `.py/.pyi/.go/.rs/.java` map to Shiki languages and
+  the four grammars are preloaded; the web bundle grows from 178.6 kB to
+  188.3 kB gzip.
+- **Docs** — the language-support matrix in `docs/analysis.md`.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- Track: `pnpm exec vitest run packages/analyzer` 14 files / 97 tests; full
+  `pnpm test` 44 files / 286 tests; `pnpm build` clean; Bunbun unchanged.
+- After merge with Phases 9–12: `pnpm test` 76 files / 617 tests; typecheck,
+  lint, build, and the toolchain guard clean.
+- After the Phase 16 merge: `pnpm test` 83 files / 674 tests, and the merged
+  browser/a11y suite passes.
+- New dependencies: `web-tree-sitter` 0.25.10, `tree-sitter-wasms` 0.1.13,
+  `smol-toml` 1.9.1 (pinned, no install scripts).
+
+### Follow-ups
+
+- Per-language precision limits are recorded in the brief; a dropped symbol
+  falls back to the line hint and the content hash still verifies.
+- Ruby, C#, C++, PHP, Kotlin, and Scala remain future adapters behind the same
+  port.
+- `ANALYZER_VERSION` 0.3.0 invalidates the per-file cache; old saved snapshots
+  still load but have no language briefs.

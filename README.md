@@ -142,6 +142,8 @@ stores only small, attributed excerpts.
   API/UI/CLI.
 - [Accounts and sync](docs/accounts.md) — GitHub OAuth, sessions, sync merge
   rules, export, and delete.
+- [Embeddable player](docs/embed.md) — export, the host API, progress, CSP, and
+  the docs fixture.
 - [Self-hosting](docs/self-hosting.md) — install, serve, storage, and upgrades.
 - [Privacy](docs/privacy.md) — what stays local and what cloud choices send.
 - [Accessibility](docs/accessibility.md) — the axe gate and keyboard map.

@@ -82,6 +82,34 @@ The ID is the anchor target for a tour. The resolver prefers a symbol's range,
 falls back to the anchor's line hint when the excerpt hash requires it, and
 verifies the content hash before a tour can cite the code.
 
+## Language support
+
+Language support is a `LanguageAnalyzer` port; the TypeScript/JavaScript
+adapter wraps the original `oxc-parser` path, and Python, Go, Rust, and Java use
+prebuilt WASM tree-sitter grammars loaded lazily per detected language.
+
+| Language                | Parser       | Symbols                                                | Imports                                                                                                       | Manifest                             | Entry points                               |
+| ----------------------- | ------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------ |
+| TypeScript / JavaScript | `oxc-parser` | full                                                   | file edges                                                                                                    | `package.json`                       | scripts, app entry files                   |
+| Python                  | tree-sitter  | functions, classes, methods, decorators                | absolute imports resolve against root/`src`/`lib` or become external                                          | `pyproject.toml`, `requirements.txt` | `__main__.py`, `if __name__ == "__main__"` |
+| Go                      | tree-sitter  | packages, structs, interfaces, funcs, methods          | module paths are external nodes                                                                               | `go.mod`                             | `package main`, `func main`                |
+| Rust                    | tree-sitter  | modules, structs, enums, traits, impl methods          | `mod`/`crate::`/`self::`/`super::` resolve; crates are external                                               | `Cargo.toml`                         | `fn main`                                  |
+| Java                    | tree-sitter  | packages, classes, interfaces, enums, records, methods | package-qualified imports resolve under `src/main/java`, `src/test/java`, `src`; wildcard/static are external | `pom.xml`, `build.gradle(.kts)`      | `public static void main`                  |
+
+Notes:
+
+- No language runtime is required and no project code runs.
+- A snapshot records `languages` (per-file languages with an `id` and one
+  `primary`) and `manifests`; the brief adds a `languageBriefs` section with
+  build systems, entry points, module layout, notable symbols, and per-language
+  limits.
+- Parsing is best-effort: a dropped symbol falls back to the line hint, and the
+  content hash still verifies the anchor.
+- Code pages highlight `.py`, `.pyi`, `.go`, `.rs`, and `.java` through Shiki;
+  the four grammars add about 9.7 kB gzip to the web bundle.
+- `ANALYZER_VERSION` bumped to `0.3.0`, which invalidates the per-file cache and
+  changes snapshot ids.
+
 ## Project brief
 
 `buildProjectBrief(snapshot)` is deterministic and model-ready. It includes the

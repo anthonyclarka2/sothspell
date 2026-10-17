@@ -32,6 +32,8 @@ docs.
   API/UI/CLI.
 - [Accounts and sync](./accounts.md) — GitHub OAuth, sessions, merge rules,
   export, and delete.
+- [Embeddable player](./embed.md) — export, the host API, progress, CSP, and
+  the docs fixture.
 - [Self-hosting](./self-hosting.md) — install, serve, environment, storage, and
   upgrades.
 - [Privacy](./privacy.md) — what stays local and what cloud choices send.
