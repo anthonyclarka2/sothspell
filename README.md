@@ -13,9 +13,41 @@ resume later.
 
 ## Status
 
-**Planning.** This repository currently contains the roadmap, phase plans, domain
-glossary, and agent instructions. No application code has been scaffolded yet.
-The first implementation phase starts at [`plans/PHASE-1.md`](plans/PHASE-1.md).
+**Phase 1 implemented (2026-10-17).** The repository contains:
+
+- a pnpm workspace on TypeScript 7.0.2, React 19, Vite 8, and Hono 4;
+- the versioned Sóþspell schema, a generated JSON Schema, and a compiler that
+  resolves anchors, hashes excerpts, highlights code with Shiki, and lays out
+  diagrams with ELK;
+- a checked-in golden Bunbun tour pinned to commit `9fef24d`;
+- a local API and a minimal web player with chapter navigation, auto-advance,
+  pause/resume, code pages, diagram-to-code links, and IndexedDB progress;
+- unit, browser, and accessibility tests.
+
+The LLM authoring pipeline (Phase 3), narration (Phase 5), Q&A (Phase 6), the
+OpenCode plugin (Phase 7), and the release hardening (Phase 8) are planned but
+not built yet.
+
+## Quick start
+
+```bash
+pnpm install
+pnpm dev            # API on 127.0.0.1:4319, web on 127.0.0.1:5173
+```
+
+Open <http://127.0.0.1:5173> and play the golden tour.
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm test:browser
+pnpm test:a11y
+pnpm build
+pnpm check:toolchain
+pnpm schema:json
+pnpm tour:build      # regenerate the golden tour from the pinned Bunbun checkout
+```
 
 ## The shape of the product
 
@@ -51,19 +83,21 @@ stores only small, attributed excerpts.
 - [Phase 6](plans/PHASE-6.md) — semi-interactive guide and progress sync.
 - [Phase 7](plans/PHASE-7.md) — OpenCode V2 plugin.
 - [Phase 8](plans/PHASE-8.md) — self-hosted release and hardening.
+- [Development guide](docs/development.md) — workspace, commands, and the
+  golden-tour workflow.
 - [Domain context](CONTEXT.md) — the project glossary.
 - [Agent instructions](AGENTS.md) — how agents work in this repository.
 
-## Stack (planned)
+## Stack
 
 pnpm 12.14.0 · Node.js 26 · TypeScript 7.0.2 · React 19.3.1 · Vite 8.3.4 ·
-TanStack Router 1.170.45 · Hono 4.13.13 · Zod 4.6.7 · Vercel AI SDK 7.0.143 ·
-Shiki 4.5.0 · React Flow 12.12.0 · ELK 0.12.0 · better-sqlite3 13.0.3 ·
-Vitest 5.0.5 · Playwright 1.64.1 · axe-core 4.14.0 · `@opencode/plugin` 2.0.32.
+TanStack Router 1.170.45 · Hono 4.13.13 · Zod 4.6.7 · Shiki 4.5.0 ·
+React Flow 12.12.0 · ELK 0.12.0 · Vitest 5.0.5 · Playwright 1.64.1 ·
+axe-core 4.14.0.
 
-TypeScript 7.0 has no programmatic compiler API; the analyzer uses `oxc-parser`,
-not the TypeScript compiler API. See the roadmap for the full version table and
-constraints.
+TypeScript 7.0 has no programmatic compiler API; the analyzer will use
+`oxc-parser`, not the TypeScript compiler API. See the roadmap for the full
+version table and constraints.
 
 ## Similar work
 

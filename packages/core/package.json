@@ -1,0 +1,21 @@
+{
+  "name": "@sothspell/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "schema:json": "tsx scripts/generate-schema.ts"
+  },
+  "dependencies": {
+    "@sothspell/diagram": "workspace:*",
+    "shiki": "4.5.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15"
+  }
+}

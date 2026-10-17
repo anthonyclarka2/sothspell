@@ -1,0 +1,1124 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "tour_bunbun_golden",
+  "title": "Bunbun: a truth story",
+  "subtitle": "How a comment travels from a browser island to an ATProto record",
+  "audience": "new-contributor",
+  "project": {
+    "slug": "bunbun",
+    "name": "Bunbun",
+    "revision": {
+      "commit": "9fef24d",
+      "branch": "main",
+      "dirty": false
+    }
+  },
+  "chapters": [
+    {
+      "id": "chapter_purpose",
+      "title": "What Bunbun is",
+      "summary": "A discussion service on the AT Protocol, with records as the source of truth and a local index for reads.",
+      "diagrams": [
+        {
+          "id": "diagram_sources",
+          "kind": "architecture",
+          "title": "Records, index, and readers",
+          "nodes": [
+            {
+              "id": "node_web",
+              "label": "Web islands",
+              "type": "client"
+            },
+            {
+              "id": "node_api",
+              "label": "NestJS API",
+              "type": "service"
+            },
+            {
+              "id": "node_pds",
+              "label": "ATProto PDS",
+              "type": "external",
+              "anchorId": "anchor_readme_overview"
+            },
+            {
+              "id": "node_index",
+              "label": "Local index",
+              "type": "store",
+              "anchorId": "anchor_readme_overview"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_web_api",
+              "from": "node_web",
+              "to": "node_api",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_api_pds",
+              "from": "node_api",
+              "to": "node_pds",
+              "kind": "writes"
+            },
+            {
+              "id": "edge_api_index",
+              "from": "node_api",
+              "to": "node_index",
+              "kind": "reads"
+            },
+            {
+              "id": "edge_pds_index",
+              "from": "node_pds",
+              "to": "node_index",
+              "kind": "writes",
+              "label": "reconcile"
+            }
+          ]
+        },
+        {
+          "id": "diagram_repo_map",
+          "kind": "tree",
+          "title": "Repository map",
+          "nodes": [
+            {
+              "id": "node_repo",
+              "label": "bunbun",
+              "type": "module",
+              "anchorId": "anchor_readme_layout"
+            },
+            {
+              "id": "node_apps_api",
+              "label": "apps/api",
+              "type": "module",
+              "anchorId": "anchor_readme_layout"
+            },
+            {
+              "id": "node_apps_web",
+              "label": "apps/web",
+              "type": "module",
+              "anchorId": "anchor_readme_layout"
+            },
+            {
+              "id": "node_acceptance",
+              "label": "browser-acceptance",
+              "type": "module",
+              "anchorId": "anchor_readme_layout"
+            },
+            {
+              "id": "node_docs",
+              "label": "docs",
+              "type": "module",
+              "anchorId": "anchor_docs_index"
+            },
+            {
+              "id": "node_plans",
+              "label": "plans",
+              "type": "module",
+              "anchorId": "anchor_readme_layout"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_repo_api",
+              "from": "node_repo",
+              "to": "node_apps_api",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_repo_web",
+              "from": "node_repo",
+              "to": "node_apps_web",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_repo_acceptance",
+              "from": "node_repo",
+              "to": "node_acceptance",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_repo_docs",
+              "from": "node_repo",
+              "to": "node_docs",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_repo_plans",
+              "from": "node_repo",
+              "to": "node_plans",
+              "kind": "contains"
+            }
+          ]
+        },
+        {
+          "id": "diagram_domain",
+          "kind": "architecture",
+          "title": "The domain in one picture",
+          "nodes": [
+            {
+              "id": "node_user",
+              "label": "User",
+              "type": "module"
+            },
+            {
+              "id": "node_bun",
+              "label": "Bun",
+              "type": "module"
+            },
+            {
+              "id": "node_thread",
+              "label": "Thread",
+              "type": "module"
+            },
+            {
+              "id": "node_comment",
+              "label": "Comment",
+              "type": "module",
+              "anchorId": "anchor_context_glossary"
+            },
+            {
+              "id": "node_reply",
+              "label": "Reply",
+              "type": "module"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_user_comment",
+              "from": "node_user",
+              "to": "node_comment",
+              "kind": "writes"
+            },
+            {
+              "id": "edge_bun_thread",
+              "from": "node_bun",
+              "to": "node_thread",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_thread_comment",
+              "from": "node_thread",
+              "to": "node_comment",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_comment_reply",
+              "from": "node_comment",
+              "to": "node_reply",
+              "kind": "contains"
+            }
+          ]
+        }
+      ],
+      "beats": [
+        {
+          "id": "beat_purpose_01",
+          "title": "Two sources, one conversation",
+          "narration": "Bunbun is a comment and discussion service built on the AT Protocol. Buns and threads are persisted as ATProto records, and a local index serves reads alongside the PDS source of truth. The index is a read model and a cache; it is never the place where a conversation truly lives.",
+          "durationMs": 32000,
+          "anchors": [
+            {
+              "id": "anchor_readme_overview",
+              "path": "README.md",
+              "lines": {
+                "start": 3,
+                "end": 3
+              },
+              "label": "What Bunbun is"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_readme_overview"],
+            "diagramId": "diagram_sources",
+            "nodeIds": ["node_pds", "node_index"],
+            "edgeIds": ["edge_pds_index", "edge_api_index"]
+          },
+          "suggestedQuestions": [
+            "Why keep a local index if the PDS is the source of truth?"
+          ]
+        },
+        {
+          "id": "beat_purpose_02",
+          "title": "Three application surfaces",
+          "narration": "The repository is a pnpm workspace with three application surfaces. apps/api is the NestJS service, apps/web is the browser island bundle served same-origin, and apps/browser-acceptance is an opt-in Playwright tier. docs and plans hold the project's memory.",
+          "durationMs": 30000,
+          "anchors": [
+            {
+              "id": "anchor_readme_layout",
+              "path": "README.md",
+              "lines": {
+                "start": 19,
+                "end": 29
+              },
+              "label": "Repository layout"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_readme_layout"],
+            "diagramId": "diagram_repo_map",
+            "nodeIds": ["node_repo", "node_apps_api", "node_apps_web", "node_acceptance"]
+          }
+        },
+        {
+          "id": "beat_purpose_03",
+          "title": "One glossary, shared by everyone",
+          "narration": "The domain language is explicit. Account, User, Bun, Thread, Comment, and Reply each mean one thing. A bun is a discussion group represented by an ATProto identity, a thread belongs to one bun, and replies nest inside a thread. The glossary is required reading before changing domain code.",
+          "durationMs": 34000,
+          "anchors": [
+            {
+              "id": "anchor_context_glossary",
+              "path": "CONTEXT.md",
+              "lines": {
+                "start": 3,
+                "end": 9
+              },
+              "label": "Domain glossary"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_context_glossary"],
+            "diagramId": "diagram_domain",
+            "nodeIds": [
+              "node_user",
+              "node_bun",
+              "node_thread",
+              "node_comment",
+              "node_reply"
+            ],
+            "edgeIds": ["edge_bun_thread", "edge_thread_comment", "edge_comment_reply"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "chapter_request_path",
+      "title": "From request to page",
+      "summary": "How a thread page is assembled from a loader, a query, and the local index without turning the controller into the application.",
+      "diagrams": [
+        {
+          "id": "diagram_boot",
+          "kind": "flow",
+          "title": "The boot path",
+          "nodes": [
+            {
+              "id": "node_boot",
+              "label": "main.ts",
+              "type": "file",
+              "anchorId": "anchor_main_bootstrap"
+            },
+            {
+              "id": "node_root_module",
+              "label": "AppModule",
+              "type": "module",
+              "anchorId": "anchor_app_module_imports"
+            },
+            {
+              "id": "node_feature_modules",
+              "label": "Feature modules",
+              "type": "module"
+            },
+            {
+              "id": "node_http",
+              "label": "HTTP surface",
+              "type": "service"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_boot_root",
+              "from": "node_boot",
+              "to": "node_root_module",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_root_features",
+              "from": "node_root_module",
+              "to": "node_feature_modules",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_features_http",
+              "from": "node_feature_modules",
+              "to": "node_http",
+              "kind": "renders"
+            }
+          ]
+        },
+        {
+          "id": "diagram_thread_page",
+          "kind": "flow",
+          "title": "One thread page",
+          "nodes": [
+            {
+              "id": "node_request",
+              "label": "GET /threads/:id",
+              "type": "external"
+            },
+            {
+              "id": "node_controller",
+              "label": "Page controller",
+              "type": "class",
+              "anchorId": "anchor_thread_controller"
+            },
+            {
+              "id": "node_loader",
+              "label": "ThreadPageLoader",
+              "type": "class",
+              "anchorId": "anchor_thread_loader"
+            },
+            {
+              "id": "node_query",
+              "label": "CommentThreadQuery",
+              "type": "class",
+              "anchorId": "anchor_comment_query"
+            },
+            {
+              "id": "node_index",
+              "label": "Local index",
+              "type": "store",
+              "anchorId": "anchor_readme_overview"
+            },
+            {
+              "id": "node_pds",
+              "label": "ATProto PDS",
+              "type": "external",
+              "anchorId": "anchor_readme_overview"
+            },
+            {
+              "id": "node_renderer",
+              "label": "Pure renderer",
+              "type": "function"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_request_controller",
+              "from": "node_request",
+              "to": "node_controller",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_controller_loader",
+              "from": "node_controller",
+              "to": "node_loader",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_loader_query",
+              "from": "node_loader",
+              "to": "node_query",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_query_index",
+              "from": "node_query",
+              "to": "node_index",
+              "kind": "reads"
+            },
+            {
+              "id": "edge_query_pds",
+              "from": "node_query",
+              "to": "node_pds",
+              "kind": "reads"
+            },
+            {
+              "id": "edge_loader_renderer",
+              "from": "node_loader",
+              "to": "node_renderer",
+              "kind": "renders"
+            }
+          ]
+        }
+      ],
+      "beats": [
+        {
+          "id": "beat_request_01",
+          "title": "Boot is one explicit path",
+          "narration": "Boot starts in main.ts. It loads the environment, creates the Nest application, installs static mounts, a global validation pipe, exception filters, and a graceful shutdown path. The app fails fast when required configuration is missing, so a broken environment never pretends to be healthy.",
+          "durationMs": 38000,
+          "anchors": [
+            {
+              "id": "anchor_main_bootstrap",
+              "path": "apps/api/src/main.ts",
+              "lines": {
+                "start": 37,
+                "end": 67
+              },
+              "symbol": "bootstrap",
+              "label": "bootstrap()"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_main_bootstrap"],
+            "diagramId": "diagram_boot",
+            "nodeIds": ["node_boot", "node_root_module"],
+            "edgeIds": ["edge_boot_root"]
+          }
+        },
+        {
+          "id": "beat_request_02",
+          "title": "AppModule is the wiring seam",
+          "narration": "AppModule imports the feature modules that make up the service: accounts, comments, buns, threads, moderation, sync, tags, telemetry, and the rest. It also registers the global interceptor and the exception filters in a deliberate order, because filter precedence is behavior, not decoration.",
+          "durationMs": 36000,
+          "anchors": [
+            {
+              "id": "anchor_app_module_imports",
+              "path": "apps/api/src/app.module.ts",
+              "lines": {
+                "start": 55,
+                "end": 75
+              },
+              "symbol": "AppModule",
+              "label": "AppModule imports"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_app_module_imports"],
+            "diagramId": "diagram_boot",
+            "nodeIds": ["node_root_module", "node_feature_modules"],
+            "edgeIds": ["edge_root_features"]
+          }
+        },
+        {
+          "id": "beat_request_03",
+          "title": "The page controller is a thin adapter",
+          "narration": "The public thread page is a thin adapter. The controller parses the request, applies security headers, asks ThreadPageLoader for one page state, and renders it. It does not know how comments, moderation, tags, or revisions are fetched, which is what keeps the page shape testable.",
+          "durationMs": 38000,
+          "anchors": [
+            {
+              "id": "anchor_thread_controller",
+              "path": "apps/api/src/comments/thread-comments-page.controller.ts",
+              "lines": {
+                "start": 23,
+                "end": 56
+              },
+              "symbol": "ThreadCommentsPageController",
+              "label": "ThreadCommentsPageController"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_thread_controller"],
+            "diagramId": "diagram_thread_page",
+            "nodeIds": ["node_request", "node_controller"],
+            "edgeIds": ["edge_request_controller", "edge_controller_loader"]
+          }
+        },
+        {
+          "id": "beat_request_04",
+          "title": "The loader returns named page states",
+          "narration": "ThreadPageLoader resolves the thread, the bun, the viewer, the moderation context, the comment tree, revisions, tags, and viewer relations. It returns a discriminated union of page states, so not-found, taken-down, labeled, age-gated, and error pages each have a name instead of collapsing into one vague message.",
+          "durationMs": 42000,
+          "anchors": [
+            {
+              "id": "anchor_thread_loader",
+              "path": "apps/api/src/comments/thread-page.loader.ts",
+              "lines": {
+                "start": 184,
+                "end": 227
+              },
+              "symbol": "ThreadPageLoader",
+              "label": "ThreadPageLoader"
+            },
+            {
+              "id": "anchor_thread_states",
+              "path": "apps/api/src/comments/thread-page.loader.ts",
+              "lines": {
+                "start": 111,
+                "end": 165
+              },
+              "symbol": "CommentsPageState",
+              "label": "Page-state union"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_thread_loader", "anchor_thread_states"],
+            "diagramId": "diagram_thread_page",
+            "nodeIds": ["node_loader", "node_renderer"],
+            "edgeIds": ["edge_controller_loader", "edge_loader_renderer"]
+          }
+        },
+        {
+          "id": "beat_request_05",
+          "title": "The query owns the read model",
+          "narration": "CommentThreadQuery is the read model. It fetches a thread's records, resolves moderation state for the viewer in front of it, orders root comments, and walks replies into a tree. The local index is consulted first, and the PDS covers unknown or legacy entries. The query composes the conversation; it does not render it.",
+          "durationMs": 42000,
+          "anchors": [
+            {
+              "id": "anchor_comment_query",
+              "path": "apps/api/src/comments/comment-thread.query.ts",
+              "lines": {
+                "start": 63,
+                "end": 100
+              },
+              "symbol": "CommentThreadQuery",
+              "label": "CommentThreadQuery"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_comment_query"],
+            "diagramId": "diagram_thread_page",
+            "nodeIds": ["node_query", "node_index", "node_pds"],
+            "edgeIds": ["edge_loader_query", "edge_query_index", "edge_query_pds"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "chapter_write_path",
+      "title": "From comment to record",
+      "summary": "Identity, validation, the PDS write, the local index upsert, and the single writer that invalidates caches.",
+      "diagrams": [
+        {
+          "id": "diagram_write_path",
+          "kind": "flow",
+          "title": "The comment write path",
+          "nodes": [
+            {
+              "id": "node_guard",
+              "label": "OAuthSessionGuard",
+              "type": "class",
+              "anchorId": "anchor_oauth_guard"
+            },
+            {
+              "id": "node_service",
+              "label": "CommentsService",
+              "type": "class",
+              "anchorId": "anchor_comments_create"
+            },
+            {
+              "id": "node_adapter",
+              "label": "PDS adapter",
+              "type": "class",
+              "anchorId": "anchor_pds_create"
+            },
+            {
+              "id": "node_pds",
+              "label": "ATProto PDS",
+              "type": "external",
+              "anchorId": "anchor_readme_overview"
+            },
+            {
+              "id": "node_writer",
+              "label": "IndexWriter",
+              "type": "class",
+              "anchorId": "anchor_index_writer"
+            },
+            {
+              "id": "node_index",
+              "label": "Local index",
+              "type": "store",
+              "anchorId": "anchor_readme_overview"
+            },
+            {
+              "id": "node_cache",
+              "label": "Read cache",
+              "type": "store"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_guard_service",
+              "from": "node_guard",
+              "to": "node_service",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_service_adapter",
+              "from": "node_service",
+              "to": "node_adapter",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_adapter_pds",
+              "from": "node_adapter",
+              "to": "node_pds",
+              "kind": "writes"
+            },
+            {
+              "id": "edge_service_writer",
+              "from": "node_service",
+              "to": "node_writer",
+              "kind": "writes"
+            },
+            {
+              "id": "edge_writer_index",
+              "from": "node_writer",
+              "to": "node_index",
+              "kind": "writes"
+            },
+            {
+              "id": "edge_writer_cache",
+              "from": "node_writer",
+              "to": "node_cache",
+              "kind": "emits",
+              "label": "invalidate"
+            }
+          ]
+        }
+      ],
+      "beats": [
+        {
+          "id": "beat_write_01",
+          "title": "Identity comes from proof, not from input",
+          "narration": "Writes begin with identity. OAuthSessionGuard restores the persisted OAuth session, resolves the author, and attaches that author to the request. Downstream code never accepts an author from the request body, which is the difference between an authenticated write and a hopeful one.",
+          "durationMs": 38000,
+          "anchors": [
+            {
+              "id": "anchor_oauth_guard",
+              "path": "apps/api/src/atproto/oauth-session.guard.ts",
+              "lines": {
+                "start": 88,
+                "end": 117
+              },
+              "symbol": "OAuthSessionGuard",
+              "label": "OAuthSessionGuard"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_oauth_guard"],
+            "diagramId": "diagram_write_path",
+            "nodeIds": ["node_guard", "node_service"],
+            "edgeIds": ["edge_guard_service"]
+          }
+        },
+        {
+          "id": "beat_write_02",
+          "title": "The service orders the write",
+          "narration": "CommentsService.create validates the text, thread, and parent, computes the root, calls the PDS adapter, then upserts the local index. The author came from the guard; the service does not re-derive it from the payload. The order matters: the record exists before the index claims it does.",
+          "durationMs": 40000,
+          "anchors": [
+            {
+              "id": "anchor_comments_create",
+              "path": "apps/api/src/comments/comments.service.ts",
+              "lines": {
+                "start": 111,
+                "end": 137
+              },
+              "symbol": "CommentsService.create",
+              "label": "CommentsService.create"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_comments_create"],
+            "diagramId": "diagram_write_path",
+            "nodeIds": ["node_service", "node_adapter", "node_writer"],
+            "edgeIds": ["edge_service_adapter", "edge_service_writer"]
+          }
+        },
+        {
+          "id": "beat_write_03",
+          "title": "The adapter is the PDS seam",
+          "narration": "AtprotoCommentPdsAdapter.create builds the ATProto record with the thread, parent, root, author, and timestamps, then calls com.atproto.repo.createRecord on the author's agent. The adapter is the only place that knows the collection name and the repository call, which keeps the PDS shape out of the service.",
+          "durationMs": 42000,
+          "anchors": [
+            {
+              "id": "anchor_pds_create",
+              "path": "apps/api/src/comments/atproto-comment-writer.ts",
+              "lines": {
+                "start": 201,
+                "end": 243
+              },
+              "symbol": "AtprotoCommentPdsAdapter.create",
+              "label": "AtprotoCommentPdsAdapter.create"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_pds_create"],
+            "diagramId": "diagram_write_path",
+            "nodeIds": ["node_adapter", "node_pds"],
+            "edgeIds": ["edge_adapter_pds"]
+          }
+        },
+        {
+          "id": "beat_write_04",
+          "title": "One writer invalidates the cache",
+          "narration": "IndexWriter is the single write path for the local index. Each write invalidates the affected cache shape before the write resolves, so a reader never sees a stale shape after a successful mutation. Comments, threads, and tags all ride the same writer, which is how invalidation stays honest across features.",
+          "durationMs": 42000,
+          "anchors": [
+            {
+              "id": "anchor_index_writer",
+              "path": "apps/api/src/sync/index-writer.ts",
+              "lines": {
+                "start": 186,
+                "end": 216
+              },
+              "symbol": "IndexWriter",
+              "label": "IndexWriter"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_index_writer"],
+            "diagramId": "diagram_write_path",
+            "nodeIds": ["node_writer", "node_index", "node_cache"],
+            "edgeIds": ["edge_writer_index", "edge_writer_cache"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "chapter_index_health",
+      "title": "Keeping the index honest",
+      "summary": "The worker thread, the reconcilers, and the cross-cutting tag service that keep local state in step with the PDS.",
+      "diagrams": [
+        {
+          "id": "diagram_sync",
+          "kind": "architecture",
+          "title": "The sync loop",
+          "nodes": [
+            {
+              "id": "node_worker",
+              "label": "Sync worker",
+              "type": "service",
+              "anchorId": "anchor_sync_worker"
+            },
+            {
+              "id": "node_reconciler",
+              "label": "Reconcilers",
+              "type": "class",
+              "anchorId": "anchor_thread_reconciler"
+            },
+            {
+              "id": "node_pds",
+              "label": "ATProto PDS",
+              "type": "external",
+              "anchorId": "anchor_readme_overview"
+            },
+            {
+              "id": "node_writer",
+              "label": "IndexWriter",
+              "type": "class",
+              "anchorId": "anchor_index_writer"
+            },
+            {
+              "id": "node_index",
+              "label": "Local index",
+              "type": "store",
+              "anchorId": "anchor_readme_overview"
+            },
+            {
+              "id": "node_main",
+              "label": "Main process",
+              "type": "service"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_worker_reconciler",
+              "from": "node_worker",
+              "to": "node_reconciler",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_reconciler_pds",
+              "from": "node_reconciler",
+              "to": "node_pds",
+              "kind": "reads"
+            },
+            {
+              "id": "edge_worker_writer",
+              "from": "node_worker",
+              "to": "node_writer",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_writer_index",
+              "from": "node_writer",
+              "to": "node_index",
+              "kind": "writes"
+            },
+            {
+              "id": "edge_worker_main",
+              "from": "node_worker",
+              "to": "node_main",
+              "kind": "emits",
+              "label": "invalidation"
+            }
+          ]
+        }
+      ],
+      "beats": [
+        {
+          "id": "beat_index_01",
+          "title": "The worker owns the writes",
+          "narration": "The sync worker runs in its own thread with its own Prisma client. It owns the IndexWriter, posts invalidation events to the main process, and runs the reconcilers. That is why the worker never touches the main process's read-through cache: it has no request context and no business seeing another thread's memory.",
+          "durationMs": 40000,
+          "anchors": [
+            {
+              "id": "anchor_sync_worker",
+              "path": "apps/api/src/sync/sync-worker.worker.ts",
+              "lines": {
+                "start": 31,
+                "end": 51
+              },
+              "symbol": "sync-worker.worker",
+              "label": "Sync worker entry"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_sync_worker"],
+            "diagramId": "diagram_sync",
+            "nodeIds": ["node_worker", "node_writer", "node_main"],
+            "edgeIds": ["edge_worker_writer", "edge_worker_main"]
+          }
+        },
+        {
+          "id": "beat_index_02",
+          "title": "Reconcile is a bounded batch",
+          "narration": "ThreadReconciler lists a bun's thread records from the PDS and hands them to the writer's reconcile. A bun whose credentials vanished is skipped, so one unreadable bun does not stop the rest of the batch. Each step is timed and reported, which is how a background loop becomes observable instead of mysterious.",
+          "durationMs": 40000,
+          "anchors": [
+            {
+              "id": "anchor_thread_reconciler",
+              "path": "apps/api/src/sync/thread-reconciler.ts",
+              "lines": {
+                "start": 89,
+                "end": 119
+              },
+              "symbol": "ThreadReconciler",
+              "label": "ThreadReconciler"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_thread_reconciler"],
+            "diagramId": "diagram_sync",
+            "nodeIds": ["node_reconciler", "node_pds"],
+            "edgeIds": ["edge_reconciler_pds"]
+          }
+        },
+        {
+          "id": "beat_index_03",
+          "title": "Tags are a hub, not a controller",
+          "narration": "TagService resolves the actor's standing, writes the repository record or local audit row through the index write seam, and keeps the tag index in step. It is a hub of ports, not a controller. That shape is what lets tags, moderation, and the index share one write path without importing each other's modules.",
+          "durationMs": 40000,
+          "anchors": [
+            {
+              "id": "anchor_tag_service",
+              "path": "apps/api/src/tags/tag.service.ts",
+              "lines": {
+                "start": 197,
+                "end": 235
+              },
+              "symbol": "TagService",
+              "label": "TagService"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_tag_service"],
+            "diagramId": "diagram_sync",
+            "nodeIds": ["node_worker", "node_reconciler", "node_index"],
+            "edgeIds": ["edge_worker_reconciler", "edge_writer_index"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "chapter_web",
+      "title": "The browser island",
+      "summary": "One bundle, a data-island registry, and the comment composer that keeps drafts alive across sessions.",
+      "diagrams": [
+        {
+          "id": "diagram_web_islands",
+          "kind": "architecture",
+          "title": "Islands on a page",
+          "nodes": [
+            {
+              "id": "node_page",
+              "label": "Server-rendered page",
+              "type": "file"
+            },
+            {
+              "id": "node_bundle",
+              "label": "Island bundle",
+              "type": "module",
+              "anchorId": "anchor_web_main"
+            },
+            {
+              "id": "node_islands",
+              "label": "Islands",
+              "type": "client",
+              "anchorId": "anchor_composer"
+            },
+            {
+              "id": "node_api",
+              "label": "Same-origin API",
+              "type": "service"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_page_bundle",
+              "from": "node_page",
+              "to": "node_bundle",
+              "kind": "renders"
+            },
+            {
+              "id": "edge_bundle_islands",
+              "from": "node_bundle",
+              "to": "node_islands",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_islands_api",
+              "from": "node_islands",
+              "to": "node_api",
+              "kind": "calls"
+            }
+          ]
+        }
+      ],
+      "beats": [
+        {
+          "id": "beat_web_01",
+          "title": "One bundle, named islands",
+          "narration": "The web client is one Svelte island bundle. main.ts maps data-island names to components and mounts them; unknown island names are ignored, so a stale cached bundle never breaks a newer page. There is no per-page script wiring and no client-side router standing between the reader and the HTML.",
+          "durationMs": 36000,
+          "anchors": [
+            {
+              "id": "anchor_web_main",
+              "path": "apps/web/src/main.ts",
+              "lines": {
+                "start": 17,
+                "end": 46
+              },
+              "symbol": "mountIslands",
+              "label": "Island registry"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_web_main"],
+            "diagramId": "diagram_web_islands",
+            "nodeIds": ["node_page", "node_bundle", "node_islands"],
+            "edgeIds": ["edge_page_bundle", "edge_bundle_islands"]
+          }
+        },
+        {
+          "id": "beat_web_02",
+          "title": "A draft that survives the session",
+          "narration": "The comment composer keeps a sessionStorage mirror and a server copy of the draft, then reconciles newer-wins so a failed request never loses the later edit. Preview goes through the server's sanitization pipeline, and the reply composer floats with keyboard controls as the primary path.",
+          "durationMs": 40000,
+          "anchors": [
+            {
+              "id": "anchor_composer",
+              "path": "apps/web/src/islands/comment-composer/CommentComposer.svelte",
+              "lines": {
+                "start": 28,
+                "end": 67
+              },
+              "symbol": "CommentComposer",
+              "label": "CommentComposer"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_composer"],
+            "diagramId": "diagram_web_islands",
+            "nodeIds": ["node_islands", "node_api"],
+            "edgeIds": ["edge_islands_api"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "chapter_where_next",
+      "title": "Where to go next",
+      "summary": "The docs index and the verification commands that keep a contribution honest.",
+      "diagrams": [
+        {
+          "id": "diagram_extension",
+          "kind": "flow",
+          "title": "A contribution loop",
+          "nodes": [
+            {
+              "id": "node_question",
+              "label": "Question",
+              "type": "note"
+            },
+            {
+              "id": "node_docs",
+              "label": "Guides",
+              "type": "file",
+              "anchorId": "anchor_docs_index"
+            },
+            {
+              "id": "node_code",
+              "label": "Feature module",
+              "type": "module"
+            },
+            {
+              "id": "node_verify",
+              "label": "Verify",
+              "type": "function"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_question_docs",
+              "from": "node_question",
+              "to": "node_docs",
+              "kind": "depends"
+            },
+            {
+              "id": "edge_docs_code",
+              "from": "node_docs",
+              "to": "node_code",
+              "kind": "depends"
+            },
+            {
+              "id": "edge_code_verify",
+              "from": "node_code",
+              "to": "node_verify",
+              "kind": "calls"
+            }
+          ]
+        }
+      ],
+      "beats": [
+        {
+          "id": "beat_next_01",
+          "title": "The docs index is the map",
+          "narration": "The documentation index is the canonical map of the project. It lists feature guides for accounts, buns, comments, threads, preferences, and feeds, and cross-cutting guides for admin, moderation, cache and sync, identity, accessibility, and the browser tier. When behavior changes, the relevant guide changes with it.",
+          "durationMs": 36000,
+          "anchors": [
+            {
+              "id": "anchor_docs_index",
+              "path": "docs/README.md",
+              "lines": {
+                "start": 7,
+                "end": 30
+              },
+              "label": "Docs index"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_docs_index"],
+            "diagramId": "diagram_extension",
+            "nodeIds": ["node_question", "node_docs"],
+            "edgeIds": ["edge_question_docs"]
+          }
+        },
+        {
+          "id": "beat_next_02",
+          "title": "Verification is part of the change",
+          "narration": "To extend Bunbun, add a feature module, wire it in AppModule, add a page or island, and verify it with the project's own commands. Typecheck, lint, the unit suite, the browser tier, and the canonical dev server are not optional ceremony. They are how the next reader can trust the story you just told.",
+          "durationMs": 40000,
+          "anchors": [
+            {
+              "id": "anchor_agents_commands",
+              "path": "AGENTS.md",
+              "lines": {
+                "start": 126,
+                "end": 140
+              },
+              "label": "Project commands"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_agents_commands"],
+            "diagramId": "diagram_extension",
+            "nodeIds": ["node_code", "node_verify"],
+            "edgeIds": ["edge_code_verify"]
+          }
+        }
+      ]
+    }
+  ]
+}

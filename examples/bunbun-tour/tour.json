@@ -1,0 +1,1184 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "tour_bunbun_golden",
+  "title": "Bunbun: a truth story",
+  "subtitle": "How a comment travels from a browser island to an ATProto record",
+  "audience": "new-contributor",
+  "project": {
+    "slug": "bunbun",
+    "name": "Bunbun",
+    "revision": {
+      "commit": "9fef24d",
+      "branch": "main",
+      "dirty": false
+    }
+  },
+  "chapters": [
+    {
+      "id": "chapter_purpose",
+      "title": "What Bunbun is",
+      "summary": "A discussion service on the AT Protocol, with records as the source of truth and a local index for reads.",
+      "diagrams": [
+        {
+          "id": "diagram_sources",
+          "kind": "architecture",
+          "title": "Records, index, and readers",
+          "nodes": [
+            {
+              "id": "node_web",
+              "label": "Web islands",
+              "type": "client"
+            },
+            {
+              "id": "node_api",
+              "label": "NestJS API",
+              "type": "service"
+            },
+            {
+              "id": "node_pds",
+              "label": "ATProto PDS",
+              "type": "external",
+              "anchorId": "anchor_readme_overview"
+            },
+            {
+              "id": "node_index",
+              "label": "Local index",
+              "type": "store",
+              "anchorId": "anchor_readme_overview"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_web_api",
+              "from": "node_web",
+              "to": "node_api",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_api_pds",
+              "from": "node_api",
+              "to": "node_pds",
+              "kind": "writes"
+            },
+            {
+              "id": "edge_api_index",
+              "from": "node_api",
+              "to": "node_index",
+              "kind": "reads"
+            },
+            {
+              "id": "edge_pds_index",
+              "from": "node_pds",
+              "to": "node_index",
+              "kind": "writes",
+              "label": "reconcile"
+            }
+          ]
+        },
+        {
+          "id": "diagram_repo_map",
+          "kind": "tree",
+          "title": "Repository map",
+          "nodes": [
+            {
+              "id": "node_repo",
+              "label": "bunbun",
+              "type": "module",
+              "anchorId": "anchor_readme_layout"
+            },
+            {
+              "id": "node_apps_api",
+              "label": "apps/api",
+              "type": "module",
+              "anchorId": "anchor_readme_layout"
+            },
+            {
+              "id": "node_apps_web",
+              "label": "apps/web",
+              "type": "module",
+              "anchorId": "anchor_readme_layout"
+            },
+            {
+              "id": "node_acceptance",
+              "label": "browser-acceptance",
+              "type": "module",
+              "anchorId": "anchor_readme_layout"
+            },
+            {
+              "id": "node_docs",
+              "label": "docs",
+              "type": "module",
+              "anchorId": "anchor_docs_index"
+            },
+            {
+              "id": "node_plans",
+              "label": "plans",
+              "type": "module",
+              "anchorId": "anchor_readme_layout"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_repo_api",
+              "from": "node_repo",
+              "to": "node_apps_api",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_repo_web",
+              "from": "node_repo",
+              "to": "node_apps_web",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_repo_acceptance",
+              "from": "node_repo",
+              "to": "node_acceptance",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_repo_docs",
+              "from": "node_repo",
+              "to": "node_docs",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_repo_plans",
+              "from": "node_repo",
+              "to": "node_plans",
+              "kind": "contains"
+            }
+          ]
+        },
+        {
+          "id": "diagram_domain",
+          "kind": "architecture",
+          "title": "The domain in one picture",
+          "nodes": [
+            {
+              "id": "node_user",
+              "label": "User",
+              "type": "module"
+            },
+            {
+              "id": "node_bun",
+              "label": "Bun",
+              "type": "module"
+            },
+            {
+              "id": "node_thread",
+              "label": "Thread",
+              "type": "module"
+            },
+            {
+              "id": "node_comment",
+              "label": "Comment",
+              "type": "module",
+              "anchorId": "anchor_context_glossary"
+            },
+            {
+              "id": "node_reply",
+              "label": "Reply",
+              "type": "module"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_user_comment",
+              "from": "node_user",
+              "to": "node_comment",
+              "kind": "writes"
+            },
+            {
+              "id": "edge_bun_thread",
+              "from": "node_bun",
+              "to": "node_thread",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_thread_comment",
+              "from": "node_thread",
+              "to": "node_comment",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_comment_reply",
+              "from": "node_comment",
+              "to": "node_reply",
+              "kind": "contains"
+            }
+          ]
+        }
+      ],
+      "beats": [
+        {
+          "id": "beat_purpose_01",
+          "title": "Two sources, one conversation",
+          "narration": "Bunbun is a comment and discussion service built on the AT Protocol. Buns and threads are persisted as ATProto records, and a local index serves reads alongside the PDS source of truth. The index is a read model and a cache; it is never the place where a conversation truly lives.",
+          "durationMs": 32000,
+          "anchors": [
+            {
+              "id": "anchor_readme_overview",
+              "path": "README.md",
+              "lines": {
+                "start": 3,
+                "end": 3
+              },
+              "contentHash": "sha256:c9fb2aa2f68d98766b87108ba9a253469cb791937ad9090cbfd1049378ffeb82",
+              "label": "What Bunbun is",
+              "language": "markdown",
+              "excerpt": "Bunbun is a comment and discussion service built on the [AT Protocol](https://atproto.com). Users authenticate with ATProto app passwords, buns (discussion groups) and threads are persisted as ATProto records, and a local index serves reads alongside the PDS source of truth. See [CONTEXT.md](CONTEXT.md) for the domain language (Account, Bun, Thread, Comment, Reply)."
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_readme_overview"],
+            "diagramId": "diagram_sources",
+            "nodeIds": ["node_pds", "node_index"],
+            "edgeIds": ["edge_pds_index", "edge_api_index"]
+          },
+          "suggestedQuestions": [
+            "Why keep a local index if the PDS is the source of truth?"
+          ]
+        },
+        {
+          "id": "beat_purpose_02",
+          "title": "Three application surfaces",
+          "narration": "The repository is a pnpm workspace with three application surfaces. apps/api is the NestJS service, apps/web is the browser island bundle served same-origin, and apps/browser-acceptance is an opt-in Playwright tier. docs and plans hold the project's memory.",
+          "durationMs": 30000,
+          "anchors": [
+            {
+              "id": "anchor_readme_layout",
+              "path": "README.md",
+              "lines": {
+                "start": 19,
+                "end": 29
+              },
+              "contentHash": "sha256:076eefd3318f412eaa8d797e154c252058f263f327fcd368eaeefd3af713a51e",
+              "label": "Repository layout",
+              "language": "markdown",
+              "excerpt": "## Repository layout\n\nBunbun is a pnpm workspace monorepo:\n\n```\napps/api                 @bunbun/api — the NestJS API (source, tests, migrations, configs)\napps/web                 @bunbun/web — the Svelte island bundle, served same-origin at /islands\napps/browser-acceptance  @bunbun/browser-acceptance — opt-in Playwright acceptance tier\ndocs/                    per-domain documentation\nplans/                   project plans\n```"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_readme_layout"],
+            "diagramId": "diagram_repo_map",
+            "nodeIds": ["node_repo", "node_apps_api", "node_apps_web", "node_acceptance"]
+          }
+        },
+        {
+          "id": "beat_purpose_03",
+          "title": "One glossary, shared by everyone",
+          "narration": "The domain language is explicit. Account, User, Bun, Thread, Comment, and Reply each mean one thing. A bun is a discussion group represented by an ATProto identity, a thread belongs to one bun, and replies nest inside a thread. The glossary is required reading before changing domain code.",
+          "durationMs": 34000,
+          "anchors": [
+            {
+              "id": "anchor_context_glossary",
+              "path": "CONTEXT.md",
+              "lines": {
+                "start": 3,
+                "end": 9
+              },
+              "contentHash": "sha256:c3db74696606d67c139d1e174b699870295b5d73fa5efa51f40ceb29e4d512a6",
+              "label": "Domain glossary",
+              "language": "markdown",
+              "excerpt": "This glossary defines the project's domain language. It deliberately avoids implementation and storage details.\n\n## Glossary\n\n### Account\n\nAn AT Protocol identity that can authenticate and own records. Use a more specific term when the role is known: **user account** for a person using Bunbun, **bun account** for a discussion group, and **example account** for the ALICE or BOB identities used by the demo."
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_context_glossary"],
+            "diagramId": "diagram_domain",
+            "nodeIds": [
+              "node_user",
+              "node_bun",
+              "node_thread",
+              "node_comment",
+              "node_reply"
+            ],
+            "edgeIds": ["edge_bun_thread", "edge_thread_comment", "edge_comment_reply"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "chapter_request_path",
+      "title": "From request to page",
+      "summary": "How a thread page is assembled from a loader, a query, and the local index without turning the controller into the application.",
+      "diagrams": [
+        {
+          "id": "diagram_boot",
+          "kind": "flow",
+          "title": "The boot path",
+          "nodes": [
+            {
+              "id": "node_boot",
+              "label": "main.ts",
+              "type": "file",
+              "anchorId": "anchor_main_bootstrap"
+            },
+            {
+              "id": "node_root_module",
+              "label": "AppModule",
+              "type": "module",
+              "anchorId": "anchor_app_module_imports"
+            },
+            {
+              "id": "node_feature_modules",
+              "label": "Feature modules",
+              "type": "module"
+            },
+            {
+              "id": "node_http",
+              "label": "HTTP surface",
+              "type": "service"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_boot_root",
+              "from": "node_boot",
+              "to": "node_root_module",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_root_features",
+              "from": "node_root_module",
+              "to": "node_feature_modules",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_features_http",
+              "from": "node_feature_modules",
+              "to": "node_http",
+              "kind": "renders"
+            }
+          ]
+        },
+        {
+          "id": "diagram_thread_page",
+          "kind": "flow",
+          "title": "One thread page",
+          "nodes": [
+            {
+              "id": "node_request",
+              "label": "GET /threads/:id",
+              "type": "external"
+            },
+            {
+              "id": "node_controller",
+              "label": "Page controller",
+              "type": "class",
+              "anchorId": "anchor_thread_controller"
+            },
+            {
+              "id": "node_loader",
+              "label": "ThreadPageLoader",
+              "type": "class",
+              "anchorId": "anchor_thread_loader"
+            },
+            {
+              "id": "node_query",
+              "label": "CommentThreadQuery",
+              "type": "class",
+              "anchorId": "anchor_comment_query"
+            },
+            {
+              "id": "node_index",
+              "label": "Local index",
+              "type": "store",
+              "anchorId": "anchor_readme_overview"
+            },
+            {
+              "id": "node_pds",
+              "label": "ATProto PDS",
+              "type": "external",
+              "anchorId": "anchor_readme_overview"
+            },
+            {
+              "id": "node_renderer",
+              "label": "Pure renderer",
+              "type": "function"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_request_controller",
+              "from": "node_request",
+              "to": "node_controller",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_controller_loader",
+              "from": "node_controller",
+              "to": "node_loader",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_loader_query",
+              "from": "node_loader",
+              "to": "node_query",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_query_index",
+              "from": "node_query",
+              "to": "node_index",
+              "kind": "reads"
+            },
+            {
+              "id": "edge_query_pds",
+              "from": "node_query",
+              "to": "node_pds",
+              "kind": "reads"
+            },
+            {
+              "id": "edge_loader_renderer",
+              "from": "node_loader",
+              "to": "node_renderer",
+              "kind": "renders"
+            }
+          ]
+        }
+      ],
+      "beats": [
+        {
+          "id": "beat_request_01",
+          "title": "Boot is one explicit path",
+          "narration": "Boot starts in main.ts. It loads the environment, creates the Nest application, installs static mounts, a global validation pipe, exception filters, and a graceful shutdown path. The app fails fast when required configuration is missing, so a broken environment never pretends to be healthy.",
+          "durationMs": 38000,
+          "anchors": [
+            {
+              "id": "anchor_main_bootstrap",
+              "path": "apps/api/src/main.ts",
+              "symbol": "bootstrap",
+              "lines": {
+                "start": 37,
+                "end": 67
+              },
+              "contentHash": "sha256:7a919aab026971ea7670aa56cbf277be50990280a00e901aad0a3d5b01cc160f",
+              "label": "bootstrap()",
+              "language": "typescript",
+              "excerpt": "async function bootstrap() {\n  ensureRequiredStartupEnv();\n\n  const app = await NestFactory.create<NestExpressApplication>(AppModule, {\n    // The instrument hook decorates providers for the same Observe module the\n    // root imports; without the credentials neither exists, and instrumenting\n    // instances that no tracer can record would be pointless (and would raise\n    // from TracerService.createSpan if ever called). Same predicate as wiring:\n    // one source of truth for \"is Observe on\".\n    instrument: observeEnabled() ? ObserveInstrument : undefined,\n  });\n  // IP-scoped rate limiting keys on req.ip: behind the atmosphereinabox relay\n  // every request arrives from the loopback Caddy, so express must resolve the\n  // client from the relay's X-Forwarded-For hop — loopback peers only, or the\n  // throttle key would be attacker-chosen (see trust-proxy.ts for the choice).\n  trustLoopbackProxy(app.getHttpAdapter().getInstance());\n  // Same-origin static mounts for the web foundation (fonts + island bundle).\n  // Why here: these are middleware-level mounts registered before the router,\n  // on the narrow /fonts and /islands prefixes no API route uses.\n  // Why `new Logger` and not `app.get(Logger)`: the Logger token is not an\n  // app-injectable provider in Nest 12, so resolving it from the container\n  // throws UnknownElementException at boot; the Logger class is designed for\n  // direct instantiation outside DI.\n  registerStaticAssetMounts(app, new Logger('StaticAssets'));\n  app.useGlobalPipes(\n    new ValidationPipe({\n      whitelist: true,\n      forbidNonWhitelisted: true,\n      transform: true,\n    }),\n  );"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_main_bootstrap"],
+            "diagramId": "diagram_boot",
+            "nodeIds": ["node_boot", "node_root_module"],
+            "edgeIds": ["edge_boot_root"]
+          }
+        },
+        {
+          "id": "beat_request_02",
+          "title": "AppModule is the wiring seam",
+          "narration": "AppModule imports the feature modules that make up the service: accounts, comments, buns, threads, moderation, sync, tags, telemetry, and the rest. It also registers the global interceptor and the exception filters in a deliberate order, because filter precedence is behavior, not decoration.",
+          "durationMs": 36000,
+          "anchors": [
+            {
+              "id": "anchor_app_module_imports",
+              "path": "apps/api/src/app.module.ts",
+              "symbol": "AppModule",
+              "lines": {
+                "start": 55,
+                "end": 75
+              },
+              "contentHash": "sha256:686ff57e798fe9d8a1ec0ca8d7acda1a28b0b4bd02c4602caaeca39872f72f88",
+              "label": "AppModule imports",
+              "language": "typescript",
+              "excerpt": "@Module({\n  imports: [\n    // The env layer of the settings registry: loads .env and serves ConfigService\n    // globally so SettingsService can resolve environment values without each\n    // feature importing configuration itself.\n    ConfigModule.forRoot({ isGlobal: true, cache: true }),\n    SettingsModule,\n    // Observe is installed only when both OBSERVE_APP_KEY and OBSERVE_APP_SECRET\n    // are present: a conditional module rather than a forRoot call with a\n    // placeholder credential. Local dev without the pair boots with no Observe\n    // module (and no 401 storm against the collector).\n    ObserveWiringModule,\n    // The telemetry facade and scheduler metrics sampler; global, so every PDS\n    // store can inject the facade unconditionally.\n    TelemetryModule,\n    AccountsModule,\n    CommentsModule,\n    BunsModule,\n    ThreadsModule,\n    AdminAuthModule,\n    AdminModule,"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_app_module_imports"],
+            "diagramId": "diagram_boot",
+            "nodeIds": ["node_root_module", "node_feature_modules"],
+            "edgeIds": ["edge_root_features"]
+          }
+        },
+        {
+          "id": "beat_request_03",
+          "title": "The page controller is a thin adapter",
+          "narration": "The public thread page is a thin adapter. The controller parses the request, applies security headers, asks ThreadPageLoader for one page state, and renders it. It does not know how comments, moderation, tags, or revisions are fetched, which is what keeps the page shape testable.",
+          "durationMs": 38000,
+          "anchors": [
+            {
+              "id": "anchor_thread_controller",
+              "path": "apps/api/src/comments/thread-comments-page.controller.ts",
+              "symbol": "ThreadCommentsPageController",
+              "lines": {
+                "start": 23,
+                "end": 56
+              },
+              "contentHash": "sha256:dee67084f5125607b09bdb878d7d2215137d05aaa4de5fb98ee548d2154695d6",
+              "label": "ThreadCommentsPageController",
+              "language": "typescript",
+              "excerpt": "@Controller('threads')\n/** Serves the comments page for one thread, keyed by its public local id — read-only HTML when signed out, write islands when signed in, moderation controls when a moderation actor resolves, and the effective content view (family-safe default, opt-in, or moderation) resolved server-side per request. */\nexport class ThreadCommentsPageController {\n  constructor(private readonly loader: ThreadPageLoader) {}\n\n  @Get(':threadId')\n  async show(\n    @Param('threadId') threadId: string,\n    @Req() request: Request,\n    @Res() response: Response,\n    @Query('done') rawDone?: string | string[],\n    @Query('sort') rawSort?: string | string[],\n  ): Promise<Response> {\n    // Security headers go on before anything can fail, so the 404 and 500\n    // pages carry the same CSP as a successful render.\n    applyPublicPageSecurityHeaders(response);\n\n    // The loader owns every collaborator and every degradation (typed union\n    // members); the renderer is pure; the adapter only picks the status and\n    // sends. The local id is the only public identifier — AT-URIs never reach\n    // the page. The sort key is parsed at this boundary (an unknown value falls\n    // back to the default rather than 400ing a public page).\n    const state = await this.loader.load(\n      threadId,\n      request,\n      normalizeDone(rawDone),\n      parseCommentSort(rawSort),\n    );\n    response\n      .status(commentsPageStatus(state))\n      .type('html')\n      .send(renderCommentsPage(state));\n    return response;\n  }"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_thread_controller"],
+            "diagramId": "diagram_thread_page",
+            "nodeIds": ["node_request", "node_controller"],
+            "edgeIds": ["edge_request_controller", "edge_controller_loader"]
+          }
+        },
+        {
+          "id": "beat_request_04",
+          "title": "The loader returns named page states",
+          "narration": "ThreadPageLoader resolves the thread, the bun, the viewer, the moderation context, the comment tree, revisions, tags, and viewer relations. It returns a discriminated union of page states, so not-found, taken-down, labeled, age-gated, and error pages each have a name instead of collapsing into one vague message.",
+          "durationMs": 42000,
+          "anchors": [
+            {
+              "id": "anchor_thread_loader",
+              "path": "apps/api/src/comments/thread-page.loader.ts",
+              "symbol": "ThreadPageLoader",
+              "lines": {
+                "start": 184,
+                "end": 227
+              },
+              "contentHash": "sha256:a0e13ebdfea6aa94f1750773d3ee8925c4d882e2ffdd6f72eab416ec672c0ac3",
+              "label": "ThreadPageLoader",
+              "language": "typescript",
+              "excerpt": "export class ThreadPageLoader {\n  constructor(\n    private readonly threadsService: PublicThreadsService,\n    private readonly bunsService: BunsService,\n    private readonly threadQuery: CommentThreadQuery,\n    private readonly sessionPageUsers: SessionPageUserPort,\n    private readonly pageModerationActor: PageModerationActorPort,\n    private readonly commentIndex: CommentCountPort,\n    private readonly commentRevisions: CommentRevisionPort,\n    private readonly threadRevisions: ThreadRevisionPort,\n    private readonly tags: TagReaderPort,\n    // The viewer-relations snapshot source (issues/0014): the page's tree\n    // read carries the signed-in viewer's mute/block marks exactly like the\n    // JSON read does.\n    private readonly viewerRelations: ViewerRelationsService,\n  ) {}\n\n  /**\n   * Loads everything the page needs for one request. `done` is the already\n   * normalized `?done=` confirmation flag and `sort` the already parsed\n   * `?sort=` comment order — request-shape parsing stays at the controller\n   * boundary.\n   */\n  async load(\n    threadId: string,\n    request: Pick<Request, 'headers'>,\n    done: DoneFlag | null,\n    sort: CommentSortKey = DEFAULT_COMMENT_SORT,\n  ): Promise<CommentsPageState> {\n    // The local id is the only public identifier; the AT-URI it resolves to is\n    // server-side plumbing for the comment query and never reaches the page.\n    // An unknown id is a 404, a failing lookup an outage (500) — different\n    // states, never one \"not found\" page for both.\n    let thread: PublicThreadSummary | null;\n    try {\n      thread = await this.threadsService.resolveByLocalId(threadId);\n    } catch {\n      return { kind: 'error', threadId };\n    }\n    if (!thread) {\n      return { kind: 'not-found' };\n    }\n\n    // The effective view is per request and decided server-side: a moderation"
+            },
+            {
+              "id": "anchor_thread_states",
+              "path": "apps/api/src/comments/thread-page.loader.ts",
+              "symbol": "CommentsPageState",
+              "lines": {
+                "start": 111,
+                "end": 165
+              },
+              "contentHash": "sha256:56a3a540845606c9f35195d019041fbae3edfe72e7be4d18f63f805dea59a2bb",
+              "label": "Page-state union",
+              "language": "typescript",
+              "excerpt": "/** The friendly 404 for a thread local id that resolves to nothing. */\nexport interface NotFoundCommentsPageState {\n  kind: 'not-found';\n}\n\n/** The calm taken-down notice page an ordinary viewer gets for a hidden thread. */\nexport interface TakenDownCommentsPageState {\n  kind: 'taken-down';\n  thread: PublicThreadSummary;\n  bun: PublicBunSummary | null;\n  done: DoneFlag | null;\n}\n\n/** The calm labeled-notice page a default-view visitor gets for a labeled thread. */\nexport interface LabeledCommentsPageState {\n  kind: 'labeled';\n  thread: PublicThreadSummary;\n  bun: PublicBunSummary | null;\n  viewer: PageViewer;\n  done: DoneFlag | null;\n}\n\n/**\n * The calm age-gate page (Phase 11 Track B): the thread lives in a MATURE\n * bun, and the viewer is signed out or holds no age attestation. Signed-in\n * viewers get the attestation action inline; signed-out viewers get the\n * sign-in affordance. Moderation actors bypass (they see the page under the\n * moderation context), and the gate precedes the labeled branch — there is\n * nothing the labeled notice could show that the age gate may not.\n */\nexport interface AgeGatedCommentsPageState {\n  kind: 'age-gated';\n  thread: PublicThreadSummary;\n  bun: PublicBunSummary | null;\n  viewer: PageViewer;\n  done: DoneFlag | null;\n}\n\n/** The retry page for a failed read (unknown thread or comment read outage). */\nexport interface ErrorCommentsPageState {\n  kind: 'error';\n  /** The local id from the request URL, for the retry link. */\n  threadId: string;\n}\n\n/**\n * Everything the thread-comments page can render, one variant per page shape.\n * Session and read-context failures deliberately fold to the signed-out\n * default view (an expired or absent session is a normal signed-out page,\n * never an error), so they carry no extra state to render.\n */\nexport type CommentsPageState =\n  | ReadyCommentsPageState\n  | NotFoundCommentsPageState\n  | TakenDownCommentsPageState"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_thread_loader", "anchor_thread_states"],
+            "diagramId": "diagram_thread_page",
+            "nodeIds": ["node_loader", "node_renderer"],
+            "edgeIds": ["edge_controller_loader", "edge_loader_renderer"]
+          }
+        },
+        {
+          "id": "beat_request_05",
+          "title": "The query owns the read model",
+          "narration": "CommentThreadQuery is the read model. It fetches a thread's records, resolves moderation state for the viewer in front of it, orders root comments, and walks replies into a tree. The local index is consulted first, and the PDS covers unknown or legacy entries. The query composes the conversation; it does not render it.",
+          "durationMs": 42000,
+          "anchors": [
+            {
+              "id": "anchor_comment_query",
+              "path": "apps/api/src/comments/comment-thread.query.ts",
+              "symbol": "CommentThreadQuery",
+              "lines": {
+                "start": 63,
+                "end": 100
+              },
+              "contentHash": "sha256:a9d5bff6f93b3f1e4386e01306d0a25b7be07e3683751fb072591c5b916b6fa8",
+              "label": "CommentThreadQuery",
+              "language": "typescript",
+              "excerpt": "export class CommentThreadQuery {\n  constructor(\n    @Inject(AtprotoCommentPdsAdapter)\n    // Only the read half of the adapter is needed here; writes go through CommentsService.\n    private readonly store: AtprotoCommentReader,\n    @Inject(LocalCommentIndexStore)\n    private readonly index: CommentIndexStore,\n    // The shared rescan scope is a REQUIRED constructor dependency, not an\n    // optional nicety: a query without a scope could not honor the\n    // one-crawl-per-interval invariant, so none can be built without one.\n    private readonly rescans: EmptyThreadRescanScope,\n  ) {}\n\n  async listThread(\n    threadId: string,\n    viewer: CommentThreadViewer = 'public',\n    sort: CommentSortKey = DEFAULT_COMMENT_SORT,\n    relations?: ViewerReadView,\n  ): Promise<CommentNode[]> {\n    const thread = parseThreadId(threadId);\n    // The moderation maps are only meaningful to the viewers that render\n    // moderation state: public tree nodes carry neither key at all, so\n    // nothing downstream — page, JSON read, spec — can even hint at the\n    // state.\n    const { records, takenDownAtById, contentLabelById } =\n      await this.commentsForThread(thread, viewer);\n    const byId = new Map(records.map((comment) => [comment.id, comment]));\n    // Viewer relations (issues/0014) apply to every non-moderation viewer\n    // when the caller resolved them for a signed-in session: moderation\n    // actors see everything, and an anonymous read has nobody to enforce\n    // for. The relation is resolved per node in toTreeNode, so the cut and\n    // the placeholder keep the node's tree position (third-party replies\n    // under a blocked author stay visible).\n    const relationOf =\n      relations && viewer !== 'moderation'\n        ? (authorDid: string): 'muted' | 'blocked' | undefined =>\n            relations.blockedWith.has(authorDid)\n              ? 'blocked'"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_comment_query"],
+            "diagramId": "diagram_thread_page",
+            "nodeIds": ["node_query", "node_index", "node_pds"],
+            "edgeIds": ["edge_loader_query", "edge_query_index", "edge_query_pds"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "chapter_write_path",
+      "title": "From comment to record",
+      "summary": "Identity, validation, the PDS write, the local index upsert, and the single writer that invalidates caches.",
+      "diagrams": [
+        {
+          "id": "diagram_write_path",
+          "kind": "flow",
+          "title": "The comment write path",
+          "nodes": [
+            {
+              "id": "node_guard",
+              "label": "OAuthSessionGuard",
+              "type": "class",
+              "anchorId": "anchor_oauth_guard"
+            },
+            {
+              "id": "node_service",
+              "label": "CommentsService",
+              "type": "class",
+              "anchorId": "anchor_comments_create"
+            },
+            {
+              "id": "node_adapter",
+              "label": "PDS adapter",
+              "type": "class",
+              "anchorId": "anchor_pds_create"
+            },
+            {
+              "id": "node_pds",
+              "label": "ATProto PDS",
+              "type": "external",
+              "anchorId": "anchor_readme_overview"
+            },
+            {
+              "id": "node_writer",
+              "label": "IndexWriter",
+              "type": "class",
+              "anchorId": "anchor_index_writer"
+            },
+            {
+              "id": "node_index",
+              "label": "Local index",
+              "type": "store",
+              "anchorId": "anchor_readme_overview"
+            },
+            {
+              "id": "node_cache",
+              "label": "Read cache",
+              "type": "store"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_guard_service",
+              "from": "node_guard",
+              "to": "node_service",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_service_adapter",
+              "from": "node_service",
+              "to": "node_adapter",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_adapter_pds",
+              "from": "node_adapter",
+              "to": "node_pds",
+              "kind": "writes"
+            },
+            {
+              "id": "edge_service_writer",
+              "from": "node_service",
+              "to": "node_writer",
+              "kind": "writes"
+            },
+            {
+              "id": "edge_writer_index",
+              "from": "node_writer",
+              "to": "node_index",
+              "kind": "writes"
+            },
+            {
+              "id": "edge_writer_cache",
+              "from": "node_writer",
+              "to": "node_cache",
+              "kind": "emits",
+              "label": "invalidate"
+            }
+          ]
+        }
+      ],
+      "beats": [
+        {
+          "id": "beat_write_01",
+          "title": "Identity comes from proof, not from input",
+          "narration": "Writes begin with identity. OAuthSessionGuard restores the persisted OAuth session, resolves the author, and attaches that author to the request. Downstream code never accepts an author from the request body, which is the difference between an authenticated write and a hopeful one.",
+          "durationMs": 38000,
+          "anchors": [
+            {
+              "id": "anchor_oauth_guard",
+              "path": "apps/api/src/atproto/oauth-session.guard.ts",
+              "symbol": "OAuthSessionGuard",
+              "lines": {
+                "start": 88,
+                "end": 117
+              },
+              "contentHash": "sha256:8c920f89146af7a2605828299d9e434d4350685579e6eecf905510267d5b2754",
+              "label": "OAuthSessionGuard",
+              "language": "typescript",
+              "excerpt": "@Injectable()\n/** Guards write endpoints by restoring a persisted OAuth session for the DID stored in the session cookie. */\nexport class OAuthSessionGuard implements CanActivate {\n  // Both ports are required (Phase 9 A3 convention): the guard used to\n  // tolerate absence by raw-constructing the Prisma resolver in its body — a\n  // manual store `new` outside any factory that hid a hard dependency behind\n  // optional-looking DI. OAuthSessionModule now supplies the one instance of\n  // each.\n  constructor(\n    private readonly resolver: OAuthSessionAuthorPort,\n    private readonly presence: OAuthSessionPresencePort,\n  ) {}\n\n  async canActivate(context: ExecutionContext): Promise<boolean> {\n    const request = context\n      .switchToHttp()\n      .getRequest<\n        Request & { [ATPROTO_AUTHOR_REQUEST_PROPERTY]?: AtprotoRequestAuthor }\n      >();\n    const author = await this.extractAuthor(request);\n\n    if (!author) {\n      throw new UnauthorizedException(\n        'A valid ATProto OAuth session is required. Please sign in again.',\n      );\n    }\n\n    request[ATPROTO_AUTHOR_REQUEST_PROPERTY] = author;\n    return true;\n  }"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_oauth_guard"],
+            "diagramId": "diagram_write_path",
+            "nodeIds": ["node_guard", "node_service"],
+            "edgeIds": ["edge_guard_service"]
+          }
+        },
+        {
+          "id": "beat_write_02",
+          "title": "The service orders the write",
+          "narration": "CommentsService.create validates the text, thread, and parent, computes the root, calls the PDS adapter, then upserts the local index. The author came from the guard; the service does not re-derive it from the payload. The order matters: the record exists before the index claims it does.",
+          "durationMs": 40000,
+          "anchors": [
+            {
+              "id": "anchor_comments_create",
+              "path": "apps/api/src/comments/comments.service.ts",
+              "symbol": "CommentsService.create",
+              "lines": {
+                "start": 111,
+                "end": 137
+              },
+              "contentHash": "sha256:832a9a14c334bb641933e95e7e0fd8835345ee595e6fd5e8bc3bd712a3d93fab",
+              "label": "CommentsService.create",
+              "language": "typescript",
+              "excerpt": "  /** Creates a comment whose identity always comes from the authenticated author, never from client input. */\n  async create(\n    input: CreateCommentInput,\n    author: AtprotoRequestAuthor,\n  ): Promise<CommentRecord> {\n    const text = this.parseText(input.text);\n    const threadId = parseThreadId(input.threadId);\n    await this.assertThreadAcceptsComments(threadId);\n    const parent = await this.resolveParent(input.parentId, threadId);\n    const rootId = parent ? (parent.rootId ?? parent.id) : null;\n\n    const created = await this.store.create({\n      author: author.handle,\n      text,\n      threadId,\n      parentId: parent ? parent.id : null,\n      rootId,\n      metadata: {\n        authorDid: author.did,\n        authorHandle: author.handle,\n        userId: input.userId ?? null,\n        bunId: input.bunId ?? null,\n      },\n    });\n    await this.index.upsert(created);\n    return created;\n  }"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_comments_create"],
+            "diagramId": "diagram_write_path",
+            "nodeIds": ["node_service", "node_adapter", "node_writer"],
+            "edgeIds": ["edge_service_adapter", "edge_service_writer"]
+          }
+        },
+        {
+          "id": "beat_write_03",
+          "title": "The adapter is the PDS seam",
+          "narration": "AtprotoCommentPdsAdapter.create builds the ATProto record with the thread, parent, root, author, and timestamps, then calls com.atproto.repo.createRecord on the author's agent. The adapter is the only place that knows the collection name and the repository call, which keeps the PDS shape out of the service.",
+          "durationMs": 42000,
+          "anchors": [
+            {
+              "id": "anchor_pds_create",
+              "path": "apps/api/src/comments/atproto-comment-writer.ts",
+              "symbol": "AtprotoCommentPdsAdapter.create",
+              "lines": {
+                "start": 201,
+                "end": 243
+              },
+              "contentHash": "sha256:cfbe4c62f077a4fb7081de402e0d693aaea9846de81806e9aa5dd6e222c1abb8",
+              "label": "AtprotoCommentPdsAdapter.create",
+              "language": "typescript",
+              "excerpt": "  async create(input: AtprotoCommentWriteInput): Promise<CommentRecord> {\n    return this.telemetry.pdsCall(\n      'AtprotoCommentPdsAdapter.create',\n      {\n        operation: 'createRecord',\n        userDid: input.metadata?.authorDid,\n        tags: { threadId: input.threadId },\n      },\n      () => this.createUnspanned(input),\n    );\n  }\n\n  private async createUnspanned(\n    input: AtprotoCommentWriteInput,\n  ): Promise<CommentRecord> {\n    const authorDid =\n      input.metadata?.authorDid ?? (await this.resolveDid(input.author));\n    const authorHandle =\n      input.metadata?.authorHandle ??\n      (await this.resolveHandle(authorDid)) ??\n      input.author;\n    const agent = await this.oauthAgentForDid(authorDid);\n    const rkey = randomUUID();\n    const timestamp = new Date().toISOString();\n    const record = {\n      $type: COMMENT_COLLECTION,\n      text: input.text,\n      threadId: input.threadId,\n      parentId: input.parentId,\n      rootId: input.rootId,\n      authorDid,\n      authorHandle,\n      userId: input.metadata?.userId ?? null,\n      bunId: input.metadata?.bunId ?? null,\n      createdAt: timestamp,\n      updatedAt: timestamp,\n    };\n    const response = await agent.api.com.atproto.repo.createRecord({\n      repo: authorDid,\n      collection: COMMENT_COLLECTION,\n      rkey,\n      record,\n    });"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_pds_create"],
+            "diagramId": "diagram_write_path",
+            "nodeIds": ["node_adapter", "node_pds"],
+            "edgeIds": ["edge_adapter_pds"]
+          }
+        },
+        {
+          "id": "beat_write_04",
+          "title": "One writer invalidates the cache",
+          "narration": "IndexWriter is the single write path for the local index. Each write invalidates the affected cache shape before the write resolves, so a reader never sees a stale shape after a successful mutation. Comments, threads, and tags all ride the same writer, which is how invalidation stays honest across features.",
+          "durationMs": 42000,
+          "anchors": [
+            {
+              "id": "anchor_index_writer",
+              "path": "apps/api/src/sync/index-writer.ts",
+              "symbol": "IndexWriter",
+              "lines": {
+                "start": 186,
+                "end": 216
+              },
+              "contentHash": "sha256:1998c987ec122c5a79884112120e89d40bbf0fb4c4b7f9e304e6174603ef25de",
+              "label": "IndexWriter",
+              "language": "typescript",
+              "excerpt": "export class IndexWriter implements IndexWriteDelegate {\n  constructor(\n    private readonly threads: ThreadIndexWriteTarget,\n    private readonly comments: CommentIndexWriteTarget,\n    private readonly tags: TagIndexWriteTarget,\n    private readonly onInvalidated?: InvalidationSink,\n  ) {}\n\n  async upsertThread(record: ThreadRecord): Promise<ThreadIndexEntry> {\n    const entry = await this.threads.upsert(record);\n    invalidateThreadScope(this.onInvalidated, record.bunId);\n    return entry;\n  }\n\n  async reconcileThreads(\n    bunId: string,\n    records: ThreadRecord[],\n  ): Promise<void> {\n    await this.threads.reconcile(bunId, records);\n    // A reconcile may prune rows as well as upsert, so the bun's whole thread\n    // shape is stale regardless of what the records contained.\n    invalidateThreadScope(this.onInvalidated, bunId);\n  }\n\n  async deleteThread(atprotoUri: string): Promise<void> {\n    // Resolve the bun before the delete: after it, the row is gone and the\n    // bun whose cached shape needs evicting is unknowable.\n    const [entry] = await this.threads.listByAtprotoUris([atprotoUri]);\n    await this.threads.deleteByAtprotoUri(atprotoUri);\n    invalidateThreadScope(this.onInvalidated, entry?.bunId);\n  }"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_index_writer"],
+            "diagramId": "diagram_write_path",
+            "nodeIds": ["node_writer", "node_index", "node_cache"],
+            "edgeIds": ["edge_writer_index", "edge_writer_cache"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "chapter_index_health",
+      "title": "Keeping the index honest",
+      "summary": "The worker thread, the reconcilers, and the cross-cutting tag service that keep local state in step with the PDS.",
+      "diagrams": [
+        {
+          "id": "diagram_sync",
+          "kind": "architecture",
+          "title": "The sync loop",
+          "nodes": [
+            {
+              "id": "node_worker",
+              "label": "Sync worker",
+              "type": "service",
+              "anchorId": "anchor_sync_worker"
+            },
+            {
+              "id": "node_reconciler",
+              "label": "Reconcilers",
+              "type": "class",
+              "anchorId": "anchor_thread_reconciler"
+            },
+            {
+              "id": "node_pds",
+              "label": "ATProto PDS",
+              "type": "external",
+              "anchorId": "anchor_readme_overview"
+            },
+            {
+              "id": "node_writer",
+              "label": "IndexWriter",
+              "type": "class",
+              "anchorId": "anchor_index_writer"
+            },
+            {
+              "id": "node_index",
+              "label": "Local index",
+              "type": "store",
+              "anchorId": "anchor_readme_overview"
+            },
+            {
+              "id": "node_main",
+              "label": "Main process",
+              "type": "service"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_worker_reconciler",
+              "from": "node_worker",
+              "to": "node_reconciler",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_reconciler_pds",
+              "from": "node_reconciler",
+              "to": "node_pds",
+              "kind": "reads"
+            },
+            {
+              "id": "edge_worker_writer",
+              "from": "node_worker",
+              "to": "node_writer",
+              "kind": "calls"
+            },
+            {
+              "id": "edge_writer_index",
+              "from": "node_writer",
+              "to": "node_index",
+              "kind": "writes"
+            },
+            {
+              "id": "edge_worker_main",
+              "from": "node_worker",
+              "to": "node_main",
+              "kind": "emits",
+              "label": "invalidation"
+            }
+          ]
+        }
+      ],
+      "beats": [
+        {
+          "id": "beat_index_01",
+          "title": "The worker owns the writes",
+          "narration": "The sync worker runs in its own thread with its own Prisma client. It owns the IndexWriter, posts invalidation events to the main process, and runs the reconcilers. That is why the worker never touches the main process's read-through cache: it has no request context and no business seeing another thread's memory.",
+          "durationMs": 40000,
+          "anchors": [
+            {
+              "id": "anchor_sync_worker",
+              "path": "apps/api/src/sync/sync-worker.worker.ts",
+              "symbol": "sync-worker.worker",
+              "lines": {
+                "start": 31,
+                "end": 51
+              },
+              "contentHash": "sha256:a080b0ec222777eb4db34cf05d62abae0e4c6ea6b5b9d872a6b54dcf8235362b",
+              "label": "Sync worker entry",
+              "language": "typescript",
+              "excerpt": "const port = parentPort;\n\nif (port) {\n  // The writer owns its own (delegate-free) adapters: in this thread it IS the\n  // writer, so routing its own methods back into itself would recurse. The\n  // thread index gets the raw tag-index store as its join cleaner (F1.4): a\n  // tagged thread's prune must sweep the joins before the row delete, or the\n  // Restrict foreign key throws. The same tag store instance is the writer's\n  // tag target (B2): one adapter, two roles, one writer.\n  const tagIndex = new PrismaTagIndexStore();\n  const writer = new IndexWriter(\n    new PrismaThreadIndexStore(undefined, undefined, tagIndex),\n    new PrismaCommentIndexPersistence(),\n    tagIndex,\n    (shapes) => {\n      port.postMessage({\n        type: 'index-invalidated',\n        shapes,\n      } satisfies SyncWorkerResponse);\n    },\n  );"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_sync_worker"],
+            "diagramId": "diagram_sync",
+            "nodeIds": ["node_worker", "node_writer", "node_main"],
+            "edgeIds": ["edge_worker_writer", "edge_worker_main"]
+          }
+        },
+        {
+          "id": "beat_index_02",
+          "title": "Reconcile is a bounded batch",
+          "narration": "ThreadReconciler lists a bun's thread records from the PDS and hands them to the writer's reconcile. A bun whose credentials vanished is skipped, so one unreadable bun does not stop the rest of the batch. Each step is timed and reported, which is how a background loop becomes observable instead of mysterious.",
+          "durationMs": 40000,
+          "anchors": [
+            {
+              "id": "anchor_thread_reconciler",
+              "path": "apps/api/src/sync/thread-reconciler.ts",
+              "symbol": "ThreadReconciler",
+              "lines": {
+                "start": 89,
+                "end": 119
+              },
+              "contentHash": "sha256:d7569e8a0ac1894d93cee6a73dc73922e3b928af2b4c4a1b91272bd01101c482",
+              "label": "ThreadReconciler",
+              "language": "typescript",
+              "excerpt": "export class ThreadReconciler {\n  constructor(\n    private readonly buns: ReconcileBunSource,\n    private readonly threads: ReconcileThreadSource,\n    private readonly writer: ReconcileWriter,\n    private readonly reportStep?: ReconcileStepReporter,\n  ) {}\n\n  /**\n   * Reconciles the named buns and returns how many were processed. A bun whose\n   * credentials vanished is skipped rather than failing the whole batch — one\n   * unreadable bun must not stop the rest of the sync cycle. The PDS listing and\n   * the index write are each timed and reported (F1.5) so the periodic sync's\n   * per-step cost is visible without trace spans in the worker.\n   */\n  async reconcileBuns(bunIds: string[]): Promise<number> {\n    let reconciled = 0;\n    for (const bunId of bunIds) {\n      const credentials = await this.buns.findCredentials(bunId);\n      if (!credentials) {\n        continue;\n      }\n      const records = await this.timedStep('list-threads', () =>\n        this.threads.list(bunId, credentials),\n      );\n      await this.timedStep('write-reconcile', () =>\n        this.writer.reconcileThreads(bunId, records),\n      );\n      reconciled += 1;\n    }\n    return reconciled;"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_thread_reconciler"],
+            "diagramId": "diagram_sync",
+            "nodeIds": ["node_reconciler", "node_pds"],
+            "edgeIds": ["edge_reconciler_pds"]
+          }
+        },
+        {
+          "id": "beat_index_03",
+          "title": "Tags are a hub, not a controller",
+          "narration": "TagService resolves the actor's standing, writes the repository record or local audit row through the index write seam, and keeps the tag index in step. It is a hub of ports, not a controller. That shape is what lets tags, moderation, and the index share one write path without importing each other's modules.",
+          "durationMs": 40000,
+          "anchors": [
+            {
+              "id": "anchor_tag_service",
+              "path": "apps/api/src/tags/tag.service.ts",
+              "symbol": "TagService",
+              "lines": {
+                "start": 197,
+                "end": 235
+              },
+              "contentHash": "sha256:345094b332e397a656d009d66a3a55ae6ed9123ba6955d692e0b9c6f07db3a5e",
+              "label": "TagService",
+              "language": "typescript",
+              "excerpt": "export class TagService implements TagReaderPort {\n  // The @Inject class tokens are required because these parameters are consumed\n  // behind interface seams, which compile to `Object` in the DI metadata (the\n  // Phase 2 lesson).\n  constructor(\n    private readonly bunsService: BunsService,\n    private readonly privilegeService: PrivilegeService,\n    private readonly adminAuth: AppAdminAuthService,\n    private readonly sessionPageUsers: SessionPageUserService,\n    private readonly privileges: PrismaUserPrivilegeLookup,\n    @Inject(AtprotoTagsStore)\n    private readonly pds: TagsPdsStore,\n    @Inject(PrismaTagIndexStore)\n    private readonly index: TagIndexStore,\n    @Inject(PrismaThreadIndexStore)\n    private readonly threadIndex: ThreadIndexStore,\n    // The comment index read slice (Phase 11 Track A): resolves a comment\n    // subject to its row and gathers the bun's comment scope for reconcile.\n    // Injected behind the concrete class token like the other store seams.\n    @Inject(PrismaCommentIndexPersistence)\n    private readonly commentIndex: CommentIndexPersistence,\n    // The User table access path (Phase 9 C6): resolves a user-subject tag's\n    // User row id to the account the join points at.\n    @Inject(PrismaUserRepository)\n    private readonly users: UserRepository,\n    // Interface-typed behind the concrete class token (the established Nest\n    // pattern for store seams in this codebase).\n    @Inject(PrismaTagAuditStore)\n    private readonly audit: TagAuditStore,\n    // The single-writer delegate (Phase 9 B2): every index WRITE rides it to\n    // the worker's IndexWriter; reads stay on `index`. Optional so specs can\n    // construct the service directly and exercise the raw store path — the\n    // store satisfies the same write shape, which is the fold's point. (Typed\n    // as the full delegate, not a Pick slice: the @Optional+@Inject+Pick\n    // triple is the exact idiom the Phase 9 Q10 DI-hygiene ban removes.)\n    @Optional()\n    @Inject(IndexWriteClient)\n    private readonly writes?: IndexWriteDelegate,\n  ) {}"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_tag_service"],
+            "diagramId": "diagram_sync",
+            "nodeIds": ["node_worker", "node_reconciler", "node_index"],
+            "edgeIds": ["edge_worker_reconciler", "edge_writer_index"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "chapter_web",
+      "title": "The browser island",
+      "summary": "One bundle, a data-island registry, and the comment composer that keeps drafts alive across sessions.",
+      "diagrams": [
+        {
+          "id": "diagram_web_islands",
+          "kind": "architecture",
+          "title": "Islands on a page",
+          "nodes": [
+            {
+              "id": "node_page",
+              "label": "Server-rendered page",
+              "type": "file"
+            },
+            {
+              "id": "node_bundle",
+              "label": "Island bundle",
+              "type": "module",
+              "anchorId": "anchor_web_main"
+            },
+            {
+              "id": "node_islands",
+              "label": "Islands",
+              "type": "client",
+              "anchorId": "anchor_composer"
+            },
+            {
+              "id": "node_api",
+              "label": "Same-origin API",
+              "type": "service"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_page_bundle",
+              "from": "node_page",
+              "to": "node_bundle",
+              "kind": "renders"
+            },
+            {
+              "id": "edge_bundle_islands",
+              "from": "node_bundle",
+              "to": "node_islands",
+              "kind": "contains"
+            },
+            {
+              "id": "edge_islands_api",
+              "from": "node_islands",
+              "to": "node_api",
+              "kind": "calls"
+            }
+          ]
+        }
+      ],
+      "beats": [
+        {
+          "id": "beat_web_01",
+          "title": "One bundle, named islands",
+          "narration": "The web client is one Svelte island bundle. main.ts maps data-island names to components and mounts them; unknown island names are ignored, so a stale cached bundle never breaks a newer page. There is no per-page script wiring and no client-side router standing between the reader and the HTML.",
+          "durationMs": 36000,
+          "anchors": [
+            {
+              "id": "anchor_web_main",
+              "path": "apps/web/src/main.ts",
+              "symbol": "mountIslands",
+              "lines": {
+                "start": 17,
+                "end": 46
+              },
+              "contentHash": "sha256:feb03153bfd4d7303b51dae14233ac9b194875e89dd84250f1d3399919b31702",
+              "label": "Island registry",
+              "language": "typescript",
+              "excerpt": "/** Islands the bundle can mount, keyed by the `data-island` attribute value. */\nconst islandRegistry = {\n  hello: Hello,\n  'comment-composer': CommentComposer,\n  'comment-tools': CommentTools,\n  'miller-columns': MillerColumns,\n  'thread-manager': ThreadManager,\n} as const;\n\n/**\n * Mounts every registered island found under `root`.\n *\n * Important: unknown `data-island` names are deliberately ignored (not thrown)\n * so a stale cached bundle never breaks a page that references a newer island.\n */\nexport function mountIslands(root: ParentNode = document): void {\n  const hosts = root.querySelectorAll<HTMLElement>('[data-island]');\n  for (const host of hosts) {\n    const name = host.dataset['island'];\n    if (name === undefined || !(name in islandRegistry)) {\n      continue;\n    }\n    mount(islandRegistry[name as keyof typeof islandRegistry], {\n      target: host,\n      // data-* attributes become props (dataset camelCases the names), so\n      // pages configure islands through markup alone — no per-island glue.\n      props: { ...host.dataset },\n    });\n  }\n}"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_web_main"],
+            "diagramId": "diagram_web_islands",
+            "nodeIds": ["node_page", "node_bundle", "node_islands"],
+            "edgeIds": ["edge_page_bundle", "edge_bundle_islands"]
+          }
+        },
+        {
+          "id": "beat_web_02",
+          "title": "A draft that survives the session",
+          "narration": "The comment composer keeps a sessionStorage mirror and a server copy of the draft, then reconciles newer-wins so a failed request never loses the later edit. Preview goes through the server's sanitization pipeline, and the reply composer floats with keyboard controls as the primary path.",
+          "durationMs": 40000,
+          "anchors": [
+            {
+              "id": "anchor_composer",
+              "path": "apps/web/src/islands/comment-composer/CommentComposer.svelte",
+              "symbol": "CommentComposer",
+              "lines": {
+                "start": 28,
+                "end": 67
+              },
+              "contentHash": "sha256:9109c6987f7086b9c773391b0c229e7202cf2438ef56ec62193a5e3b07afe28a",
+              "label": "CommentComposer",
+              "language": "svelte",
+              "excerpt": "<script lang=\"ts\">\n  import { onMount } from 'svelte';\n  import {\n    apiFetch,\n    clearDraft,\n    getComposerLayout,\n    getDraft,\n    saveComposerLayout,\n    saveDraft,\n  } from '../../lib/api.js';\n\n  let {\n    threadLocalId,\n    parentId = '',\n    maxLength,\n  }: {\n    threadLocalId?: string;\n    parentId?: string;\n    // The comment-text bound from the server's mount payload (Phase 9 B4,\n    // `data-max-length` in thread-page-render.ts, source constant\n    // apps/api/src/comments/comment-limits.ts). Why a prop and not a literal:\n    // the number exists once on the server; if a future page forgot the\n    // attribute, the textarea simply loses its client-side cap and the API's\n    // 400 message stays the single enforcement point.\n    maxLength?: string;\n  } = $props();\n\n  /** Idle window before a keystroke is written to the server; long enough to coalesce typing, short enough to survive a crash. */\n  const DRAFT_DEBOUNCE_MS = 500;\n  /** The responsive baseline breakpoint (shared `main` is max-width: 760px); below it the reply box docks. */\n  const MOBILE_BREAKPOINT_QUERY = '(max-width: 760px)';\n  const ROOT_PARENT_KEY = 'root';\n  const MOVE_STEP = 10;\n  const MIN_BOX_WIDTH = 220;\n  const MIN_BOX_HEIGHT = 140;\n\n  const draftKey = `bunbun-draft-${threadLocalId ?? ''}-${parentId || ROOT_PARENT_KEY}`;\n  const fieldId = `comment-text-${parentId || ROOT_PARENT_KEY}`;\n  /** Only the reply instance floats; the root composer is the inline form. */\n  const floating = $derived(Boolean(parentId));"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_composer"],
+            "diagramId": "diagram_web_islands",
+            "nodeIds": ["node_islands", "node_api"],
+            "edgeIds": ["edge_islands_api"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "chapter_where_next",
+      "title": "Where to go next",
+      "summary": "The docs index and the verification commands that keep a contribution honest.",
+      "diagrams": [
+        {
+          "id": "diagram_extension",
+          "kind": "flow",
+          "title": "A contribution loop",
+          "nodes": [
+            {
+              "id": "node_question",
+              "label": "Question",
+              "type": "note"
+            },
+            {
+              "id": "node_docs",
+              "label": "Guides",
+              "type": "file",
+              "anchorId": "anchor_docs_index"
+            },
+            {
+              "id": "node_code",
+              "label": "Feature module",
+              "type": "module"
+            },
+            {
+              "id": "node_verify",
+              "label": "Verify",
+              "type": "function"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_question_docs",
+              "from": "node_question",
+              "to": "node_docs",
+              "kind": "depends"
+            },
+            {
+              "id": "edge_docs_code",
+              "from": "node_docs",
+              "to": "node_code",
+              "kind": "depends"
+            },
+            {
+              "id": "edge_code_verify",
+              "from": "node_code",
+              "to": "node_verify",
+              "kind": "calls"
+            }
+          ]
+        }
+      ],
+      "beats": [
+        {
+          "id": "beat_next_01",
+          "title": "The docs index is the map",
+          "narration": "The documentation index is the canonical map of the project. It lists feature guides for accounts, buns, comments, threads, preferences, and feeds, and cross-cutting guides for admin, moderation, cache and sync, identity, accessibility, and the browser tier. When behavior changes, the relevant guide changes with it.",
+          "durationMs": 36000,
+          "anchors": [
+            {
+              "id": "anchor_docs_index",
+              "path": "docs/README.md",
+              "lines": {
+                "start": 7,
+                "end": 30
+              },
+              "contentHash": "sha256:6391782d26006369805245504c3a0908fe89012f3cb3daa66a746e8b26b5ce44",
+              "label": "Docs index",
+              "language": "markdown",
+              "excerpt": "\n- [Accounts](./accounts.md) — creating and importing ATProto accounts, example devnet accounts\n- [Buns](./buns.md) — discussion groups: provisioning, credentials, deletion\n- [Comments](./comments.md) — thread-aware comments and replies, authentication, edit history with revisions and diffs, block anchors and line links, integrity verification, viewer relations (mute/block), and the local read index\n- [Threads](./threads.md) — admin thread lifecycle stored in each bun's ATProto repo, with name/description edit history\n- [Preferences](./preferences.md) — the user account's per-DID preferences, the settings page, and the composer-layout JSON API\n- [RSS feeds](./feeds.md) — the bun threads feed and the opt-in per-user comments feed, their item shape, visibility rules, and discovery\n\n## Cross-cutting guides\n\n- [Admin area](./admin.md) — admin login, sessions, dashboard, user and settings management\n- [Moderation](./moderation.md) — the moderator dashboard, takedown/restore actions, the actor model, and the audit trail\n- [Jurisdiction rules](./jurisdiction.md) — versioned, append-only per-country rules that adjust the effective read view, and the `/admin/jurisdiction` surface\n- [Osprey integration](./osprey.md) — the automated-moderation seam: the `POST /osprey/proposals` intake, how proposals become open cases attributed to automation, and the live devnet runbook\n- [Accessibility](./accessibility.md) — the axe gate (`pnpm test:a11y`), the audited page × state matrix, the fixed 0-critical/0-serious threshold, and the keyboard checklist\n- [Consultation](./consultation.md) — the consultation process for disabled, LGBTQ+, and neurodivergent people: who is consulted, recruitment, cadence, and how findings become first-class `issues/` tickets\n- [Harm minimization](./harm-minimization.md) — the design-review template that discourages bullying and dogpiling before moderation is asked to help, the private-groups spike input, and the pilot review of the thread/comment surface\n- [Cache and sync](./cache.md) — the Postgres index as the persistent cache, the single index writer (worker thread or in-process), the bounded TTL read-through cache, and event-based invalidation\n- [Settings](./settings.md) — the settings registry, tiers, secrets, and full catalog\n- [Identity and authentication](./identity-and-auth.md) — OAuth session auth, encryption at rest, startup checks, PDS resolution\n- [Health and observability](./health-and-observability.md) — `/health` checks, home page, unhandled route errors (the global exception filter), Observe integration\n- [Web client](./web-client.md) — the `apps/web` Svelte island bundle, same-origin `/fonts` and `/islands` mounts, the island API wrapper, and the `/columns` Miller-columns browse view\n- [Web styling](./web-styling.md) — the shared stylesheet, page skeleton, and breadcrumbs\n- [Browser acceptance tests](./browser-acceptance.md) — the opt-in Playwright tier (`pnpm test:browser`), its devnet prerequisites, and its configuration decisions"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_docs_index"],
+            "diagramId": "diagram_extension",
+            "nodeIds": ["node_question", "node_docs"],
+            "edgeIds": ["edge_question_docs"]
+          }
+        },
+        {
+          "id": "beat_next_02",
+          "title": "Verification is part of the change",
+          "narration": "To extend Bunbun, add a feature module, wire it in AppModule, add a page or island, and verify it with the project's own commands. Typecheck, lint, the unit suite, the browser tier, and the canonical dev server are not optional ceremony. They are how the next reader can trust the story you just told.",
+          "durationMs": 40000,
+          "anchors": [
+            {
+              "id": "anchor_agents_commands",
+              "path": "AGENTS.md",
+              "lines": {
+                "start": 126,
+                "end": 140
+              },
+              "contentHash": "sha256:0e905c86f31e2d71427e432d9f8f3a9d04558fcd5770ffc6806ff3bb4160c5dc",
+              "label": "Project commands",
+              "language": "markdown",
+              "excerpt": "## Commands\n\n- Install: `pnpm install`. Setup, env keys, and the devnet overlay are documented in [README.md](README.md).\n- All scripts below run from the repo root (root `package.json` delegates to `@bunbun/api` via `pnpm --filter`) or from `apps/api/`; the devnet command's `./data/root.crt` resolves against `apps/api/data/`.\n- Dev server, internet profile (the canonical verification command): `PORT=3001 pnpm start:dev` — runs against the public ATProto network, no CA or devnet env needed.\n- Dev server, devnet profile: `PORT=3001 pnpm start:localdev` — sets `ATPROTO_ENV=localdev` and `NODE_EXTRA_CA_CERTS=./data/root.crt` itself, and requires the atmosphereinabox sandbox plus a `.env.localdev` overlay (see [README.md](README.md)).\n- Dev server ports are 3001–3003. An agent may always kill any process listening on one of those ports to free it: the developer never starts the dev server by hand while an agent is working, so processes on those ports are safe to stop (restart the canonical command afterwards).\n- Lint: `pnpm lint` (oxlint with type-aware rules) · Format: `pnpm format`\n- Web island bundle: `pnpm --filter @bunbun/web build` (emits `apps/web/dist` + vite manifest, served at `/islands`) · `pnpm --filter @bunbun/web test` (its vitest suite). Not required for the API to boot — a missing build is skipped gracefully.\n- Unit tests: `pnpm --filter @bunbun/api exec vitest run <relevant-path>` (or `pnpm test` for the full suite). The default config matches only `**/*.spec.ts` (colocated specs).\n- E2E tests: `pnpm test:e2e` (config matches `**/*.e2e-spec.ts`).\n- Browser acceptance (Playwright, opt-in): `pnpm test:browser` — needs a running server (`127.0.0.1:3001`) and, for the authenticated specs, the atmosphereinabox devnet; skips cleanly when the devnet is down. Comment-writing spec is opt-in via `BUNBUN_ACCEPTANCE_ALLOW_WRITES=1`. See `docs/browser-acceptance.md`.\n- Database contract changes: `pnpm contract:emit && pnpm contract:patch-types` (see below).\n- Local ATProto sandbox: driven by `deno task sandbox ...` in the separate atmosphereinabox project (see [README.md](README.md)).\n"
+            }
+          ],
+          "stage": {
+            "anchorIds": ["anchor_agents_commands"],
+            "diagramId": "diagram_extension",
+            "nodeIds": ["node_code", "node_verify"],
+            "edgeIds": ["edge_code_verify"]
+          }
+        }
+      ]
+    }
+  ]
+}

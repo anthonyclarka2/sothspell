@@ -91,10 +91,10 @@ justify the harness seam.
    ```
 2. Implement:
    ```ts
-   import { Plugin } from "@opencode/plugin";
+   import { Plugin } from '@opencode/plugin';
 
    export default Plugin.define({
-     id: "sothspell",
+     id: 'sothspell',
      async setup(ctx) {
        return async () => {
          // cleanup: close RPC, stop the server if this plugin started it
@@ -230,7 +230,7 @@ justify the harness seam.
    `opencode.json`:
    ```jsonc
    {
-     "plugins": [{ "package": "@sothspell/opencode-plugin", "options": {} }]
+     "plugins": [{ "package": "@sothspell/opencode-plugin", "options": {} }],
    }
    ```
 2. Start OpenCode V2; verify:

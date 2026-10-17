@@ -1,0 +1,348 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 96
+    },
+    "subtitle": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "audience": {
+      "type": "string",
+      "enum": ["new-contributor", "technical-evaluator", "maintainer"]
+    },
+    "project": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 96
+        },
+        "revision": {
+          "type": "object",
+          "properties": {
+            "commit": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 64
+            },
+            "branch": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "dirty": {
+              "type": "boolean"
+            }
+          },
+          "required": ["commit", "branch", "dirty"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["slug", "name", "revision"],
+      "additionalProperties": false
+    },
+    "estimatedDurationMs": {
+      "type": "integer",
+      "minimum": 60000,
+      "maximum": 3600000
+    },
+    "chapters": {
+      "minItems": 1,
+      "maxItems": 12,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 96
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 400
+          },
+          "diagrams": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": ["architecture", "dependency", "flow", "tree", "sequence"]
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 96
+                },
+                "nodes": {
+                  "minItems": 1,
+                  "maxItems": 16,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "label": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 48
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "module",
+                          "service",
+                          "store",
+                          "client",
+                          "queue",
+                          "external",
+                          "file",
+                          "class",
+                          "function",
+                          "note"
+                        ]
+                      },
+                      "anchorId": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": ["id", "label", "type"],
+                    "additionalProperties": false
+                  }
+                },
+                "edges": {
+                  "maxItems": 24,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "from": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "to": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "calls",
+                          "reads",
+                          "writes",
+                          "emits",
+                          "renders",
+                          "depends",
+                          "contains"
+                        ]
+                      },
+                      "label": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 32
+                      }
+                    },
+                    "required": ["id", "from", "to", "kind"],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": ["id", "kind", "title", "nodes", "edges"],
+              "additionalProperties": false
+            }
+          },
+          "beats": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 96
+                },
+                "narration": {
+                  "type": "string",
+                  "minLength": 20,
+                  "maxLength": 1200
+                },
+                "durationMs": {
+                  "type": "integer",
+                  "minimum": 4000,
+                  "maximum": 300000
+                },
+                "anchors": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "path": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "symbol": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "lines": {
+                        "type": "object",
+                        "properties": {
+                          "start": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991
+                          },
+                          "end": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": ["start", "end"],
+                        "additionalProperties": false
+                      },
+                      "contentHash": {
+                        "type": "string",
+                        "pattern": "^sha256:[a-f0-9]{64}$"
+                      },
+                      "label": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 96
+                      },
+                      "language": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 32
+                      },
+                      "excerpt": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": ["id", "path", "lines", "contentHash"],
+                    "additionalProperties": false
+                  }
+                },
+                "stage": {
+                  "type": "object",
+                  "properties": {
+                    "anchorIds": {
+                      "maxItems": 3,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "diagramId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "nodeIds": {
+                      "maxItems": 16,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "edgeIds": {
+                      "maxItems": 24,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "required": ["anchorIds"],
+                  "additionalProperties": false
+                },
+                "suggestedQuestions": {
+                  "maxItems": 3,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 4,
+                    "maxLength": 240
+                  }
+                }
+              },
+              "required": ["id", "title", "narration", "anchors", "stage"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["id", "title", "summary", "diagrams", "beats"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "title",
+    "subtitle",
+    "audience",
+    "project",
+    "chapters"
+  ],
+  "additionalProperties": false
+}

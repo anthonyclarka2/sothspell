@@ -198,7 +198,7 @@ from Phase 3 and the analyzer snapshot from Phase 2.
      currentBeatId: string;
      offsetMs: number;
      completedBeatIds: string[];
-     mode: "read" | "listen";
+     mode: 'read' | 'listen';
      speed: number;
      createdAt: string;
      updatedAt: string;
@@ -280,7 +280,7 @@ What they cover and miss:
 ## Exit criteria (measurable)
 
 1. The golden Bunbun tour plays end to end in read mode, including all six
-   chapters and 18 beats, without manual intervention.
+   chapters and 19 beats, without manual intervention.
 2. Pause/resume returns to within 150 ms of the saved offset.
 3. Reloading the page resumes the same beat and offset.
 4. Every beat can open its code page; every code page can return to the beat.

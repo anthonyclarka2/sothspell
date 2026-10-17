@@ -1,0 +1,39 @@
+{
+  "name": "sothspell",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.14.0",
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @sothspell/api --filter @sothspell/web dev",
+    "build": "pnpm --filter @sothspell/web build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "oxlint apps packages scripts",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:browser": "playwright test",
+    "test:a11y": "playwright test --project=a11y",
+    "check:toolchain": "node scripts/check-toolchain.mjs",
+    "schema:json": "pnpm --filter @sothspell/core schema:json",
+    "tour:build": "node scripts/build-golden-tour.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.64.1",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "oxlint": "1.88.0",
+    "prettier": "3.9.10",
+    "tailwindcss": "4.3.3",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
+  }
+}

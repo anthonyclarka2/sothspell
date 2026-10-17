@@ -49,7 +49,6 @@ Status convention: `**Status: planned**` → `**Status: in progress**` →
 9. The Bunbun demo is a checked-in golden tour pinned to commit `9fef24d`, with
    small attributed excerpts. The Bunbun tree remains read-only.
 
-
 ## 1. The problem
 
 A codebase is not self-explanatory. A new contributor can read the README, open
@@ -97,15 +96,15 @@ pinned snapshot.
 Research checked 2026-10-17. These are the closest products or formats, and why
 Sóþspell is not a copy of any one of them.
 
-| Product / format | What it does | What Sóþspell adds |
-| --- | --- | --- |
-| [DeepWiki](https://deepwiki.com/) / [Devin's repository wikis](https://docs.devin.ai/work-with-devin/deepwiki) | Generates wiki-style docs, architecture diagrams, code links, and conversational Q&A for repositories. | A paced, auto-advancing tour with synchronized code focus and diagrams, persistent progress, and a shared harness plugin. |
-| [CodeSee](https://docs.codesee.io/docs/getting-started) tours and maps | Interactive codebase maps and step-by-step onboarding tours; AI summaries and PR tours. CodeSee's standalone maps/tours are no longer marketed, and GitKraken Codemaps is in development as of late 2026. | An AI-authored narrative that runs without an IDE, with narration, diagrams, and resumable progress. |
-| [Swimm](https://swimm.io/) | Code-coupled documentation with anchored snippets and IDE integration. | A generated movie-like explanation rather than docs a team must author and maintain by hand. |
-| [VS Code CodeTour](https://marketplace.visualstudio.com/items?itemName=vsls-contrib.codetour) and [LACY](https://arxiv.org/html/2603.25391) | Step-based tours anchored to files and lines, optionally AI-generated or expert-curated. | Diagrams, speech, continuous playback, Q&A, progress, and use outside VS Code. |
-| [GitDiagram](https://github.com/ahmedkhaleel2004/gitdiagram) | One-shot Mermaid architecture diagrams from a repository tree. | A sequence of diagrams tied to a narrative, with node-to-code links and animated focus. |
-| [Scrimba](https://scrimba.com/) | Interactive screencasts where the learner can pause and edit the instructor's code. | Explains an existing project rather than teaching a new build; read-only, no code execution. |
-| [NotebookLM Audio Overviews](https://blog.google/innovation-and-ai/products/notebooklm-audio-overviews/) | Narrated overviews with interactive questions that return to the original audio. | Code-aware narration with line-level anchors and diagrams; local repository as the source. |
+| Product / format                                                                                                                            | What it does                                                                                                                                                                                              | What Sóþspell adds                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| [DeepWiki](https://deepwiki.com/) / [Devin's repository wikis](https://docs.devin.ai/work-with-devin/deepwiki)                              | Generates wiki-style docs, architecture diagrams, code links, and conversational Q&A for repositories.                                                                                                    | A paced, auto-advancing tour with synchronized code focus and diagrams, persistent progress, and a shared harness plugin. |
+| [CodeSee](https://docs.codesee.io/docs/getting-started) tours and maps                                                                      | Interactive codebase maps and step-by-step onboarding tours; AI summaries and PR tours. CodeSee's standalone maps/tours are no longer marketed, and GitKraken Codemaps is in development as of late 2026. | An AI-authored narrative that runs without an IDE, with narration, diagrams, and resumable progress.                      |
+| [Swimm](https://swimm.io/)                                                                                                                  | Code-coupled documentation with anchored snippets and IDE integration.                                                                                                                                    | A generated movie-like explanation rather than docs a team must author and maintain by hand.                              |
+| [VS Code CodeTour](https://marketplace.visualstudio.com/items?itemName=vsls-contrib.codetour) and [LACY](https://arxiv.org/html/2603.25391) | Step-based tours anchored to files and lines, optionally AI-generated or expert-curated.                                                                                                                  | Diagrams, speech, continuous playback, Q&A, progress, and use outside VS Code.                                            |
+| [GitDiagram](https://github.com/ahmedkhaleel2004/gitdiagram)                                                                                | One-shot Mermaid architecture diagrams from a repository tree.                                                                                                                                            | A sequence of diagrams tied to a narrative, with node-to-code links and animated focus.                                   |
+| [Scrimba](https://scrimba.com/)                                                                                                             | Interactive screencasts where the learner can pause and edit the instructor's code.                                                                                                                       | Explains an existing project rather than teaching a new build; read-only, no code execution.                              |
+| [NotebookLM Audio Overviews](https://blog.google/innovation-and-ai/products/notebooklm-audio-overviews/)                                    | Narrated overviews with interactive questions that return to the original audio.                                                                                                                          | Code-aware narration with line-level anchors and diagrams; local repository as the source.                                |
 
 The gap is the combination: **evidence-anchored code + animated diagrams +
 narration + semi-interactive Q&A + resumable progress + harness-native plugins.**
@@ -191,16 +190,16 @@ always links back to the beat that sent the user there.
 
 ### 5.5 Routes
 
-| Route | Purpose |
-| --- | --- |
-| `/` | Home, project picker, recent tours |
-| `/p/:projectId` | Project brief, snapshot, tour list, generation status |
-| `/p/:projectId/source/*` | Read-only code page with anchor focus and line links |
-| `/t/:tourId` | Player, resumes the latest run or starts at the beginning |
-| `/t/:tourId/:beatId` | Deep link to a beat |
-| `/t/:tourId/:beatId/source/*` | Player with the code pane open at an anchor |
-| `/runs` | Local progress, export/import, delete |
-| `/settings` | Model provider, voice provider, storage, privacy |
+| Route                         | Purpose                                                   |
+| ----------------------------- | --------------------------------------------------------- |
+| `/`                           | Home, project picker, recent tours                        |
+| `/p/:projectId`               | Project brief, snapshot, tour list, generation status     |
+| `/p/:projectId/source/*`      | Read-only code page with anchor focus and line links      |
+| `/t/:tourId`                  | Player, resumes the latest run or starts at the beginning |
+| `/t/:tourId/:beatId`          | Deep link to a beat                                       |
+| `/t/:tourId/:beatId/source/*` | Player with the code pane open at an anchor               |
+| `/runs`                       | Local progress, export/import, delete                     |
+| `/settings`                   | Model provider, voice provider, storage, privacy          |
 
 Code URLs carry the anchor and beat, for example:
 
@@ -348,16 +347,16 @@ the project root; the artifact carries the project slug and revision.
 The design follows `codebase-design`: small interfaces, large implementations,
 testable at the public seam.
 
-| Module | Public interface | Hides |
-| --- | --- | --- |
+| Module          | Public interface                                      | Hides                                                                                       |
+| --------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | `core/compiler` | `compileSothspell(document, snapshot) → CompiledTour` | schema validation, anchor resolution, duration estimation, highlight ranges, diagram layout |
-| `analyzer` | `analyzeProject(root, options) → ProjectSnapshot` | path safety, ignore rules, parsing, symbol extraction, hashing, caching |
-| `authoring` | `authorTour(snapshot, model, options) → TourDraft` | prompts, context packing, planning, generation, validation, repair, cost accounting |
-| `player` | `createPlayback(compiled, options) → Playback` | timing, auto-advance, pause/seek, audio events, progress events |
-| `narration` | `synthesize(text, voice) → NarrationSegment` | provider adapters, alignment normalization, caching |
-| `progress` | `ProgressStore` | local/remote merge, signed anonymous session, export/import |
-| `harness` | `HarnessAdapter` | project root, revision, model call, storage, player launch |
-| OpenCode plugin | `Plugin.define(...)` + RPC | host lifecycle, model access, storage, browser launch |
+| `analyzer`      | `analyzeProject(root, options) → ProjectSnapshot`     | path safety, ignore rules, parsing, symbol extraction, hashing, caching                     |
+| `authoring`     | `authorTour(snapshot, model, options) → TourDraft`    | prompts, context packing, planning, generation, validation, repair, cost accounting         |
+| `player`        | `createPlayback(compiled, options) → Playback`        | timing, auto-advance, pause/seek, audio events, progress events                             |
+| `narration`     | `synthesize(text, voice) → NarrationSegment`          | provider adapters, alignment normalization, caching                                         |
+| `progress`      | `ProgressStore`                                       | local/remote merge, signed anonymous session, export/import                                 |
+| `harness`       | `HarnessAdapter`                                      | project root, revision, model call, storage, player launch                                  |
+| OpenCode plugin | `Plugin.define(...)` + RPC                            | host lifecycle, model access, storage, browser launch                                       |
 
 ## 8. Sóþspell document format
 
@@ -375,7 +374,7 @@ breaking change.
   "project": {
     "slug": "bunbun",
     "name": "Bunbun",
-    "revision": { "commit": "9fef24d", "branch": "main", "dirty": false }
+    "revision": { "commit": "9fef24d", "branch": "main", "dirty": false },
   },
   "estimatedDurationMs": 660000,
   "chapters": [
@@ -392,14 +391,14 @@ breaking change.
             { "id": "web", "label": "Web islands", "type": "client" },
             { "id": "api", "label": "NestJS API", "type": "service" },
             { "id": "pds", "label": "ATProto PDS", "type": "external" },
-            { "id": "index", "label": "Local index", "type": "store" }
+            { "id": "index", "label": "Local index", "type": "store" },
           ],
           "edges": [
             { "id": "edge_web_api", "from": "web", "to": "api", "kind": "calls" },
             { "id": "edge_api_index", "from": "api", "to": "index", "kind": "reads" },
-            { "id": "edge_api_pds", "from": "api", "to": "pds", "kind": "writes" }
-          ]
-        }
+            { "id": "edge_api_pds", "from": "api", "to": "pds", "kind": "writes" },
+          ],
+        },
       ],
       "beats": [
         {
@@ -413,22 +412,22 @@ breaking change.
               "path": "README.md",
               "lines": { "start": 3, "end": 3 },
               "contentHash": "sha256:…",
-              "label": "Bunbun overview"
-            }
+              "label": "Bunbun overview",
+            },
           ],
           "stage": {
             "anchorIds": ["anchor_readme_overview"],
             "diagramId": "diagram_sources_of_truth",
             "nodeIds": ["pds", "index"],
-            "edgeIds": ["edge_api_pds"]
+            "edgeIds": ["edge_api_pds"],
           },
           "suggestedQuestions": [
-            "Why keep a local index if the PDS is the source of truth?"
-          ]
-        }
-      ]
-    }
-  ]
+            "Why keep a local index if the PDS is the source of truth?",
+          ],
+        },
+      ],
+    },
+  ],
 }
 ```
 
@@ -662,9 +661,10 @@ attributed set of excerpts, anchors, diagrams, and narration. It is pinned to
 the commit and can be regenerated on demand; it is never written back into the
 Bunbun tree.
 
-### 15.1 Tour outline (18 beats, roughly 10–12 minutes narrated)
+### 15.1 Tour outline (19 beats, roughly 10–12 minutes narrated)
 
 **Chapter 1 — What Bunbun is (3 beats)**
+
 1. A discussion service on ATProto: users, buns, threads, comments; records are
    the source of truth.
 2. Two surfaces, one conversation: the NestJS API and the local index; why the
@@ -672,40 +672,26 @@ Bunbun tree.
 3. Repository map: `apps/api`, `apps/web`, `apps/browser-acceptance`, `docs`,
    `plans`.
 
-**Chapter 2 — From request to page (4 beats)**
-4. Boot: `main.ts` → `AppModule`; fail-fast configuration, global validation,
-   filters, and middleware.
-5. The thread page: controller → `ThreadPageLoader` → page state.
-6. The read model: `CommentThreadQuery` and the local comment index; how a tree
-   is assembled and why the PDS is not read on every page view.
-7. Failure and view branches: not-found, takedown, label, age gate, error; how
-   the page loader returns a discriminated state instead of throwing.
+**Chapter 2 — From request to page (5 beats)** 4. Boot: `main.ts` → `AppModule`; fail-fast configuration, global validation,
+filters, and middleware. 5. AppModule as the wiring seam: feature modules, global interceptor, filter
+order. 6. The thread page: controller → `ThreadPageLoader` → page state. 7. The read model: `CommentThreadQuery` and the local comment index; how a tree
+is assembled and why the PDS is not read on every page view. 8. Failure and view branches: not-found, takedown, label, age gate, error; how
+the page loader returns a discriminated state instead of throwing.
 
-**Chapter 3 — From comment to record (4 beats)**
-8. The write guard: OAuth session restoration and the author identity boundary.
-9. `CommentsService.create`: parse, validate thread and parent, compute root,
-   write the PDS record, update the index.
-10. The adapter seam: `AtprotoCommentPdsAdapter` and the PDS write.
-11. The index writer and cache invalidation: one writer, one invalidation event.
+**Chapter 3 — From comment to record (4 beats)** 9. The write guard: OAuth session restoration and the author identity boundary. 10. `CommentsService.create`: parse, validate thread and parent, compute root,
+write the PDS record, update the index. 11. The adapter seam: `AtprotoCommentPdsAdapter` and the PDS write. 12. The index writer and cache invalidation: one writer, one invalidation event.
 
-**Chapter 4 — Keeping the index honest (3 beats)**
-12. The sync worker: why it runs in a worker thread and owns its own Prisma
-    client.
-13. The reconcilers: threads, tags, and the bounded crawl.
-14. Tags, moderation, and telemetry as cross-cutting evidence: where state
-    changes and where it is observed.
+**Chapter 4 — Keeping the index honest (3 beats)** 13. The sync worker: why it runs in a worker thread and owns its own Prisma
+client. 14. The reconcilers: threads, tags, and the bounded crawl. 15. Tags, moderation, and telemetry as cross-cutting evidence: where state
+changes and where it is observed.
 
-**Chapter 5 — The browser island (2 beats)**
-15. `apps/web/src/main.ts`: one bundle, `data-island` mounting, unknown islands
-    ignored.
-16. The comment composer and the island API wrapper: same-origin fetch, pending,
-    error, and draft behavior.
+**Chapter 5 — The browser island (2 beats)** 16. `apps/web/src/main.ts`: one bundle, `data-island` mounting, unknown islands
+ignored. 17. The comment composer and the island API wrapper: same-origin fetch, pending,
+error, and draft behavior.
 
-**Chapter 6 — Where to go next (2 beats)**
-17. The docs and plans as the project's memory: `CONTEXT.md`, `docs/README.md`,
-    `plans/ROADMAP.md`.
-18. Extension points: add a feature module, a page, an island, or an ATProto
-    record; how to verify it.
+**Chapter 6 — Where to go next (2 beats)** 18. The docs and plans as the project's memory: `CONTEXT.md`, `docs/README.md`,
+`plans/ROADMAP.md`. 19. Extension points: add a feature module, a page, an island, or an ATProto
+record; how to verify it.
 
 Every beat has at least one code anchor. Diagram nodes link to anchors where the
 concept maps to code. The player can open a code page from any beat or diagram
@@ -716,35 +702,35 @@ node and return to the same offset.
 Versions checked with `pnpm view <package> version` on 2026-10-17. Pin exact
 versions in the workspace catalog; do not float majors.
 
-| Area | Package | Version |
-| --- | --- | --- |
-| Runtime | Node.js | 26.12.0 (installed); `engines >=26` |
-| Package manager | pnpm | 12.14.0 |
-| Language | TypeScript | 7.0.2 |
-| UI | React / React DOM | 19.3.1 |
-| Bundler | Vite | 8.3.4 |
-| Router | TanStack Router | 1.170.45 |
-| Server state | TanStack Query | 5.104.3 |
-| Virtualization | TanStack Virtual | 3.14.21 |
-| API | Hono | 4.13.13 |
-| Validation | Zod | 4.6.7 |
-| LLM | Vercel AI SDK | 7.0.143 |
-| LLM providers | `@ai-sdk/openai` / `@ai-sdk/anthropic` | 4.0.96 / 4.0.82 |
-| Code parsing | `oxc-parser` | 0.154.0 |
-| Highlighting | Shiki | 4.5.0 |
-| Diagrams | `@xyflow/react` / `elkjs` | 12.12.0 / 0.12.0 |
-| Motion | `motion` | 14.3.0 |
-| Styling | Tailwind CSS / `@tailwindcss/vite` | 4.3.3 |
-| Primitives | `radix-ui` | 1.8.1 |
-| Icons | `@phosphor-icons/react` | 2.1.10 |
-| Fonts | `@fontsource-variable/geist` / `geist-mono` | 5.3.0 |
-| Local DB | `better-sqlite3` | 13.0.3 |
-| Local state | `idb` | 8.0.4 |
-| TTS | `@elevenlabs/elevenlabs-js` | 2.73.0 |
-| OpenCode plugin | `@opencode/plugin` | 2.0.32 |
-| Tests | Vitest | 5.0.5 |
-| Browser tests | Playwright / axe | 1.64.1 / 4.14.0 |
-| Lint / format | oxlint / Prettier | 1.88.0 / 3.9.10 |
+| Area            | Package                                     | Version                             |
+| --------------- | ------------------------------------------- | ----------------------------------- |
+| Runtime         | Node.js                                     | 26.12.0 (installed); `engines >=26` |
+| Package manager | pnpm                                        | 12.14.0                             |
+| Language        | TypeScript                                  | 7.0.2                               |
+| UI              | React / React DOM                           | 19.3.1                              |
+| Bundler         | Vite                                        | 8.3.4                               |
+| Router          | TanStack Router                             | 1.170.45                            |
+| Server state    | TanStack Query                              | 5.104.3                             |
+| Virtualization  | TanStack Virtual                            | 3.14.21                             |
+| API             | Hono                                        | 4.13.13                             |
+| Validation      | Zod                                         | 4.6.7                               |
+| LLM             | Vercel AI SDK                               | 7.0.143                             |
+| LLM providers   | `@ai-sdk/openai` / `@ai-sdk/anthropic`      | 4.0.96 / 4.0.82                     |
+| Code parsing    | `oxc-parser`                                | 0.154.0                             |
+| Highlighting    | Shiki                                       | 4.5.0                               |
+| Diagrams        | `@xyflow/react` / `elkjs`                   | 12.12.0 / 0.12.0                    |
+| Motion          | `motion`                                    | 14.3.0                              |
+| Styling         | Tailwind CSS / `@tailwindcss/vite`          | 4.3.3                               |
+| Primitives      | `radix-ui`                                  | 1.8.1                               |
+| Icons           | `@phosphor-icons/react`                     | 2.1.10                              |
+| Fonts           | `@fontsource-variable/geist` / `geist-mono` | 5.3.0                               |
+| Local DB        | `better-sqlite3`                            | 13.0.3                              |
+| Local state     | `idb`                                       | 8.0.4                               |
+| TTS             | `@elevenlabs/elevenlabs-js`                 | 2.73.0                              |
+| OpenCode plugin | `@opencode/plugin`                          | 2.0.32                              |
+| Tests           | Vitest                                      | 5.0.5                               |
+| Browser tests   | Playwright / axe                            | 1.64.1 / 4.14.0                     |
+| Lint / format   | oxlint / Prettier                           | 1.88.0 / 3.9.10                     |
 
 ### 16.1 TypeScript 7 constraints
 
@@ -882,16 +868,22 @@ seam. Phase 6 needs progress storage and a stable Q&A context. Phase 7 needs the
 local server and the artifact format; the Phase 8 packaging work can start during
 Phase 7. Phase 8 is the release gate.
 
-| Phase | Status | Primary outcome |
-| --- | --- | --- |
-| 1 | planned | Toolchain, schema, compiler, hand-authored Bunbun tour, minimal player |
-| 2 | planned | Read-only snapshot, TS/JS symbol graph, project brief |
-| 3 | planned | LLM curriculum, beat authoring, validation, repair, CLI |
-| 4 | planned | Movie-like player, code browser, diagrams, local progress |
-| 5 | planned | Browser + cloud narration, captions, accessibility gate |
-| 6 | planned | Q&A interludes, drilldown, resumable runs |
-| 7 | planned | OpenCode V2 command/tools/RPC, local player launch |
-| 8 | planned | Packaging, security, performance, docs, release verification |
+| Phase | Status                | Primary outcome                                                                                                                  |
+| ----- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | complete (2026-10-17) | Toolchain, schema, compiler, hand-authored Bunbun tour, minimal player ([closure record](PHASE-1.md#shipped-closure-2026-10-17)) |
+| 2     | planned               | Read-only snapshot, TS/JS symbol graph, project brief                                                                            |
+| 3     | planned               | LLM curriculum, beat authoring, validation, repair, CLI                                                                          |
+| 4     | planned               | Movie-like player, code browser, diagrams, local progress                                                                        |
+| 5     | planned               | Browser + cloud narration, captions, accessibility gate                                                                          |
+| 6     | planned               | Q&A interludes, drilldown, resumable runs                                                                                        |
+| 7     | planned               | OpenCode V2 command/tools/RPC, local player launch                                                                               |
+| 8     | planned               | Packaging, security, performance, docs, release verification                                                                     |
+
+Phase 1 shipped the workspace, schema, generated JSON Schema, compiler, the
+checked-in golden Bunbun tour (6 chapters, 19 beats, 20 anchors, pinned to
+`9fef24d`), the Hono API, the minimal React player, IndexedDB progress, and the
+TypeScript 7 toolchain guard. The full closure evidence lives in
+[`PHASE-1.md`](PHASE-1.md#shipped-closure-2026-10-17).
 
 ## 20. Risks and open questions
 

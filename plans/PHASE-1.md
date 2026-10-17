@@ -1,7 +1,8 @@
 # Phase 1 — Foundation & Sóþspell Format
 
-**Status: planned.** Depends on: nothing. Starts after the owner confirms the
-test seams in [`ROADMAP.md`](ROADMAP.md#18-testing-strategy-and-seams).
+**Status: complete (2026-10-17).** Depends on: nothing. The owner confirmed the
+test seams in [`ROADMAP.md`](ROADMAP.md#18-testing-strategy-and-seams) on
+2026-10-17.
 
 **Deliverable:** a pnpm workspace on TypeScript 7, the versioned Sóþspell
 document schema, a deterministic compiler, a hand-authored golden Bunbun tour,
@@ -161,7 +162,7 @@ API. This is the phase where that constraint is tested in practice, not assumed.
 ### Wave 2 — Golden Bunbun tour
 
 1. Create `examples/bunbun-tour/`:
-   - `tour.json` — the hand-authored 18-beat tour from the roadmap outline;
+   - `tour.json` — the hand-authored 19-beat tour from the roadmap outline;
    - `README.md` — provenance, Bunbun commit `9fef24d`, how to regenerate;
    - `excerpts/` — small attributed excerpts for each anchor, or embedded
      `excerpt` fields in the anchors.
@@ -273,7 +274,7 @@ What the seams cover and miss:
 1. The workspace builds and typechecks on TypeScript 7.0.2 with pnpm 12.14.0.
 2. The core schema is versioned and has a generated JSON Schema.
 3. The compiler resolves every anchor in the golden tour; 0 unresolved anchors.
-4. The golden tour has 18 beats across 6 chapters and renders end to end.
+4. The golden tour has 19 beats across 6 chapters and renders end to end.
 5. Every beat has at least one code anchor; every chapter has at least one
    diagram.
 6. The player can play, pause, advance, and open a code page from a beat and a
@@ -310,3 +311,54 @@ What the seams cover and miss:
 - Commit each wave with a descriptive message.
 - Update `CONTEXT.md` if a new domain term appears; update this phase plan when a
   decision changes.
+
+## Shipped (closure, 2026-10-17)
+
+- **Workspace and toolchain** — pnpm 12.14.0 workspace on Node 26 and TypeScript
+  7.0.2; React 19.3.1, Vite 8.3.4, Hono 4.13.13, Zod 4.6.7, Shiki 4.5.0,
+  React Flow 12.12.0, ELK 0.12.0, Vitest 5.0.5, Playwright 1.64.1, axe 4.14.0.
+  `scripts/check-toolchain.mjs` fails if TypeScript drops below 7 or a classic
+  compiler-API package (`ts-morph`, `typescript-estree`,
+  `vite-tsconfig-paths`) appears.
+- **Schema and compiler** — `packages/core` has the versioned Zod schema,
+  semantic validation (unique IDs, stage references, diagram references),
+  a generated draft-2020-12 JSON Schema at
+  `packages/core/schema/sothspell.schema.json`, read-only source access with
+  traversal and symlink containment, anchor hashing, Shiki highlighting with
+  high-contrast dual themes, and deterministic ELK diagram layout.
+- **Golden Bunbun tour** — `examples/bunbun-tour/tour.json` has 6 chapters,
+  19 beats, 20 anchors, and 8 diagrams, pinned to Bunbun `9fef24d`.
+  `tour.source.json` is the editable source; `pnpm tour:build` regenerates the
+  artifact read-only and refuses a different Bunbun revision. The 19th beat
+  (AppModule as the wiring seam) was added during implementation; the roadmap
+  outline was updated to match.
+- **API and player** — Hono serves the compiled tour and code anchors; the React
+  player has chapter navigation, auto-advance, pause/resume, previous/next,
+  progress, code excerpts, diagram focus and node-to-code links, deep links,
+  and IndexedDB resume. Shiki markup is server-compiled; the browser renders
+  HTML, not grammars. A code page shows the anchored excerpt, hash prefix, and a
+  return link to the beat.
+- **Accessibility** — axe-core runs on the home, player, and code pages with a
+  0 critical / 0 serious threshold; the high-contrast Shiki themes, underlined
+  in-text links, and focusable controls were the fixes the gate required.
+- **Deviation from the plan** — the `sothspell` CLI and the live snapshot reader
+  are deferred to Phase 2; Phase 1 serves the embedded golden excerpts through
+  the API, which keeps the read-only promise and removes a filesystem surface
+  from the player. The player serves production assets through Vite in
+  development and the API's static fallback in a production build.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- `pnpm typecheck` → 0 errors.
+- `pnpm lint` → 0 errors, 0 warnings.
+- `pnpm test` → 7 files / 26 tests passed.
+- `pnpm build` → web build succeeded; the main bundle is 504.92 kB minified /
+  161.25 kB gzip (budget: under 500 kB gzip).
+- `pnpm test:browser` → 6 passed.
+- `pnpm test:a11y` → 3 passed; 0 critical / 0 serious violations.
+- `pnpm check:toolchain` → TypeScript 7.0.2, no classic compiler API packages.
+- `pnpm tour:build` → idempotent; 6 chapters, 19 beats, 20 anchors.
+- `pnpm schema:json` → idempotent; 11,431-byte schema.
+- `git -C /Users/ajc/Projects/codegens/bunbun status --porcelain` → empty.
+- Manual `pnpm dev` pass: home page, player, play/pause, next, code link,
+  diagram node link, and reload-resume all verified in Chrome at 1440×1100.

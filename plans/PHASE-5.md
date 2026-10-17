@@ -84,7 +84,7 @@ audio. A user who cannot or does not want audio gets the same tour in text mode.
      sentences: SentenceTiming[];
      words: WordTiming[];
      audio?: { path: string; durationMs: number; mimeType: string };
-     provider: "browser" | "elevenlabs";
+     provider: 'browser' | 'elevenlabs';
      voiceId: string;
      modelId?: string;
      contentHash: string;

@@ -7,9 +7,10 @@
   codebase with synchronized narration, diagrams, and highlighted code anchors.
   The website is first; an OpenCode V2 plugin follows; other harness adapters
   are a future track.
-- **Repository status: planning.** This repository currently contains plans and
-  documentation, not application code. Do not assume a workspace, scripts, or
-  dependencies exist until Phase 1 lands.
+- **Repository status: Phase 1 implemented (2026-10-17).** The workspace,
+  schema, compiler, golden tour, API, and minimal player exist. The analyzer,
+  authoring, narration, and OpenCode plugin packages are placeholders until
+  their phases land.
 - **Example project:** Bunbun at `/Users/ajc/Projects/codegens/bunbun`, pinned to
   commit `9fef24d`. It is **read-only**. No command may create, modify, or delete
   anything inside that tree. All snapshots, tours, audio, logs, and runs live
@@ -81,27 +82,33 @@ Do not claim completion without fresh verification output.
 - Record performance numbers (analysis time, bundle size, LCP, audio cache size)
   when a phase plan requires them.
 
-## Repository layout (planned)
+## Repository layout
 
-- `apps/web/` — React player, code browser, settings, runs.
-- `apps/api/` — Hono API, SQLite persistence, static web host.
-- `apps/cli/` — `sothspell` CLI (`analyze`, `author`, `serve`, `doctor`).
-- `packages/core/` — tour schema, compiler, validation, IDs.
-- `packages/analyzer/` — read-only snapshot and symbol graph.
-- `packages/authoring/` — `GuideModel`, prompts, curriculum/beat pipeline.
+- `apps/web/` — React player and code browser (Phase 1: minimal player).
+- `apps/api/` — Hono API and static web host (Phase 1: compiled tour and anchors;
+  SQLite persistence lands with the run sync phase).
+- `apps/cli/` — `sothspell` CLI (`analyze`, `author`, `serve`, `doctor`) —
+  Phase 2.
+- `packages/core/` — tour schema, compiler, source access, validation, IDs.
+- `packages/analyzer/` — read-only snapshot and symbol graph (Phase 2
+  placeholder).
+- `packages/authoring/` — `GuideModel`, prompts, curriculum/beat pipeline
+  (Phase 3 placeholder).
 - `packages/player/` — framework-free playback state machine.
-- `packages/narration/` — browser and ElevenLabs adapters, alignment, cache.
+- `packages/narration/` — browser and ElevenLabs adapters, alignment, cache
+  (Phase 5 placeholder).
 - `packages/diagram/` — diagram IR, validation, ELK layout.
-- `packages/harness/` — harness adapter contract.
-- `packages/opencode-plugin/` — OpenCode V2 plugin.
+- `packages/harness/` — harness adapter contract (Phase 7 placeholder).
+- `packages/opencode-plugin/` — OpenCode V2 plugin (Phase 7).
 - `examples/bunbun-tour/` — checked-in golden tour pinned to Bunbun `9fef24d`.
-- `docs/` — architecture, authoring, player, narration, plugin, privacy,
-  self-hosting, accessibility, troubleshooting.
+- `docs/` — development guide now; architecture, authoring, player, narration,
+  plugin, privacy, self-hosting, accessibility, and troubleshooting as phases
+  land.
 - `plans/` — roadmap and phase plans.
 - `CONTEXT.md` — domain glossary. Required reading before domain code.
 - `AGENTS.md` — this file.
 
-## Commands (target; available from Phase 1)
+## Commands
 
 ```bash
 pnpm install
@@ -112,13 +119,18 @@ pnpm test
 pnpm test:browser
 pnpm test:a11y
 pnpm build
+pnpm check:toolchain
+pnpm schema:json
+pnpm tour:build
 pnpm sothspell doctor
 pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun
 pnpm sothspell author /Users/ajc/Projects/codegens/bunbun --out "$SOTHSPELL_HOME/projects/bunbun/tours"
 pnpm sothspell serve
 ```
 
-Until Phase 1 exists, treat these as planned interfaces, not working scripts.
+The `sothspell` CLI commands arrive in Phase 2. Everything above them is
+available now. The dev server ports are `4319` (API) and `5173` (web); an agent
+may kill processes on those ports to free them.
 
 ## Domain vocabulary
 

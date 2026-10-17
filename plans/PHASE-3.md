@@ -251,7 +251,7 @@ suitable for the Phase 4 player.
    need to author or review a tour manually. The skill points to the schema and
    the quality gates; it does not duplicate the prompts.
 3. Generate a Bunbun tour with a real model:
-   - use the roadmap's 18-beat outline as the target;
+   - use the roadmap's 19-beat outline as the target;
    - compare chapter coverage, anchor validity, and duration;
    - review every beat manually for truthfulness;
    - commit the generated draft under `examples/bunbun-generated/` with model,
