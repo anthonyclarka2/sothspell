@@ -422,6 +422,9 @@ importers:
       '@sothspell/core':
         specifier: workspace:*
         version: link:../core
+      '@sothspell/narration':
+        specifier: workspace:*
+        version: link:../narration
 
 packages:
 

@@ -8,6 +8,7 @@
   },
   "types": "./src/index.ts",
   "dependencies": {
-    "@sothspell/core": "workspace:*"
+    "@sothspell/core": "workspace:*",
+    "@sothspell/narration": "workspace:*"
   }
 }

@@ -9,3 +9,11 @@ export {
   type PlaybackStatus,
   type PlaybackTour,
 } from './playback.js';
+
+export {
+  activeSentenceIndex,
+  captionCues,
+  sentenceAt,
+  wordAt,
+  type CaptionCue,
+} from './narration-sync.js';

@@ -64,6 +64,39 @@
 - Do not add a dependency that needs the TypeScript 6 compiler API without an
   explicit owner decision. The TypeScript 7 constraint is architectural.
 
+## Subagent dispatch
+
+Parallel work is isolated in git worktrees under
+`<project-root>/.worktrees/<phase>-<track>-<short-name>`. Each subagent owns a
+branch named after its worktree and a non-overlapping file set. The main agent
+owns integration, plans, docs, and the final verification.
+
+Every subagent must:
+
+1. read `AGENTS.md`, `CONTEXT.md`, and the relevant phase plan;
+2. run `pnpm install --frozen-lockfile` in its worktree;
+3. work test-first and run `pnpm exec vitest run <its paths>`, then
+   `pnpm typecheck`, `pnpm lint`, and `pnpm test`;
+4. commit on its branch with the standard co-author trailer;
+5. report the branch, commit, files, test output, and any integration
+   assumptions.
+
+The main agent merges branches sequentially with `git merge --no-ff`, resolves
+conflicts in favor of the agreed contract, reruns the full gate, and deletes the
+worktree only after the merge is verified. A subagent must never write to the
+Bunbun tree or to another agent's worktree.
+
+### Phase 5 dispatches (2026-10-17)
+
+| Track | Branch / worktree | Owner scope | Session |
+| --- | --- | --- | --- |
+| Narration package | `phase-5-a-narration` / `.worktrees/phase-5-a-narration` | `packages/narration/**` only: sentence splitting, alignment, browser speech, ElevenLabs client, file asset store, tests | `ses_eb653ebb7ffeGazvoXzSytxXwM` |
+| API audio/narration | `phase-5-b-api-audio` / `.worktrees/phase-5-b-api-audio` | `apps/api/**` only: narration service, `POST /api/narration`, `GET /api/audio/:hash` with range support, tests | `ses_eb653ebb7ffdGB5uz1mPyW6YC2` |
+
+Main owns `apps/web/**`, `packages/player/**`, `packages/core/**`, plans, docs,
+and the final player integration. The narration contract lives in
+`packages/narration/src/types.ts` and is frozen for both tracks.
+
 ## Verification
 
 Do not claim completion without fresh verification output.
