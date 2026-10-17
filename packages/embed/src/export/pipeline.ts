@@ -103,9 +103,7 @@ export async function buildEmbedExport(
   const embedTour: EmbedTour = {
     ...compiled,
     ...(overlay.locale === undefined ? {} : { locale: overlay.locale }),
-    ...(overlay.translations === undefined
-      ? {}
-      : { translations: overlay.translations }),
+    ...(overlay.translations === undefined ? {} : { translations: overlay.translations }),
   };
   const { totalExcerptBytes } = validateTourContent(embedTour, {
     maxExcerptBytes,

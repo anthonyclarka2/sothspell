@@ -230,10 +230,9 @@ The rule that Sóþspell may read a project but never write to it or execute its
 code. Snapshots, tours, audio, logs, and runs live under Sóþspell's own data
 directory. Read-only is a product promise and a test invariant.
 
-## Next-stage terms (planned)
+## Next-stage terms
 
-These terms are reserved for the next-stage roadmap (Phases 9–16) and become
-binding as their phases land.
+These terms are part of the shipped next stage (Phases 9–16) and are binding.
 
 ### Connection profile
 

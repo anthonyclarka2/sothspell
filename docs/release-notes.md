@@ -1,5 +1,56 @@
 # Release Notes
 
+## 0.2.0 — 2026-10-17 (next stage)
+
+The second stage adds configuration, reach, collaboration, languages, review,
+and distribution.
+
+### Included
+
+- **Preferences UI** — connection profiles for authoring and narration with a
+  write-only secret store, provider testing, env fallback, and profile-aware
+  pipelines.
+- **Harness plugins** — the `HarnessAdapter` contract and shared runtime, the
+  OpenCode plugin refactor, and Claude Code and Codex adapters with fake-host
+  conformance tests.
+- **GitHub import** — public URL parsing, a shallow read-only clone sandbox with
+  limits and cleanup, an import API/UI, and `sothspell import`.
+- **Accounts and sync** — GitHub OAuth with PKCE, server-side sessions, device
+  flow, cross-device run sync with documented merge rules, claim, export, and
+  delete.
+- **Language analyzers** — a `LanguageAnalyzer` port and Python, Go, Rust, and
+  Java adapters over WASM tree-sitter grammars, manifest readers, language
+  briefs, and Shiki highlighting for the new languages.
+- **Translation and locales** — schema 1.1.0 with migrations, a protected-span
+  translation pipeline, locale-aware narration and voices, a localized UI with
+  an RTL pass, and `sothspell translate`.
+- **Human review UI** — a review state machine, per-beat comments, beat edits,
+  regeneration with diff/revert, anchor gating, decisions, export, and the
+  `sothspell review` CLI.
+- **Embeddable player** — `packages/embed`, a custom element and iframe host
+  API, local progress with opt-out, `sothspell export --embed`, and a docs
+  fixture.
+- **Docs** — settings, harnesses, import, accounts, analysis language matrix,
+  embed, review, and translation guides.
+
+### Verification
+
+- `pnpm test` → 98 files / 810 tests.
+- `CI=1 pnpm test:browser` → 57 passed (all surfaces and axe states).
+- `pnpm test:browser:embed` → 20 passed.
+- `pnpm build`, `pnpm typecheck`, `pnpm lint`, `pnpm check:toolchain`, and
+  `pnpm sothspell doctor` clean; Bunbun remains read-only.
+
+### Known limitations
+
+- Real provider round trips (authoring, translation, ElevenLabs), real Claude
+  Code/Codex/OpenCode sessions, and real GitHub OAuth need credentials or host
+  installs; fakes and fixture paths cover the logic.
+- Reviews are local-reviewer scoped until an account signs in.
+- The embed shows the tour's own locale unless the host supplies an overlay.
+- The v1 limitations still apply: single-user local-first default, no accounts
+  requirement, and no hosted mode.
+
 ## 0.1.0 — 2026-10-17
 
 First local-first Sóþspell release.

@@ -1,7 +1,7 @@
 # Phase 14 — Multi-language Narration and Translation
 
-**Status: in progress (2026-10-17).** Depends on: Phase 9 (voice profiles), Phase 10
-(harness surfaces), and the v1 narration package.
+**Status: complete (2026-10-17).** Depends on: Phase 9 (voice profiles), Phase 10
+(harness surfaces), and the v1 narration package; shipped last, after Phases 9–13 and 15–16.
 
 ## Goal
 
@@ -147,3 +147,45 @@ the player UI — while code anchors, identifiers, and citations stay exact.
   the player never translates.
 - Verify in a real browser for each locale, including RTL.
 - Update `CONTEXT.md` with locale and translation terms when they land.
+
+## Shipped (closure, 2026-10-17)
+
+- **Schema 1.1.0** — tour `locale` plus per-locale `translations` with a
+  migration from `1.0.0`; `parseSothspell` migrates before validating, so v1
+  tours and the golden tour still compile. Regenerated JSON Schema.
+- **Translation pipeline** — `translateTour` with protected spans
+  (identifiers, paths, code, anchor ids), per-beat translation, retry/repair,
+  cache keyed by source text + locale + model, and strict validation that ids,
+  counts, order, question counts, and anchors are unchanged.
+- **Narration** — locale-aware voice resolution (`./voices` subpath keeps Node
+  built-ins out of the browser bundle) and a locale-aware content hash.
+- **API and CLI** — translation routes, `?locale` on the tour route, and
+  `sothspell translate`.
+- **Player and UI** — typed message catalogs, a persistent locale switcher,
+  translated captions and shells, `lang` attributes, logical CSS properties, and
+  an RTL block (code stays LTR). A responsive topbar fix keeps the shell inside
+  375px.
+- **Integration on main** — the embed's translation overlay was aligned with the
+  core `TourTranslation` schema.
+- **Docs** — `docs/translation.md`.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- Track: focused `vitest run packages/core packages/authoring packages/narration
+apps/api apps/cli` 29 files / 219 tests; full `pnpm test` 61 files / 459 tests;
+  `CI=1 pnpm test:browser` 29 passed including `es`/`ar` axe and RTL keyboard.
+- Bunbun acceptance with the fixture model (`es`): 20 anchors byte-identical
+  (id, path, lines, hash), 34 ids identical, compiles with `locale=es` and
+  `availableLocales=[en,es]`; the Bunbun checkout is untouched.
+- After the final merge: `pnpm typecheck` and `pnpm lint` clean, `pnpm test`
+  98 files / 810 tests, `pnpm build` clean, `CI=1 pnpm test:browser` 57 passed,
+  and `pnpm test:browser:embed` 20 passed.
+- Bunbun remains read-only.
+
+### Follow-ups
+
+- A real model translation is owner-gated on provider credentials; the fixture
+  model covers the pipeline.
+- Live model answers are not translated; code comments and code pages stay in
+  their source language.
+- Adding more UI catalog locales is a reviewed change.

@@ -36,6 +36,8 @@ docs.
   the docs fixture.
 - [Human review](./review.md) — the review state machine, editing, regeneration,
   anchor gating, and decisions.
+- [Translation and locales](./translation.md) — the locale schema,
+  protected-span pipeline, localized UI, and RTL support.
 - [Self-hosting](./self-hosting.md) — install, serve, environment, storage, and
   upgrades.
 - [Privacy](./privacy.md) — what stays local and what cloud choices send.
