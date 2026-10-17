@@ -24,7 +24,8 @@ export interface AskQuestionInput {
   question: string;
   tour: SothspellDocument;
   beatId: string;
-  snapshot: ProjectSnapshot;
+  /** Optional when the tour carries its own anchor excerpts. */
+  snapshot?: ProjectSnapshot;
   sourceRoot: string;
   model: GuideModel;
   history?: AskHistoryEntry[];

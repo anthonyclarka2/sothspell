@@ -178,6 +178,82 @@ describe('API', () => {
 
     expect(response.status).toBe(400);
   });
+
+  it('answers an in-tour question through the injected service', async () => {
+    const app = createApp({
+      databasePath: ':memory:',
+      askService: {
+        async answer() {
+          return {
+            answer: {
+              markdown: 'The service owns the operation.',
+              citations: ['anchor_service'],
+              followUps: [],
+            },
+            citations: [
+              {
+                id: 'anchor_service',
+                label: 'Service',
+                path: 'src/service.ts',
+                startLine: 1,
+                endLine: 1,
+              },
+            ],
+            warnings: [],
+            modelId: 'fake/model',
+          };
+        },
+      },
+    });
+
+    const response = await app.request('/api/tours/tour_bunbun_golden/ask', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ beatId: 'beat_purpose_01', question: 'What owns it?' }),
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      modelId: 'fake/model',
+      citations: [expect.objectContaining({ id: 'anchor_service' })],
+    });
+  });
+
+  it('returns 503 for questions when no model is configured', async () => {
+    const previous = process.env.SOTHSPELL_MODEL;
+    delete process.env.SOTHSPELL_MODEL;
+    const app = createApp({ databasePath: ':memory:', askService: null });
+    try {
+      const response = await app.request('/api/tours/tour_bunbun_golden/ask', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ beatId: 'beat_purpose_01', question: 'Why?' }),
+      });
+      expect(response.status).toBe(503);
+    } finally {
+      if (previous !== undefined) {
+        process.env.SOTHSPELL_MODEL = previous;
+      }
+    }
+  });
+
+  it('rejects an invalid question payload', async () => {
+    const app = createApp({
+      databasePath: ':memory:',
+      askService: {
+        async answer() {
+          throw new Error('should not be called');
+        },
+      },
+    });
+    const response = await app.request('/api/tours/tour_bunbun_golden/ask', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ beatId: '', question: '' }),
+    });
+
+    expect(response.status).toBe(400);
+  });
 });
 
 function fakeNarration() {

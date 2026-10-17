@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { Hono } from 'hono';
+import { z } from 'zod';
 import type { NarrationAssetStore } from '@sothspell/narration';
 import {
   compileSothspell,
@@ -21,6 +22,25 @@ import {
   type NarrationService,
 } from './narration.js';
 import { createRunStore, RunBodySchema, type RunRecord } from './runs.js';
+import {
+  AskUnavailableError,
+  createAskService,
+  type AskService,
+} from './ask-service.js';
+
+const AskBodySchema = z.object({
+  beatId: z.string().min(1).max(128),
+  question: z.string().min(3).max(2000),
+  history: z
+    .array(
+      z.object({
+        question: z.string().min(1).max(2000),
+        answer: z.string().min(1).max(8000),
+      }),
+    )
+    .max(6)
+    .optional(),
+});
 
 export interface AppOptions {
   /** Override for tests; defaults to the checked-in golden tour. */
@@ -39,6 +59,8 @@ export interface AppOptions {
   fetchImpl?: typeof fetch;
   /** Full service override for tests. */
   narrationService?: NarrationService;
+  /** In-tour question service; tests inject a fake. */
+  askService?: AskService | null;
 }
 
 const DEFAULT_TOUR_PATH = new URL(
@@ -239,6 +261,14 @@ export function createApp(options: AppOptions = {}): Hono {
       modelId: options.elevenLabsModelId ?? process.env.ELEVENLABS_MODEL_ID,
       fetchImpl: options.fetchImpl,
     });
+  const askService =
+    options.askService === undefined
+      ? createAskService({
+          tourJsonPath,
+          sourceRoot: projectRoot,
+          modelId: process.env.SOTHSPELL_MODEL ?? null,
+        })
+      : options.askService;
   const app = new Hono();
 
   registerAudioRoutes(app, { assetStore });
@@ -286,6 +316,39 @@ export function createApp(options: AppOptions = {}): Hono {
 
     context.header('cache-control', 'no-store');
     return context.json(await sourcePayload({ projectRoot, location, tour, projectId }));
+  });
+
+  app.post('/api/tours/:tourId/ask', async (context) => {
+    if (!GOLDEN_TOUR_ALIASES.has(context.req.param('tourId'))) {
+      return context.json({ error: `unknown tour: ${context.req.param('tourId')}` }, 404);
+    }
+    if (!askService) {
+      return context.json(
+        { error: 'in-tour questions are unavailable; no model is configured' },
+        503,
+      );
+    }
+
+    const body = await context.req.json().catch(() => null);
+    const parsed = AskBodySchema.safeParse(body);
+    if (!parsed.success) {
+      return context.json(
+        { error: 'invalid question payload', issues: parsed.error.issues },
+        400,
+      );
+    }
+
+    try {
+      return context.json(await askService.answer(parsed.data));
+    } catch (error) {
+      if (error instanceof AskUnavailableError) {
+        return context.json({ error: error.message }, 503);
+      }
+      if (error instanceof Error && /unknown beat/i.test(error.message)) {
+        return context.json({ error: error.message }, 404);
+      }
+      throw error;
+    }
   });
 
   app.get('/api/runs', (context) => {

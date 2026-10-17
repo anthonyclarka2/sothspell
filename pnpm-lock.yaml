@@ -253,6 +253,9 @@ importers:
       '@hono/node-server':
         specifier: 2.1.5
         version: 2.1.5(hono@4.13.13)
+      '@sothspell/authoring':
+        specifier: workspace:*
+        version: link:../../packages/authoring
       '@sothspell/core':
         specifier: workspace:*
         version: link:../../packages/core
