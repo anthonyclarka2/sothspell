@@ -5,7 +5,12 @@
  */
 import { randomUUID } from 'node:crypto';
 import type { JsonStore } from '../storage/file-store.ts';
-import { NoteNotFoundError, type Note, type NoteDraft, type NoteQuery } from '../types.ts';
+import {
+  NoteNotFoundError,
+  type Note,
+  type NoteDraft,
+  type NoteQuery,
+} from '../types.ts';
 
 /** The exact JSON document stored on disk. */
 export interface NotesDocument {
@@ -67,7 +72,9 @@ export function createNoteRepository(
       return note;
     },
     async list(query = {}) {
-      return (await readNotes()).filter((note) => matchesQuery(note, query)).toSorted(byRecency);
+      return (await readNotes())
+        .filter((note) => matchesQuery(note, query))
+        .toSorted(byRecency);
     },
     find,
     async require(id) {

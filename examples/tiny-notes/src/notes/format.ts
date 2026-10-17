@@ -6,7 +6,12 @@ import type { Note, NoteSummary } from '../types.ts';
 
 /** One note as a Markdown block with a stable field order. */
 export function formatNote(note: Note): string {
-  const lines = [`## ${note.title}`, '', note.body.length > 0 ? note.body : '_(no body)_', ''];
+  const lines = [
+    `## ${note.title}`,
+    '',
+    note.body.length > 0 ? note.body : '_(no body)_',
+    '',
+  ];
   if (note.tags.length > 0) {
     lines.push(`Tags: ${note.tags.join(', ')}`);
   }

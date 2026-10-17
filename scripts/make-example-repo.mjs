@@ -14,7 +14,9 @@ import { promisify } from 'node:util';
 const run = promisify(execFile);
 const root = path.resolve(import.meta.dirname, '..');
 const source = path.join(root, 'examples', 'tiny-notes');
-const home = path.resolve(process.env.SOTHSPELL_HOME ?? path.join(os.homedir(), '.sothspell'));
+const home = path.resolve(
+  process.env.SOTHSPELL_HOME ?? path.join(os.homedir(), '.sothspell'),
+);
 const target = path.join(home, 'example-repos', 'tiny-notes');
 
 // A fixed identity and date keep the demo repository reproducible across

@@ -3,7 +3,12 @@
  * requests into service calls and results into status codes, and owns no
  * business rules, so the CLI and the API can never drift apart.
  */
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
+import {
+  createServer,
+  type IncomingMessage,
+  type Server,
+  type ServerResponse,
+} from 'node:http';
 import { NoteNotFoundError, NoteValidationError, type NoteDraft } from '../types.ts';
 import type { NoteService } from '../notes/service.ts';
 
@@ -56,7 +61,10 @@ function draftFromBody(body: Record<string, unknown>): NoteDraft {
   if (text !== undefined && typeof text !== 'string') {
     throw new NoteValidationError('body must be a string');
   }
-  if (tags !== undefined && (!Array.isArray(tags) || tags.some((tag) => typeof tag !== 'string'))) {
+  if (
+    tags !== undefined &&
+    (!Array.isArray(tags) || tags.some((tag) => typeof tag !== 'string'))
+  ) {
     throw new NoteValidationError('tags must be an array of strings');
   }
   return { title, body: text ?? '', tags: (tags ?? []) as string[] };
@@ -91,7 +99,11 @@ async function route(
       return;
     }
     if (method === 'POST') {
-      sendJson(response, 201, await service.add(draftFromBody(await readJsonBody(request))));
+      sendJson(
+        response,
+        201,
+        await service.add(draftFromBody(await readJsonBody(request))),
+      );
       return;
     }
   }
@@ -107,7 +119,9 @@ async function route(
   }
 
   const knownMethod = method === 'GET' || method === 'POST' || method === 'DELETE';
-  sendJson(response, knownMethod ? 404 : 405, { error: `${method} ${url.pathname} is not a route` });
+  sendJson(response, knownMethod ? 404 : 405, {
+    error: `${method} ${url.pathname} is not a route`,
+  });
 }
 
 export function createNotesServer(service: NoteService): Server {

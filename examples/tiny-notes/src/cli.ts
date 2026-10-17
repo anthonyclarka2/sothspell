@@ -98,7 +98,9 @@ const COMMANDS: Record<
     console.log(formatNote(await service.archive(id)));
   },
   async remove({ positional }, service) {
-    const note = await service.remove(requiredText(positional[0], 'remove needs a note id'));
+    const note = await service.remove(
+      requiredText(positional[0], 'remove needs a note id'),
+    );
     console.log(`Removed ${note.id}: ${note.title}`);
   },
   async summary(_parsed, service) {
@@ -125,7 +127,8 @@ export async function main(argv: string[]): Promise<number> {
 }
 
 const invokedDirectly =
-  process.argv[1] !== undefined && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+  process.argv[1] !== undefined &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (invokedDirectly) {
   try {

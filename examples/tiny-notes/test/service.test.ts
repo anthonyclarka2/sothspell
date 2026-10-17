@@ -46,7 +46,10 @@ test('adds a note, normalizes tags, and lists newest first', async () => {
       [second.id, first.id],
     );
     assert.match(formatNote(first), /^## First\n\none\n\nTags: ideas, work/);
-    assert.match(formatSummary(await service.summary()), /Notes: 2 total, 2 active, 0 archived/);
+    assert.match(
+      formatSummary(await service.summary()),
+      /Notes: 2 total, 2 active, 0 archived/,
+    );
   });
 });
 
@@ -59,7 +62,11 @@ test('rejects a note without a title', async () => {
 test('searches by tag and by text', async () => {
   await withService(async (service) => {
     await service.add({ title: 'Groceries', body: 'Oat milk and bread', tags: ['home'] });
-    await service.add({ title: 'Release notes', body: 'Ship the parser', tags: ['work'] });
+    await service.add({
+      title: 'Release notes',
+      body: 'Ship the parser',
+      tags: ['work'],
+    });
     const byTag = await service.search({ tag: 'work' });
     const byText = await service.search({ text: 'OAT' });
     assert.deepEqual(

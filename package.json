@@ -22,7 +22,8 @@
     "check:toolchain": "node scripts/check-toolchain.mjs",
     "schema:json": "pnpm --filter @sothspell/core schema:json",
     "sothspell": "tsx apps/cli/src/index.ts",
-    "tour:build": "node scripts/build-golden-tour.mjs"
+    "tour:build": "node scripts/build-golden-tour.mjs",
+    "example:tiny-notes": "node scripts/make-example-repo.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

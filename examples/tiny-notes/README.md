@@ -7,16 +7,16 @@ dependencies, and the whole thing is small enough to read in one sitting.
 
 ## Architecture
 
-| Path                      | Responsibility                                             |
-| ------------------------- | ---------------------------------------------------------- |
-| `src/types.ts`            | The `Note` model, queries, summaries, and errors.          |
-| `src/storage/file-store.ts` | JSON document storage with atomic writes.                |
-| `src/notes/repository.ts` | Note persistence: create, list, find, save, remove.        |
-| `src/notes/service.ts`    | Use cases: add, search, archive, remove, summary.          |
-| `src/notes/format.ts`     | Plain-text and Markdown rendering for the CLI.             |
-| `src/http/server.ts`      | `node:http` JSON API over the service.                     |
-| `src/cli.ts`              | The `tiny-notes` command line.                             |
-| `src/index.ts`            | The public entry that wires the layers together.           |
+| Path                        | Responsibility                                      |
+| --------------------------- | --------------------------------------------------- |
+| `src/types.ts`              | The `Note` model, queries, summaries, and errors.   |
+| `src/storage/file-store.ts` | JSON document storage with atomic writes.           |
+| `src/notes/repository.ts`   | Note persistence: create, list, find, save, remove. |
+| `src/notes/service.ts`      | Use cases: add, search, archive, remove, summary.   |
+| `src/notes/format.ts`       | Plain-text and Markdown rendering for the CLI.      |
+| `src/http/server.ts`        | `node:http` JSON API over the service.              |
+| `src/cli.ts`                | The `tiny-notes` command line.                      |
+| `src/index.ts`              | The public entry that wires the layers together.    |
 
 Each layer only imports from the layer below it: the CLI and the HTTP adapter
 call the service, the service calls the repository, and the repository calls

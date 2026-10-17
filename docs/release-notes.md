@@ -13,6 +13,9 @@ and distribution.
 - **Web authoring flow** — `/new` opens a local git repository or a public
   GitHub URL, inspects it read-only, and authors a tour with the fixture or
   active profile model through a progress job.
+- **Example repository** — `examples/tiny-notes/`, a small layered TypeScript
+  project, plus `pnpm example:tiny-notes` to materialize it as a standalone git
+  repository for the local demo.
 - **Harness plugins** — the `HarnessAdapter` contract and shared runtime, the
   OpenCode plugin refactor, and Claude Code and Codex adapters with fake-host
   conformance tests.

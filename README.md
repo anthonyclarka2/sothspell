@@ -153,6 +153,8 @@ stores only small, attributed excerpts.
   protected-span pipeline, localized UI, and RTL support.
 - [Open a repository](docs/open-repo.md) — author a tour from a local git
   checkout or a public GitHub URL in the web UI.
+- [Tiny notes example](examples/tiny-notes/README.md) — the small demo
+  repository for the open-repository flow.
 - [Self-hosting](docs/self-hosting.md) — install, serve, storage, and upgrades.
 - [Privacy](docs/privacy.md) — what stays local and what cloud choices send.
 - [Accessibility](docs/accessibility.md) — the axe gate and keyboard map.

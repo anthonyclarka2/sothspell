@@ -31,7 +31,10 @@ export function createJsonStore<T>(filePath: string, empty: () => T): JsonStore<
     async write(value) {
       const directory = path.dirname(filePath);
       await mkdir(directory, { recursive: true });
-      const temporary = path.join(directory, `.${path.basename(filePath)}.${randomUUID()}.tmp`);
+      const temporary = path.join(
+        directory,
+        `.${path.basename(filePath)}.${randomUUID()}.tmp`,
+      );
       await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
       try {
         await rename(temporary, filePath);

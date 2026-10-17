@@ -28,7 +28,9 @@ export interface ServiceOptions {
 
 /** Lower-cases, trims, de-duplicates, and sorts tags so filters are stable. */
 export function normalizeTags(tags: readonly string[]): string[] {
-  const normalized = tags.map((tag) => tag.trim().toLowerCase()).filter((tag) => tag.length > 0);
+  const normalized = tags
+    .map((tag) => tag.trim().toLowerCase())
+    .filter((tag) => tag.length > 0);
   return [...new Set(normalized)].toSorted();
 }
 
@@ -41,7 +43,9 @@ function summarize(notes: readonly Note[]): NoteSummary {
   }
   const tags = [...counts.entries()]
     .map(([tag, count]) => ({ tag, count }))
-    .toSorted((left, right) => right.count - left.count || left.tag.localeCompare(right.tag));
+    .toSorted(
+      (left, right) => right.count - left.count || left.tag.localeCompare(right.tag),
+    );
   return {
     total: notes.length,
     active: notes.filter((note) => note.archivedAt === null).length,
