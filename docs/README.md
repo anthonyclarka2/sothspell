@@ -24,6 +24,8 @@ docs.
   and progress.
 - [OpenCode plugin](./opencode-plugin.md) — install, commands, tools, RPC, and
   the host model adapter.
+- [Harnesses](./harnesses.md) — the `HarnessAdapter` contract, the shared
+  runtime, and the Claude Code and Codex adapters.
 - [Self-hosting](./self-hosting.md) — install, serve, environment, storage, and
   upgrades.
 - [Privacy](./privacy.md) — what stays local and what cloud choices send.

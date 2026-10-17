@@ -1,8 +1,8 @@
 # Phase 10 — Harness Plugins
 
-**Status: in progress (2026-10-17).** Depends on: Phase 9 (connection profiles), Phase 7
-(OpenCode plugin, archived). Claude Code ships first, then Codex, then the
-remaining agent CLIs.
+**Status: complete (2026-10-17).** Depends on: Phase 7 (OpenCode plugin,
+archived) and the shared harness runtime. Phase 9 profile resolution is injected
+via the adapter model resolver; profile wiring lands with Phase 9 integration.
 
 ## Goal
 
@@ -139,3 +139,39 @@ same.
 - Verify with the real CLI when credentials and the host are available; record
   the exact host versions.
 - Keep every adapter free of provider keys and project writes.
+
+## Shipped (closure, 2026-10-17)
+
+- **`packages/harness`** — `HarnessAdapter` port, `createHarnessRuntime` shared
+  runtime, conformance suite with a fake harness backend and fake player fetch,
+  shared text guide model with a bounded repair loop, command parsing/formatting,
+  launch helpers, and session-start hook output.
+- **OpenCode plugin refactor** — the plugin runtime shrank from 553 to 175 lines
+  and now consumes the shared runtime; all 46 existing tests pass unchanged.
+- **Claude Code adapter** — plugin manifest with user configuration, a
+  `sothspell` skill, a session-start hook, a CLI over the shared verbs, and a
+  model resolver over `claude -p --output-format json --json-schema`.
+- **Codex adapter** — the mirrored surface with a portable plugin manifest,
+  skill, hook, and scripts, and a model resolver over
+  `codex exec --json --ephemeral --sandbox read-only --skip-git-repo-check
+--output-schema`.
+- **Docs** — `docs/harnesses.md` plus per-adapter package READMEs.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- Focused: `pnpm exec vitest run packages/harness packages/harness-claude-code
+packages/harness-codex packages/opencode-plugin` → 18 files / 161 tests.
+- Full gate after merge: `pnpm typecheck` clean, `pnpm lint` clean,
+  `pnpm test` → 50 files / 324 tests, `pnpm build` clean,
+  `pnpm check:toolchain` OK.
+- No new external dependency; workspace links only.
+- Bunbun remains read-only.
+
+### Owner-gated / follow-ups
+
+- Real Claude Code, Codex, and OpenCode V2 TUI sessions were not run; validate
+  the plugin manifests and host JSON shapes before publishing.
+- Profile-aware model resolution is injected; the active-profile wiring is part
+  of Phase 9 integration.
+- The remaining adapter backlog (for example Gemini CLI, Aider) enters through
+  the conformance suite.

@@ -134,6 +134,8 @@ stores only small, attributed excerpts.
   drilldown, and progress.
 - [OpenCode plugin](docs/opencode-plugin.md) — install, commands, tools, RPC,
   and the host model adapter.
+- [Harnesses](docs/harnesses.md) — the adapter contract and the Claude Code and
+  Codex adapters.
 - [Self-hosting](docs/self-hosting.md) — install, serve, storage, and upgrades.
 - [Privacy](docs/privacy.md) — what stays local and what cloud choices send.
 - [Accessibility](docs/accessibility.md) — the axe gate and keyboard map.

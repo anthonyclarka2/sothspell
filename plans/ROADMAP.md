@@ -67,7 +67,7 @@ and the tour format, not on accounts.
 | Phase | Status                   | Primary outcome                                                   |
 | ----- | ------------------------ | ----------------------------------------------------------------- |
 | 9     | in progress (2026-10-17) | Connection profiles, settings API, `/settings` UI, provider tests |
-| 10    | in progress (2026-10-17) | `HarnessAdapter` contract, Claude Code plugin, Codex plugin       |
+| 10    | complete (2026-10-17)    | `HarnessAdapter` contract, Claude Code plugin, Codex plugin       |
 | 11    | in progress (2026-10-17) | GitHub URL import, shallow clone sandbox, import UI               |
 | 12    | in progress (2026-10-17) | GitHub OAuth accounts, run sync, account export/delete            |
 | 13    | in progress (2026-10-17) | Python/Go/Rust/Java analyzer adapters and fixtures                |
