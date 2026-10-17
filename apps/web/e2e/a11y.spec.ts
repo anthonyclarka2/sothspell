@@ -9,6 +9,7 @@ const pages = [
   '/t/tour_bunbun_golden/beat_purpose_01',
   '/p/bunbun/source/apps/api/src/main.ts?anchor=anchor_main_bootstrap&beat=beat_request_01',
   '/import',
+  '/new',
 ];
 
 for (const path of pages) {

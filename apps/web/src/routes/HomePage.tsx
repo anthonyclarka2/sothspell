@@ -53,6 +53,9 @@ export function HomePage() {
               {t('home.readChapters')}
               <ArrowRight size={16} weight="bold" className="rtl-flip" />
             </a>
+            <Link className="secondary-action" to="/new">
+              {t('shell.newTour')}
+            </Link>
           </div>
         </div>
         <aside className="revision-card">

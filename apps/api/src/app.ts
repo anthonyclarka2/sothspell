@@ -64,6 +64,8 @@ import {
   type TranslationService,
   type TranslationStore,
 } from './translations.js';
+import { createAuthoringService, type AuthoringService } from './authoring-service.js';
+import { registerAuthoringRoutes } from './authoring.js';
 
 const AskBodySchema = z.object({
   beatId: z.string().min(1).max(128),
@@ -130,6 +132,8 @@ export interface AppOptions {
   translationStore?: TranslationStore;
   /** Translation service; tests inject a fake, `null` disables the POST route. */
   translationService?: TranslationService | null;
+  /** Authoring service; tests inject a fake job runner. */
+  authoringService?: AuthoringService;
 }
 
 const DEFAULT_TOUR_PATH = new URL(
@@ -430,6 +434,15 @@ export function createApp(options: AppOptions = {}): Hono {
       : options.drilldownService;
   const importService =
     options.importService ?? createImportService({ home: sothspellHome() });
+  const authoringService =
+    options.authoringService ??
+    createAuthoringService({
+      home: sothspellHome(),
+      importService,
+      resolveAuthoringConnection: () => settingsService.resolveAuthoringConnection(),
+      analysisCacheDirectory: path.join(sothspellHome(), 'cache', 'analysis'),
+      authoringCacheDirectory: path.join(sothspellHome(), 'cache', 'authoring'),
+    });
   // Reviews share the run database; the audit trail and progress are both
   // local-first records under SOTHSPELL_HOME.
   const reviewService =
@@ -468,6 +481,7 @@ export function createApp(options: AppOptions = {}): Hono {
     store: translationStore,
     resolveTourPath: (tourId) => resolveTourJsonPath(tourJsonPath, tourId),
   });
+  registerAuthoringRoutes(app, { service: authoringService });
 
   app.get('/api/health', (context) =>
     context.json({

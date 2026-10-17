@@ -38,6 +38,8 @@ docs.
   anchor gating, and decisions.
 - [Translation and locales](./translation.md) — the locale schema,
   protected-span pipeline, localized UI, and RTL support.
+- [Open a repository](./open-repo.md) — author a tour from a local git checkout
+  or a public GitHub URL in the web UI.
 - [Self-hosting](./self-hosting.md) — install, serve, environment, storage, and
   upgrades.
 - [Privacy](./privacy.md) — what stays local and what cloud choices send.

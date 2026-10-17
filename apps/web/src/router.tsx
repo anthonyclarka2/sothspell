@@ -14,6 +14,7 @@ import { SettingsPage } from './routes/SettingsPage.js';
 import { AccountPage } from './routes/AccountPage.js';
 import { SyncBadge } from './components/account/SyncBadge.js';
 import { ReviewPage } from './routes/ReviewPage.js';
+import { NewTourPage } from './routes/NewTourPage.js';
 import { LocaleSwitcher } from './components/LocaleSwitcher.js';
 import { useLocale } from './i18n/locale.js';
 
@@ -29,6 +30,9 @@ function RootLayout() {
         </Link>
         <div className="topbar-meta">
           <LocaleSwitcher />
+          <Link to="/new" className="topbar-link">
+            {t('shell.newTour')}
+          </Link>
           <Link to="/settings" className="topbar-link">
             {t('shell.settings')}
           </Link>
@@ -76,6 +80,12 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
+const newRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/new',
+  component: NewTourPage,
+});
+
 const importRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/import',
@@ -97,6 +107,7 @@ const reviewRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   homeRoute,
   settingsRoute,
+  newRoute,
   importRoute,
   playerRoute,
   codeRoute,
@@ -114,6 +125,7 @@ export {
   codeRoute,
   homeRoute,
   importRoute,
+  newRoute,
   playerRoute,
   reviewRoute,
   settingsRoute,

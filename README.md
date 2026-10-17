@@ -149,6 +149,8 @@ stores only small, attributed excerpts.
   regeneration, anchor gating, and decisions.
 - [Translation and locales](docs/translation.md) — the locale schema,
   protected-span pipeline, localized UI, and RTL support.
+- [Open a repository](docs/open-repo.md) — author a tour from a local git
+  checkout or a public GitHub URL in the web UI.
 - [Self-hosting](docs/self-hosting.md) — install, serve, storage, and upgrades.
 - [Privacy](docs/privacy.md) — what stays local and what cloud choices send.
 - [Accessibility](docs/accessibility.md) — the axe gate and keyboard map.
