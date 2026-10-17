@@ -10,7 +10,9 @@
 - **Repository status: v1 release complete (2026-10-17); next stage complete
   (2026-10-17).** Phases 9–16 are complete: preferences, harness plugins,
   GitHub import, accounts and sync, language analyzers, translation, review UI,
-  and the embeddable player. The v1 plans are archived in `plans/archive/`; the
+  and the embeddable player. The web authoring flow (`/new`) opens a local git
+  repository or a public GitHub URL and authors a tour; `examples/tiny-notes/`
+  is the demo repository. The v1 plans are archived in `plans/archive/`; the
   next-stage roadmap and Phases 9–16 live in `plans/ROADMAP.md` and
   `plans/PHASE-9.md` through `plans/PHASE-16.md`.
 - **Example project:** Bunbun at `/Users/ajc/Projects/codegens/bunbun`, pinned to
@@ -114,9 +116,12 @@ verification. The narration contract lives in
 | 15    | `phase-15-a-review`       | `packages/review/**`, review API/UI/CLI, regeneration and approval gating               | `ses_eb5ed20a8ffdR416C2wSJRn0Ol` |
 
 All next-stage tracks (Phases 9–16) are merged and their worktrees and branches
-were removed after verification. Main owns integration, `plans/**`, `docs/**`,
-`CONTEXT.md`, and the final verification. Shared-file edits (`app.ts`,
-`router.tsx`, `cli.ts`) were resolved by main at merge.
+were removed after verification. A follow-on demo track
+(`example-tiny-notes`, session `ses_eb592edfdffeXLHLXPzSBvmWVo`) added
+`examples/tiny-notes/` and `scripts/make-example-repo.mjs`; it is merged and its
+worktree is removed. Main owns integration, `plans/**`, `docs/**`, `CONTEXT.md`,
+and the final verification. Shared-file edits (`app.ts`, `router.tsx`,
+`cli.ts`) were resolved by main at merge.
 
 ## Verification
 
