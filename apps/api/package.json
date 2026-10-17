@@ -20,6 +20,7 @@
     "@sothspell/core": "workspace:*",
     "@sothspell/import": "workspace:*",
     "@sothspell/narration": "workspace:*",
+    "@sothspell/review": "workspace:*",
     "@sothspell/settings": "workspace:*",
     "better-sqlite3": "13.0.3",
     "hono": "4.13.13",

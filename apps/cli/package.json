@@ -16,6 +16,7 @@
     "@sothspell/core": "workspace:*",
     "@sothspell/embed": "workspace:*",
     "@sothspell/import": "workspace:*",
+    "@sothspell/review": "workspace:*",
     "@sothspell/settings": "workspace:*"
   }
 }

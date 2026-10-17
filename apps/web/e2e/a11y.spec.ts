@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { installFakeSettings, makeProfile } from './settings-fake.js';
+import { installFakeReview } from './review-fake.js';
 
 const pages = [
   '/',
@@ -219,6 +220,42 @@ test('account error state has no blocking axe violations', async ({ page }) => {
   );
 
   await page.goto('/account');
+  await page.waitForLoadState('networkidle');
+
+  await expectNoBlockingViolations(page);
+});
+
+/* Phase 15 review (merged) */
+
+test('review page has no blocking axe violations: reading state', async ({ page }) => {
+  await installFakeReview(page);
+  await page.goto('/review/tour_review_fixture');
+  await expect(page.getByRole('heading', { name: 'The overview' })).toBeVisible();
+  await page.waitForLoadState('networkidle');
+
+  await expectNoBlockingViolations(page);
+});
+
+test('review page has no blocking axe violations: editing state', async ({ page }) => {
+  await installFakeReview(page);
+  await page.goto('/review/tour_review_fixture');
+  await page.getByRole('button', { name: 'Edit beat' }).click();
+  await expect(page.getByRole('heading', { name: 'Edit this beat' })).toBeVisible();
+  // An invalid field shows its inline error and aria-invalid state.
+  await page.getByLabel('Narration').fill('Too short.');
+  await page.getByRole('button', { name: 'Save beat' }).click();
+  await expect(page.getByText('Narration needs at least 20 characters.')).toBeVisible();
+  await page.waitForLoadState('networkidle');
+
+  await expectNoBlockingViolations(page);
+});
+
+test('review page has no blocking axe violations: decision state', async ({ page }) => {
+  await installFakeReview(page);
+  await page.goto('/review/tour_review_fixture');
+  await page.getByRole('button', { name: 'Approve review' }).click();
+  await expect(page.getByRole('status')).toContainText('Review approved.');
+  await expect(page.locator('.review-decision-list')).toContainText('approved');
   await page.waitForLoadState('networkidle');
 
   await expectNoBlockingViolations(page);

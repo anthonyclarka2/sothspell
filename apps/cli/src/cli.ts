@@ -21,9 +21,11 @@ import {
   type AuthoringConnection,
   type SettingsService,
 } from '@sothspell/settings';
+import type { ReviewService } from '@sothspell/review';
 import { runDoctor } from './doctor.js';
 import { parseImportArgs, runImport } from './import.js';
 import { parseExportArgs, runExport } from './export.js';
+import { runReview } from './review.js';
 import { runServe, type ServeArgs } from './serve.js';
 import { runAccountCommand } from './account.js';
 
@@ -35,6 +37,8 @@ export interface CliIO {
 export interface CliDependencies {
   /** Injected settings service; tests keep the real SOTHSPELL_HOME untouched. */
   settings?: SettingsService;
+  /** Injected review service; tests keep the real database untouched. */
+  review?: ReviewService;
 }
 
 const USAGE = `Usage:
@@ -46,6 +50,7 @@ const USAGE = `Usage:
   sothspell export <tour.json> --embed --out <dir> [--source-root <path>]
   sothspell serve [--port <n>] [--host <host>] [--no-open]
   sothspell doctor
+  sothspell review list|show|approve|reject [<reviewId>] [--reason <text>]
 
 Commands:
   analyze <path>    Build a read-only project snapshot.
@@ -54,6 +59,7 @@ Commands:
   export <tour>     Write a self-contained embed bundle for a docs page.
   serve             Start the local API and web player.
   doctor            Check the local runtime and optional integrations.
+  review            List, show, approve, or reject a stored review session.
 
 Options:
   --json            Print the snapshot JSON (analyze), or the import record (import).
@@ -434,6 +440,10 @@ export async function runCli(
 
   if (argv[0] === 'account' || argv[0] === 'sync') {
     return runAccountCommand(argv, io);
+  }
+
+  if (argv[0] === 'review') {
+    return runReview(argv.slice(1), io, { service: dependencies.review });
   }
 
   if (argv[0] !== 'analyze') {

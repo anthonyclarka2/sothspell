@@ -13,6 +13,7 @@ import { NotFoundPage } from './routes/NotFoundPage.js';
 import { SettingsPage } from './routes/SettingsPage.js';
 import { AccountPage } from './routes/AccountPage.js';
 import { SyncBadge } from './components/account/SyncBadge.js';
+import { ReviewPage } from './routes/ReviewPage.js';
 
 function RootLayout() {
   return (
@@ -82,6 +83,12 @@ const accountRoute = createRoute({
   component: AccountPage,
 });
 
+const reviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/review/$tourId',
+  component: ReviewPage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   settingsRoute,
@@ -89,6 +96,7 @@ const routeTree = rootRoute.addChildren([
   playerRoute,
   codeRoute,
   accountRoute,
+  reviewRoute,
 ]);
 
 export const router = createRouter({
@@ -96,7 +104,15 @@ export const router = createRouter({
   defaultPreload: 'intent',
 });
 
-export { accountRoute, codeRoute, homeRoute, importRoute, playerRoute, settingsRoute };
+export {
+  accountRoute,
+  codeRoute,
+  homeRoute,
+  importRoute,
+  playerRoute,
+  reviewRoute,
+  settingsRoute,
+};
 
 declare module '@tanstack/react-router' {
   interface Register {
