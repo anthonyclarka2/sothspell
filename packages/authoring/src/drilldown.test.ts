@@ -125,4 +125,66 @@ describe('generateDrilldown', () => {
       'src/service.ts',
     );
   });
+
+  it('omits an empty symbol instead of failing schema validation', async () => {
+    const { root, snapshot, document } = await fixture();
+    const withoutSymbol = structuredClone(document);
+    for (const chapter of withoutSymbol.chapters) {
+      for (const beat of chapter.beats) {
+        for (const anchor of beat.anchors) {
+          delete anchor.symbol;
+        }
+      }
+    }
+
+    const model = new FakeGuideModel(() => ({
+      title: 'Service in detail',
+      summary: 'A closer look at the service declaration.',
+      diagram: {
+        id: 'diagram_detail',
+        kind: 'architecture',
+        title: 'Service detail',
+        nodes: [
+          {
+            id: 'node_service',
+            label: 'Service',
+            type: 'class',
+            anchorId: 'anchor_service',
+          },
+        ],
+        edges: [],
+      },
+      beats: [
+        {
+          title: 'The class',
+          narration:
+            'The service class is the entry point for this drilldown. The cited declaration shows the class boundary, and the next beat names the run method inside it without claiming behavior beyond the excerpt.',
+          anchorIds: ['anchor_service'],
+          nodeIds: ['node_service'],
+        },
+        {
+          title: 'The method',
+          narration:
+            'The run method is the operation this class exposes. The same anchor covers the declaration, so the drilldown stays within the evidence supplied by the parent tour and can return the reader to that beat when it ends.',
+          anchorIds: ['anchor_service'],
+          nodeIds: ['node_service'],
+        },
+      ],
+    }));
+
+    const result = await generateDrilldown({
+      tour: withoutSymbol,
+      anchorId: 'anchor_service',
+      snapshot,
+      sourceRoot: root,
+      model,
+    });
+
+    expect(
+      result.document.chapters[0]?.beats[0]?.anchors[0]?.symbol,
+    ).toBeUndefined();
+    expect(result.document.chapters[0]?.beats[0]?.anchors[0]?.path).toBe(
+      'src/service.ts',
+    );
+  });
 });

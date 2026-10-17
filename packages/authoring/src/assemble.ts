@@ -26,7 +26,7 @@ function anchorFor(
   return {
     id: `${beatId}_anchor_${index + 1}`,
     path: candidate.path,
-    symbol: candidate.symbol,
+    ...(candidate.symbol.length > 0 ? { symbol: candidate.symbol } : {}),
     lines: candidate.lines,
     contentHash: candidate.contentHash,
     label: candidate.label,
