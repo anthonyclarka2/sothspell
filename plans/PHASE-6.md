@@ -1,7 +1,9 @@
 # Phase 6 — Semi-Interactive Guide & Progress Sync
 
-**Status: planned.** Depends on: Phase 3 (authoring), Phase 4 (runs), Phase 5
-(player and accessibility).
+**Status: complete (2026-10-17).** Depends on: Phase 3 (authoring), Phase 4
+(runs), Phase 5 (player and accessibility). The ask and progress paths are
+implemented; the drilldown generator is implemented, with its player/API launch
+link recorded as a follow-up. A reviewed real-model answer set is owner-gated.
 
 **Deliverable:** in-tour questions with cited answers, on-demand drilldown into a
 module or symbol, a run history that survives server restarts, and the guardrails
@@ -300,3 +302,45 @@ What they cover and miss:
 - Use `codebase-design` for the answer/drilldown seams.
 - Keep questions and answers out of the tour artifact; they belong to the run.
 - Record real model calls and costs for the Bunbun acceptance.
+
+## Shipped (closure, 2026-10-17)
+
+- **Ask pipeline** — `answerQuestion` builds a bounded context from the current
+  beat, chapter, tour outline, anchor excerpts, and prior questions; requires
+  citations from the supplied anchors; drops unsupported citations with warnings;
+  never mutates the tour.
+- **Ask API** — `POST /api/tours/:tourId/ask` with `SOTHSPELL_MODEL` lazily
+  resolved, 503 when no model is configured, 400 for invalid payloads, 404 for
+  unknown beats, and a fake-service test seam.
+- **Interlude UI** — pause, ask, render the answer and citations, open cited code
+  in a new tab to preserve the interlude, follow-up questions, and Continue at the
+  same position. Playwright covers the full journey.
+- **Progress** — local IndexedDB + SQLite mirror, anonymous client IDs, local/
+  server merge by newer position with a union of completed beats, mode/speed
+  persistence, reload/restart resume, and DELETE on start-over/completion.
+- **Drilldown** — `generateDrilldown` validates a 3–5 beat chapter against the
+  shared anchor rules and assembles a one-chapter Sóþspell; covered by a fake
+  model test.
+- **Accessibility** — axe covers the ask/listen states at 0 critical/serious.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- `pnpm test` → 32 files / 161 tests passing (ask, progress, drilldown, and the
+  existing suites).
+- `pnpm test:browser` → 13 passed, including the ask/citation/continue journey
+  and listen/pause.
+- `pnpm test:a11y` → 4 passed at 0 critical/serious.
+- `pnpm typecheck`, `pnpm lint`, `pnpm build` clean; bundle 178.63 kB gzip.
+- Bunbun remains read-only.
+
+### Follow-ups / deviations
+
+- Drilldown generation is implemented and tested, but the API route and player
+  button that launch a generated side tour are not wired yet. The generated
+  document is a normal Sóþspell and can be served by the existing player once a
+  route stores it.
+- Answers are session-local in the UI; per-run answer persistence, streaming
+  tokens, prompt-injection fixtures, and per-run/daily cost governors remain
+  Phase 6 follow-ups.
+- No real-model answer set was produced; provider credentials are absent. The
+  ask pipeline and citation validation are covered with the fake model.

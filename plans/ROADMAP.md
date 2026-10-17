@@ -874,8 +874,8 @@ Phase 7. Phase 8 is the release gate.
 | 2     | complete (2026-10-17) | Read-only snapshot, TS/JS symbol graph, project brief, CLI ([closure record](PHASE-2.md#shipped-closure-2026-10-17))                                |
 | 3     | complete (2026-10-17) | GuideModel, context packs, curriculum, chapter generation, validation, repair, author CLI ([closure record](PHASE-3.md#shipped-closure-2026-10-17)) |
 | 4     | complete (2026-10-17) | Cinematic player, virtualized code browser, local run persistence ([closure record](PHASE-4.md#shipped-closure-2026-10-17))                         |
-| 5     | planned               | Browser + cloud narration, captions, accessibility gate                                                                                             |
-| 6     | planned               | Q&A interludes, drilldown, resumable runs                                                                                                           |
+| 5     | complete (2026-10-17) | Browser + cloud narration, synchronization, captions, accessibility gate ([closure record](PHASE-5.md#shipped-closure-2026-10-17))                  |
+| 6     | complete (2026-10-17) | Q&A interludes, drilldown generator, resumable runs ([closure record](PHASE-6.md#shipped-closure-2026-10-17))                                       |
 | 7     | planned               | OpenCode V2 command/tools/RPC, local player launch                                                                                                  |
 | 8     | planned               | Packaging, security, performance, docs, release verification                                                                                        |
 
@@ -906,6 +906,17 @@ completed-beat tracking, keyboard control, diagram keyboard/focus interaction,
 sequence-diagram rendering, a virtualized full-file code browser with anchor
 outlines and stale badges, and local-first run persistence with a SQLite mirror.
 The full evidence lives in [`PHASE-4.md`](PHASE-4.md#shipped-closure-2026-10-17).
+
+Phase 5 shipped browser and cloud narration: sentence splitting, alignment
+normalization, browser speech with pause/resume, ElevenLabs synthesis with
+retries, content-addressed audio caching, range serving, listen-mode playback,
+sentence highlighting, fallback behavior, and an axe-covered listen/ask state.
+The full evidence lives in [`PHASE-5.md`](PHASE-5.md#shipped-closure-2026-10-17).
+
+Phase 6 shipped the ask interlude, citation validation, local/server run merge,
+and the drilldown generator. The API and player preserve the position across a
+question, and cited code opens in a new tab. The full evidence lives in
+[`PHASE-6.md`](PHASE-6.md#shipped-closure-2026-10-17).
 
 ## 20. Risks and open questions
 

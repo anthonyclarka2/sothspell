@@ -1,6 +1,8 @@
 # Phase 5 — Narration & Accessibility
 
-**Status: planned.** Depends on: Phase 4 (player timing and code browser).
+**Status: complete (2026-10-17).** Depends on: Phase 4 (player timing and code
+browser). Browser speech and cloud narration are implemented; a live cloud round
+trip is owner-gated on provider credentials.
 
 **Deliverable:** two narration adapters at launch — browser speech (default) and
 cached ElevenLabs cloud narration — synchronized with text and diagrams, plus a
@@ -315,3 +317,43 @@ What they cover and miss:
 - Use `tdd` for alignment and sync; use the `design-taste-frontend` accessibility
   guardrails for the UI pass.
 - Record the audio cache and cost numbers in the phase closure note.
+
+## Shipped (closure, 2026-10-17)
+
+- **Browser narration** — sentence splitting, one utterance per sentence,
+  sentence/word boundary events, pause-cancel/resume-replay, stop, unsupported
+  browser errors, and injected dependencies for tests.
+- **Carriage of timings** — character alignment normalized to sentence and word
+  spans with a deterministic proportional fallback. `narrationContentHash`
+  includes text, voice, model, and output format.
+- **Cloud narration** — ElevenLabs `with-timestamps`, one bounded retry on
+  429/5xx, key redaction, MP3 + alignment records, a file store with atomic
+  writes, and content-addressed audio URLs.
+- **API** — `POST /api/narration` with cache hits and 503 fallback; range-capable
+  `GET /api/audio/:hash` with 200/206/416 behavior; `ELEVENLABS_API_KEY`,
+  `ELEVENLABS_VOICE_ID`, and `ELEVENLABS_MODEL_ID` configuration.
+- **Player** — Listen mode, provider selector, sentence highlighting, narration
+  status, pause/resume, transport state, cloud-to-browser fallback, and
+  narration progress feeding the run.
+- **Accessibility** — axe covers read, listen, and ask states at 0 critical /
+  0 serious; keyboard journey covers listen/pause and the ask panel.
+- **Docs** — `docs/narration.md` and the updated player/authoring guides.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- `pnpm exec vitest run packages/narration` → 6 files / 56 tests.
+- API narration/audio tests → 18 tests.
+- `pnpm test` → 32 files / 161 tests (final phase gate run after merge).
+- `pnpm test:browser` → 13 passed, including browser narration/pause and ask.
+- `pnpm test:a11y` → 4 passed at 0 critical/serious.
+- `pnpm typecheck`, `pnpm lint`, `pnpm build` clean; bundle 178.63 kB gzip.
+- Bunbun remains read-only.
+
+### Owner-gated / deviations
+
+- No live ElevenLabs request was made; no key/voice is configured. The adapter,
+  retry, normalization, cache, range route, and browser fallback are tested.
+- Cloud narration sends provider text; cloud is opt-in and the UI exposes the
+  choice. Browser narration remains the default.
+- The browser adapter is sentence-level by design; word-level highlighting is
+  cloud-only unless the browser emits usable boundary events.
