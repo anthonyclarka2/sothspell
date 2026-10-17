@@ -254,6 +254,32 @@ describe('API', () => {
 
     expect(response.status).toBe(400);
   });
+
+  it('returns a drilldown document through the injected service', async () => {
+    const app = createApp({
+      databasePath: ':memory:',
+      drilldownService: {
+        async generate(anchorId: string) {
+          return {
+            document: { id: 'tour_child' } as never,
+            anchorId,
+            beats: 3,
+          };
+        },
+      },
+    });
+    const response = await app.request('/api/tours/tour_bunbun_golden/drilldown', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ anchorId: 'anchor_readme_overview' }),
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      anchorId: 'anchor_readme_overview',
+      beats: 3,
+    });
+  });
 });
 
 function fakeNarration() {

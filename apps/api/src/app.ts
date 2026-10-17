@@ -23,6 +23,10 @@ import {
 } from './narration.js';
 import { createRunStore, RunBodySchema, type RunRecord } from './runs.js';
 import { AskUnavailableError, createAskService, type AskService } from './ask-service.js';
+import {
+  createDrilldownService,
+  type DrilldownService,
+} from './drilldown-service.js';
 
 const AskBodySchema = z.object({
   beatId: z.string().min(1).max(128),
@@ -57,6 +61,8 @@ export interface AppOptions {
   narrationService?: NarrationService;
   /** In-tour question service; tests inject a fake. */
   askService?: AskService | null;
+  /** Drilldown service; tests inject a fake. */
+  drilldownService?: DrilldownService | null;
 }
 
 const DEFAULT_TOUR_PATH = new URL(
@@ -265,6 +271,14 @@ export function createApp(options: AppOptions = {}): Hono {
           modelId: process.env.SOTHSPELL_MODEL ?? null,
         })
       : options.askService;
+  const drilldownService =
+    options.drilldownService === undefined
+      ? createDrilldownService({
+          tourJsonPath,
+          sourceRoot: projectRoot ?? process.cwd(),
+          modelId: process.env.SOTHSPELL_MODEL ?? null,
+        })
+      : options.drilldownService;
   const app = new Hono();
 
   registerAudioRoutes(app, { assetStore });
@@ -341,6 +355,33 @@ export function createApp(options: AppOptions = {}): Hono {
         return context.json({ error: error.message }, 503);
       }
       if (error instanceof Error && /unknown beat/i.test(error.message)) {
+        return context.json({ error: error.message }, 404);
+      }
+      throw error;
+    }
+  });
+
+  app.post('/api/tours/:tourId/drilldown', async (context) => {
+    if (!GOLDEN_TOUR_ALIASES.has(context.req.param('tourId'))) {
+      return context.json({ error: `unknown tour: ${context.req.param('tourId')}` }, 404);
+    }
+    if (!drilldownService) {
+      return context.json({ error: 'drilldown is unavailable; no model is configured' }, 503);
+    }
+    const body = await context.req.json().catch(() => null);
+    const parsed = z
+      .object({ anchorId: z.string().min(1).max(256) })
+      .safeParse(body);
+    if (!parsed.success) {
+      return context.json({ error: 'invalid drilldown payload' }, 400);
+    }
+    try {
+      return context.json(await drilldownService.generate(parsed.data.anchorId));
+    } catch (error) {
+      if (error instanceof AskUnavailableError) {
+        return context.json({ error: error.message }, 503);
+      }
+      if (error instanceof Error && /unknown anchor/i.test(error.message)) {
         return context.json({ error: error.message }, 404);
       }
       throw error;
