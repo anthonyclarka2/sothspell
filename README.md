@@ -136,6 +136,12 @@ stores only small, attributed excerpts.
   and the host model adapter.
 - [Harnesses](docs/harnesses.md) — the adapter contract and the Claude Code and
   Codex adapters.
+- [Settings and connection profiles](docs/settings.md) — provider profiles, the
+  secret store, and resolution rules.
+- [GitHub import](docs/import.md) — URL forms, sandbox limits, and the import
+  API/UI/CLI.
+- [Accounts and sync](docs/accounts.md) — GitHub OAuth, sessions, sync merge
+  rules, export, and delete.
 - [Self-hosting](docs/self-hosting.md) — install, serve, storage, and upgrades.
 - [Privacy](docs/privacy.md) — what stays local and what cloud choices send.
 - [Accessibility](docs/accessibility.md) — the axe gate and keyboard map.

@@ -26,6 +26,12 @@ docs.
   the host model adapter.
 - [Harnesses](./harnesses.md) — the `HarnessAdapter` contract, the shared
   runtime, and the Claude Code and Codex adapters.
+- [Settings](./settings.md) — connection profiles, the secret store, and
+  resolution rules.
+- [GitHub import](./import.md) — URL forms, sandbox limits, and the import
+  API/UI/CLI.
+- [Accounts and sync](./accounts.md) — GitHub OAuth, sessions, merge rules,
+  export, and delete.
 - [Self-hosting](./self-hosting.md) — install, serve, environment, storage, and
   upgrades.
 - [Privacy](./privacy.md) — what stays local and what cloud choices send.

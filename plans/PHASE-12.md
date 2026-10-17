@@ -1,7 +1,7 @@
 # Phase 12 — Accounts and Cross-Device Sync
 
-**Status: in progress (2026-10-17).** Depends on: Phase 9 (profiles) and the v1 run store. Can
-run in parallel with Phases 10, 11, and 13 after Phase 9.
+**Status: complete (2026-10-17).** Depends on: Phase 9 (profiles) and the v1 run store;
+shipped in parallel with Phases 10 and 11.
 
 ## Goal
 
@@ -142,3 +142,41 @@ account. The server owns identity; the browser and harnesses stay local-first.
 - Keep anonymous paths free of auth imports.
 - Never log tokens, cookies, or full OAuth payloads.
 - Update `CONTEXT.md` with account and sync terms when they land.
+
+## Shipped (closure, 2026-10-17)
+
+- **`packages/accounts`** — GitHub OAuth over `fetch` (no OAuth library) with
+  PKCE, device flow, sanitized errors, and `read:user`; HMAC-signed session and
+  state values; server-side `SessionService` with rotation, expiry, revocation,
+  and last-seen; origin policy; merge rules (per-field last-write-wins, set
+  union of completed beats, newest beat/offset pair, tombstones); `SyncService`
+  with pull/push/merge/claim/export/delete; in-memory and SQLite stores.
+- **API** — `/api/auth/github`, callback, device flow, `/api/auth/session`,
+  `/api/auth/signout`, `/api/account`, `/api/account/export`,
+  `DELETE /api/account`, `/api/sync/pull|push|claim`.
+- **Runs** — nullable `user_id`, tombstones, and an idempotent in-place
+  migration; anonymous behavior unchanged.
+- **UI** — `/account` with sign-in, sessions, sync status, export, and delete;
+  a home sign-in nudge and a player sync badge.
+- **CLI** — `sothspell account signin|signout|status` and
+  `sothspell sync status|push|pull` with 0600 credentials.
+- **Docs** — `docs/accounts.md`.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- Track: 15 files / 135 focused tests; `pnpm test` 46 files / 298 tests;
+  `pnpm test:browser` 23 passed (16 browser + 7 a11y) at 0 critical/serious.
+- Manual real-server check with a fake GitHub provider: loopback sign-in,
+  httpOnly SameSite=Lax cookie, sync push/claim/pull union merge, export
+  attachment, delete followed by 401, and an evil-origin 403.
+- After merge with Phases 9 and 11: `pnpm typecheck` clean, `pnpm lint` clean,
+  `pnpm test` 69 files / 540 tests, `pnpm build` clean.
+- Bunbun remains read-only.
+
+### Owner-gated / follow-ups
+
+- A real GitHub OAuth app and device-flow round trip were not run; a fake
+  provider covered the flows.
+- Without `SOTHSPELL_SESSION_SECRET` sessions reset on restart; the UI reports
+  the ephemeral state.
+- Reviews are not part of the export bundle until Phase 15 lands.

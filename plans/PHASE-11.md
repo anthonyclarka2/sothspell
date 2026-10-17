@@ -1,7 +1,7 @@
 # Phase 11 — GitHub Import
 
-**Status: in progress (2026-10-17).** Depends on: Phase 9 (profiles) and the v1 analyzer. Can run
-in parallel with Phase 10 after Phase 9.
+**Status: complete (2026-10-17).** Depends on: Phase 9 (profiles) and the v1 analyzer;
+shipped in parallel with Phases 10 and 12.
 
 ## Goal
 
@@ -152,3 +152,37 @@ The acceptance is:
   argument array and a scrubbed environment.
 - Keep the analyzer read-only rules unchanged; the import only chooses the root.
 - Record the import limits and layout in `docs/import.md` and `CONTEXT.md`.
+
+## Shipped (closure, 2026-10-17)
+
+- **`packages/import`** — `parseGitHubUrl` for shorthand, HTTPS, SSH, `.git`,
+  `/tree/<ref>`, and `www.` forms; host allowlist and traversal rejection;
+  `ImportPolicy` with depth 1, single branch, no tags/submodules/LFS/hooks, a
+  scrubbed `GIT_*` environment, timeout, and size ceilings; a `GitRemote` over
+  `execFile` with a fixed argument array; and `createImportService` with
+  `import/list/get/refresh/remove`, staging clones, revision pinning, read-only
+  marking, partial cleanup, and metadata beside (never inside) the clone.
+- **API** — `POST/GET /api/imports`, `GET/DELETE /api/imports/:id`,
+  `POST /api/imports/:id/refresh` with 400/404/409/502/504/507 mapping.
+- **UI** — `/import` with URL and ref, progress states, the import list, and
+  confirmed removal.
+- **CLI** — `sothspell import <url> [--ref <ref>] [--json]`.
+- **Docs** — `docs/import.md`.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- Track: 12 files / 109 focused tests; `pnpm test` 43 files / 272 tests;
+  `pnpm test:browser` 19 passed with the new import specs and axe coverage.
+- After merge with Phase 9: `pnpm typecheck` clean, `pnpm lint` clean,
+  `pnpm test` 60 files / 451 tests, `pnpm build` clean.
+- Live headless-Chrome check: phases observed, commit pinned, clone mode 444
+  with writes denied, shallow depth 1, refresh idempotent, removal clean.
+- Bunbun remains read-only.
+
+### Follow-ups
+
+- Imported projects are not yet wired into a tour-source picker; a follow-up
+  will let the player and authoring choose an imported root directly.
+- Only public repositories; private access waits on accounts.
+- A container or micro-VM sandbox remains the stronger future option behind the
+  same port.
