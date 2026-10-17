@@ -17,6 +17,7 @@ import {
   type TourPlan,
 } from '@sothspell/authoring';
 import { runDoctor } from './doctor.js';
+import { parseExportArgs, runExport } from './export.js';
 import { runServe, type ServeArgs } from './serve.js';
 
 export interface CliIO {
@@ -29,12 +30,14 @@ const USAGE = `Usage:
   sothspell author <path> [--model <provider/model>] [--out <dir>]
                           [--audience new-contributor|technical-evaluator|maintainer]
                           [--max-minutes <n>] [--no-cache]
+  sothspell export <tour.json> --embed --out <dir> [--source-root <path>]
   sothspell serve [--port <n>] [--host <host>] [--no-open]
   sothspell doctor
 
 Commands:
   analyze <path>    Build a read-only project snapshot.
   author <path>     Plan and write a Sóþspell tour from the snapshot.
+  export <tour>     Write a self-contained embed bundle for a docs page.
   serve             Start the local API and web player.
   doctor            Check the local runtime and optional integrations.
 
@@ -46,6 +49,8 @@ Options:
   --model <id>      provider/model, or "fixture" for a deterministic offline tour.
   --audience <kind> new-contributor, technical-evaluator, or maintainer.
   --max-minutes <n> Target tour runtime for the curriculum planner.
+  --embed           Export the embed bundle (required for export).
+  --source-root <p> Read excerpts for anchors without embedded text (export).
   --port <n>        Port for serve (default 4319).
   --host <host>     Host for serve (default 127.0.0.1).
   --no-open         Do not open the browser from serve.
@@ -361,6 +366,15 @@ export async function runCli(argv: string[], io: CliIO): Promise<number> {
   if (argv[0] === 'author') {
     try {
       return await runAuthor(parseAuthorArgs(argv.slice(1)), io);
+    } catch (error) {
+      io.stderr(error instanceof Error ? error.message : String(error));
+      return 2;
+    }
+  }
+
+  if (argv[0] === 'export') {
+    try {
+      return await runExport(parseExportArgs(argv.slice(1)), io);
     } catch (error) {
       io.stderr(error instanceof Error ? error.message : String(error));
       return 2;

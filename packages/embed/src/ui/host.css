@@ -1,0 +1,40 @@
+/*
+ * player.css — host-page defaults for the embed bundle. It ships beside
+ * player.js so a docs page can reserve layout before the custom element
+ * upgrades and so the bundled iframe page can fill its viewport. Everything
+ * visual lives in the element's shadow root; this file deliberately stays
+ * tiny and global.
+ */
+
+sothspell-tour {
+  display: block;
+  width: 100%;
+}
+
+sothspell-tour:not(:defined) {
+  min-height: 320px;
+}
+
+body.sothspell-iframe {
+  margin: 0;
+  min-height: 100dvh;
+  background: #f6f7f9;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  body.sothspell-iframe {
+    background: #0b0e13;
+  }
+}
+
+body.sothspell-iframe sothspell-tour {
+  height: 100dvh;
+}
+
+body.sothspell-iframe sothspell-tour::part(player) {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}

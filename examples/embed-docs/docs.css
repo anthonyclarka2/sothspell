@@ -1,0 +1,82 @@
+/*
+ * Deliberately opinionated docs-site CSS. If the embed were not isolated in a
+ * shadow root, the dashed amber buttons and serif body text would restyle the
+ * player chrome — the fixture is the proof that it does not.
+ */
+
+:root {
+  --docs-ink: #16181d;
+  --docs-muted: #565b66;
+  --docs-bg: #fdfdfb;
+  --docs-line: #e5e1d8;
+  --docs-accent: #7a3bbf;
+}
+
+body {
+  margin: 0;
+  background: var(--docs-bg);
+  color: var(--docs-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 20px 72px;
+}
+
+h1 {
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0 0 12px;
+}
+
+h2 {
+  font-size: 22px;
+  margin: 0 0 8px;
+}
+
+p {
+  max-width: 72ch;
+  color: var(--docs-muted);
+}
+
+section {
+  margin: 36px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--docs-line);
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+  background: #f2efe8;
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+/* These rules target every button on the page; the player ignores them. */
+button {
+  font:
+    12px/1.2 'Comic Sans MS',
+    cursive;
+  background: #ffe9c7;
+  color: #111;
+  border: 1px dashed #b07d2a;
+  border-radius: 4px;
+  padding: 4px 10px;
+}
+
+iframe {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--docs-line);
+  border-radius: 8px;
+}
+
+#iframe-slot {
+  min-height: 480px;
+}

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Embed progress opt-out — Sóþspell</title>
+    <link rel="stylesheet" href="./docs.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Progress opt-out</h1>
+      <p>
+        This page embeds the golden tour with <code>progress="off"</code>. No record is
+        read from or written to the host origin's storage.
+      </p>
+      <sothspell-tour
+        id="optout-embed"
+        tour="./dist/sothspell/tour.json"
+        progress="off"
+        style="min-height: 420px"
+      ></sothspell-tour>
+    </main>
+
+    <script type="module" src="./dist/sothspell/player.js"></script>
+  </body>
+</html>
