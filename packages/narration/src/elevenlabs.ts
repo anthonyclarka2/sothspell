@@ -2,6 +2,7 @@ import { Buffer } from 'node:buffer';
 import { normalizeAlignment } from './alignment.js';
 import { narrationContentHash } from './content.js';
 import { splitSentences } from './sentences.js';
+import { narrationModelForLocale } from './voices.js';
 import type {
   CharacterAlignment,
   NarrationAssetRecord,
@@ -25,6 +26,8 @@ export interface SynthesizeElevenLabsOptions {
   text: string;
   voiceId: string;
   modelId?: string;
+  /** The narration locale; joins the cache key and defaults the model. */
+  locale?: string;
   beatId: string;
   apiKey: string;
   outputFormat?: string;
@@ -147,6 +150,11 @@ export async function synthesizeElevenLabs(
       }));
   const retryDelayMs = options.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS;
   const outputFormat = options.outputFormat ?? DEFAULT_OUTPUT_FORMAT;
+  // A locale-aware request without a configured model must not fall back to a
+  // monolingual default; the multilingual model is what keeps the voice usable.
+  const modelId =
+    options.modelId ??
+    (options.locale === undefined ? undefined : narrationModelForLocale(options.locale));
   const url = `${API_BASE}/${encodeURIComponent(options.voiceId)}/with-timestamps?output_format=${encodeURIComponent(outputFormat)}`;
   const init: RequestInit = {
     method: 'POST',
@@ -154,7 +162,7 @@ export async function synthesizeElevenLabs(
       'content-type': 'application/json',
       'xi-api-key': apiKey,
     },
-    body: JSON.stringify({ text: options.text, model_id: options.modelId }),
+    body: JSON.stringify({ text: options.text, model_id: modelId }),
     signal: options.signal,
   };
 
@@ -217,8 +225,9 @@ export async function synthesizeElevenLabs(
   const contentHash = narrationContentHash(
     options.text,
     options.voiceId,
-    options.modelId,
+    modelId,
     outputFormat,
+    options.locale,
   );
   const { sentences, words } = normalizeAlignment(
     options.text,
@@ -238,7 +247,7 @@ export async function synthesizeElevenLabs(
     durationMs,
     provider: 'elevenlabs',
     voiceId: options.voiceId,
-    modelId: options.modelId,
+    modelId,
     alignment,
   };
 
@@ -255,7 +264,7 @@ export async function synthesizeElevenLabs(
     },
     provider: 'elevenlabs',
     voiceId: options.voiceId,
-    modelId: options.modelId,
+    modelId,
     contentHash,
   };
 

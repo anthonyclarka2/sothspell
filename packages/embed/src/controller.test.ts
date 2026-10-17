@@ -18,14 +18,45 @@ function makeTour(): EmbedTour {
     },
     estimatedDurationMs: 16_000,
     locale: 'en',
+    sourceLocale: 'en',
+    availableLocales: ['en', 'de'],
     translations: {
       de: {
+        locale: 'de',
+        sourceLocale: 'en',
         title: 'Fixture-Tour',
+        subtitle: 'Eine kleine Tour für Tests',
         chapters: [
           {
             id: 'chapter_one',
             title: 'Eins',
-            beats: [{ id: 'beat_one', title: 'Schlag eins', narration: 'Erster Text.' }],
+            summary: 'Erste Kapitelzusammenfassung.',
+            diagrams: [],
+            beats: [
+              {
+                id: 'beat_one',
+                title: 'Schlag eins',
+                narration: 'Erster Text für den ersten Schlag der Tour.',
+              },
+              {
+                id: 'beat_two',
+                title: 'Schlag zwei',
+                narration: 'Zweiter Text für den zweiten Schlag der Tour.',
+              },
+            ],
+          },
+          {
+            id: 'chapter_two',
+            title: 'Zwei',
+            summary: 'Zweite Kapitelzusammenfassung.',
+            diagrams: [],
+            beats: [
+              {
+                id: 'beat_three',
+                title: 'Schlag drei',
+                narration: 'Dritter Text für den dritten Schlag der Tour.',
+              },
+            ],
           },
         ],
       },

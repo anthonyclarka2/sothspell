@@ -1,6 +1,7 @@
 import { compileSothspell, parseSothspell, type CompiledTour } from '@sothspell/core';
 import { EMBED_CHANNEL } from '../protocol.js';
-import type { EmbedTour, EmbedTranslation } from '../types.js';
+import type { EmbedTour } from '../types.js';
+import type { TourTranslation } from '@sothspell/core';
 import {
   createManifest,
   fileEntry,
@@ -49,7 +50,10 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function extractOverlay(input: unknown): Pick<EmbedTour, 'locale' | 'translations'> {
+function extractOverlay(input: unknown): {
+  locale?: string;
+  translations?: Record<string, TourTranslation>;
+} {
   if (typeof input !== 'object' || input === null) {
     return {};
   }
@@ -57,7 +61,7 @@ function extractOverlay(input: unknown): Pick<EmbedTour, 'locale' | 'translation
   const locale = typeof record.locale === 'string' ? record.locale : undefined;
   const translations =
     typeof record.translations === 'object' && record.translations !== null
-      ? (record.translations as Record<string, EmbedTranslation>)
+      ? (record.translations as Record<string, TourTranslation>)
       : undefined;
   return {
     ...(locale === undefined ? {} : { locale }),
@@ -95,7 +99,14 @@ export async function buildEmbedExport(
     );
   }
 
-  const embedTour: EmbedTour = { ...compiled, ...extractOverlay(input) };
+  const overlay = extractOverlay(input);
+  const embedTour: EmbedTour = {
+    ...compiled,
+    ...(overlay.locale === undefined ? {} : { locale: overlay.locale }),
+    ...(overlay.translations === undefined
+      ? {}
+      : { translations: overlay.translations }),
+  };
   const { totalExcerptBytes } = validateTourContent(embedTour, {
     maxExcerptBytes,
     maxTotalExcerptBytes,

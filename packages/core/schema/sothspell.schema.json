@@ -4,7 +4,7 @@
   "properties": {
     "schemaVersion": {
       "type": "string",
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "id": {
       "type": "string",
@@ -78,6 +78,10 @@
         "revision"
       ],
       "additionalProperties": false
+    },
+    "locale": {
+      "type": "string",
+      "pattern": "^[a-z]{2,8}(-[a-z0-9]{2,8})*$"
     },
     "estimatedDurationMs": {
       "type": "integer",
@@ -385,6 +389,168 @@
           "summary",
           "diagrams",
           "beats"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "translations": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z]{2,8}(-[a-z0-9]{2,8})*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "locale": {
+            "type": "string",
+            "pattern": "^[a-z]{2,8}(-[a-z0-9]{2,8})*$"
+          },
+          "sourceLocale": {
+            "type": "string",
+            "pattern": "^[a-z]{2,8}(-[a-z0-9]{2,8})*$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 96
+          },
+          "subtitle": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "chapters": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 96
+                },
+                "summary": {
+                  "type": "string",
+                  "minLength": 10,
+                  "maxLength": 400
+                },
+                "diagrams": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 96
+                      },
+                      "nodeLabels": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "additionalProperties": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 48
+                        }
+                      },
+                      "edgeLabels": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "additionalProperties": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 32
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "title"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "beats": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 96
+                      },
+                      "narration": {
+                        "type": "string",
+                        "minLength": 20,
+                        "maxLength": 1200
+                      },
+                      "suggestedQuestions": {
+                        "maxItems": 3,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 4,
+                          "maxLength": 240
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "title",
+                      "narration"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "summary",
+                "diagrams",
+                "beats"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "modelId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "promptVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          }
+        },
+        "required": [
+          "locale",
+          "sourceLocale",
+          "title",
+          "subtitle",
+          "chapters"
         ],
         "additionalProperties": false
       }

@@ -4,6 +4,7 @@ import { createPlayback, type PlaybackSnapshot } from '@sothspell/player';
 import type { CompiledBeat, CompiledTour } from '@sothspell/core';
 import { fetchTour } from '../lib/api.js';
 import { useAsync } from '../lib/use-async.js';
+import { useLocale } from '../i18n/locale.js';
 import {
   clearRun,
   getOrCreateClientId,
@@ -56,12 +57,29 @@ function findBeat(tour: CompiledTour, beatId: string): CompiledBeat | null {
 export function PlayerPage() {
   const params = useParams({ strict: false }) as PlayerParams;
   const navigate = useNavigate();
+  const { locale, t } = useLocale();
   const clientId = useMemo(() => getOrCreateClientId(), []);
-  const tourState = useAsync(() => fetchTour(params.tourId), [params.tourId]);
+  const tourState = useAsync(
+    () => fetchTour(params.tourId, locale),
+    [params.tourId, locale],
+  );
+
+  // The last compiled tour stays mounted while the next locale loads, so a
+  // locale switch never resets playback or loses the current beat.
+  const [loadedTour, setLoadedTour] = useState<CompiledTour | null>(null);
+  useEffect(() => {
+    if (tourState.data) {
+      setLoadedTour(tourState.data);
+    }
+  }, [tourState.data]);
+  const tour = tourState.data ?? loadedTour;
 
   const playback = useMemo(
-    () => (tourState.data ? createPlayback(toPlaybackTour(tourState.data)) : null),
-    [tourState.data],
+    () => (tour ? createPlayback(toPlaybackTour(tour)) : null),
+    // The playback tour is structural (ids and durations); a locale change must
+    // not rebuild the state machine, so only the tour id does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tour?.id],
   );
 
   const [snapshot, setSnapshot] = useState<PlaybackSnapshot | null>(null);
@@ -76,11 +94,9 @@ export function PlayerPage() {
   const resumeAfterAskRef = useRef(false);
 
   const currentChapter =
-    tourState.data && snapshot
-      ? (tourState.data.chapters.find(
-          (candidate) => candidate.id === snapshot.chapterId,
-        ) ??
-        tourState.data.chapters[0] ??
+    tour && snapshot
+      ? (tour.chapters.find((candidate) => candidate.id === snapshot.chapterId) ??
+        tour.chapters[0] ??
         null)
       : null;
   const currentBeat =
@@ -92,6 +108,7 @@ export function PlayerPage() {
     enabled: narrationMode === 'listen' && currentBeat !== null,
     provider: narrationProvider,
     speed: snapshot?.speed ?? 1,
+    locale,
     onBeatEnd: () => playback?.next(),
     onProgress: (offsetMs) => playback?.seekOffset(offsetMs),
   });
@@ -251,32 +268,35 @@ export function PlayerPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [playback]);
 
-  if (tourState.status === 'loading') {
+  if (!tour) {
     return (
       <div className="page">
-        <p className="notice">Loading the tour…</p>
+        {tourState.status === 'error' ? (
+          <div className="notice">
+            <strong>{t('player.loadError')}</strong> {tourState.error?.message}
+          </div>
+        ) : (
+          <p className="notice">{t('player.loading')}</p>
+        )}
       </div>
     );
   }
 
-  if (tourState.status === 'error' || !tourState.data || !snapshot) {
+  if (!snapshot) {
     return (
       <div className="page">
-        <div className="notice">
-          <strong>The tour did not load.</strong> {tourState.error?.message}
-        </div>
+        <p className="notice">{t('player.loading')}</p>
       </div>
     );
   }
 
-  const tour = tourState.data;
   const chapter = currentChapter;
   const beat = currentBeat;
 
   if (!chapter || !beat) {
     return (
       <div className="page">
-        <div className="notice">The requested beat is not part of this tour.</div>
+        <div className="notice">{t('player.beatNotFound')}</div>
       </div>
     );
   }
@@ -360,18 +380,19 @@ export function PlayerPage() {
         <div className="page" style={{ paddingBottom: 0 }}>
           <div className="notice resume-banner">
             <span>
-              You have progress in this tour:{' '}
-              {findBeat(tour, resume.beatId)?.title ?? resume.beatId}.{' '}
+              {t('player.resume', {
+                beat: findBeat(tour, resume.beatId)?.title ?? resume.beatId,
+              })}{' '}
               {resume.completedBeatIds.length > 0
-                ? `${resume.completedBeatIds.length} beats completed.`
+                ? t('player.resumeCompleted', { count: resume.completedBeatIds.length })
                 : ''}
             </span>
             <span style={{ display: 'flex', gap: 8 }}>
               <button type="button" className="primary-action" onClick={resumeRun}>
-                Resume
+                {t('player.resumeAction')}
               </button>
               <button type="button" className="secondary-action" onClick={startOver}>
-                Start over
+                {t('player.startOver')}
               </button>
             </span>
           </div>
@@ -389,17 +410,17 @@ export function PlayerPage() {
 
         <div className="stage-column">
           <div className="stage">
-            <section className="diagram-panel" aria-label="Diagram">
+            <section className="diagram-panel" aria-label={t('player.diagram')}>
               <div className="panel-header">
-                <strong>{chapter.diagrams[0]?.title ?? 'Diagram'}</strong>
+                <strong>{chapter.diagrams[0]?.title ?? t('player.diagram')}</strong>
                 <span>{chapter.title}</span>
               </div>
               <DiagramStage chapter={chapter} beat={beat} onOpenAnchor={openAnchor} />
             </section>
 
-            <section className="code-panel" aria-label="Code evidence">
+            <section className="code-panel" aria-label={t('player.codeEvidence')}>
               <div className="panel-header">
-                <strong>{beat.anchors[0]?.label ?? 'Code evidence'}</strong>
+                <strong>{beat.anchors[0]?.label ?? t('player.codeEvidence')}</strong>
                 <span className="mono">{beat.anchors[0]?.language ?? 'text'}</span>
               </div>
               <CodePane projectSlug={tour.project.slug} beat={beat} />

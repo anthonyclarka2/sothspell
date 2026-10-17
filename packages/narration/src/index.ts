@@ -30,6 +30,15 @@ export type {
 
 export { estimateDurationMs, narrationContentHash } from './content.js';
 
+export {
+  ELEVENLABS_MULTILINGUAL_MODEL,
+  languageOf,
+  narrationModelForLocale,
+  pickBrowserVoice,
+  voicesForLocale,
+  type NarrationVoiceLike,
+} from './voices.js';
+
 export { synthesizeElevenLabs } from './elevenlabs.js';
 export type { ElevenLabsSynthesis, SynthesizeElevenLabsOptions } from './elevenlabs.js';
 

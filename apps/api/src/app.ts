@@ -17,11 +17,15 @@ import {
   type ReviewService,
 } from '@sothspell/review';
 import {
+  LocaleSchema,
   compileSothspell,
   highlightCodeLines,
   languageForPath,
+  parseSothspell,
   readSourceFile,
   readSourceRange,
+  sourceLocaleOf,
+  withTranslation,
   type CompiledAnchor,
   type CompiledTour,
 } from '@sothspell/core';
@@ -53,6 +57,13 @@ import {
   type SyncService,
 } from '@sothspell/accounts';
 import { createSqliteAccountStore } from '@sothspell/accounts/sqlite';
+import {
+  createFileTranslationStore,
+  createTranslationService,
+  registerTranslationRoutes,
+  type TranslationService,
+  type TranslationStore,
+} from './translations.js';
 
 const AskBodySchema = z.object({
   beatId: z.string().min(1).max(128),
@@ -115,6 +126,10 @@ export interface AppOptions {
   now?: () => number;
   /** Review service; tests inject one over a temp store and a fake model. */
   reviewService?: ReviewService;
+  /** Translation store; defaults to a file store under SOTHSPELL_HOME. */
+  translationStore?: TranslationStore;
+  /** Translation service; tests inject a fake, `null` disables the POST route. */
+  translationService?: TranslationService | null;
 }
 
 const DEFAULT_TOUR_PATH = new URL(
@@ -162,17 +177,38 @@ async function resolveTourJsonPath(
   return null;
 }
 
-function loadCompiledTour(tourJsonPath: string): Promise<CompiledTour> {
-  const cached = compiledCache.get(tourJsonPath);
-  if (cached) {
-    return cached;
+function loadCompiledTour(
+  store: TranslationStore,
+  tourJsonPath: string,
+  tourId: string,
+  locale?: string,
+): Promise<CompiledTour> {
+  if (locale === undefined) {
+    const cached = compiledCache.get(tourJsonPath);
+    if (cached) {
+      return cached;
+    }
+
+    const compiled = readFile(tourJsonPath, 'utf8').then((raw) =>
+      compileSothspell(JSON.parse(raw) as unknown),
+    );
+    compiledCache.set(tourJsonPath, compiled);
+    return compiled;
   }
 
-  const compiled = readFile(tourJsonPath, 'utf8').then((raw) =>
-    compileSothspell(JSON.parse(raw) as unknown),
-  );
-  compiledCache.set(tourJsonPath, compiled);
-  return compiled;
+  // A translated compile is never cached: a translation can be stored at any
+  // moment, and recompiling one tour is cheaper than invalidating every key.
+  return readFile(tourJsonPath, 'utf8').then(async (raw) => {
+    const document = parseSothspell(JSON.parse(raw) as unknown);
+    if (locale === sourceLocaleOf(document)) {
+      return compileSothspell(document);
+    }
+    const translation = await store.read(tourId, locale);
+    if (!translation) {
+      return compileSothspell(document);
+    }
+    return compileSothspell(withTranslation(document, translation), { locale });
+  });
 }
 
 interface AnchorLocation {
@@ -408,6 +444,17 @@ export function createApp(options: AppOptions = {}): Hono {
       sourceRoot: projectRoot,
       resolveModel: resolveAuthoringModel,
     });
+  const translationStore =
+    options.translationStore ??
+    createFileTranslationStore(path.join(sothspellHome(), 'translations'));
+  const translationService =
+    options.translationService === undefined
+      ? createTranslationService({
+          resolveTourPath: (tourId) => resolveTourJsonPath(tourJsonPath, tourId),
+          resolveModel: resolveAuthoringModel,
+          cacheDirectory: path.join(sothspellHome(), 'cache', 'authoring'),
+        })
+      : options.translationService;
   const app = new Hono();
 
   registerAudioRoutes(app, { assetStore });
@@ -416,6 +463,11 @@ export function createApp(options: AppOptions = {}): Hono {
   registerAuthRoutes(app, auth);
   registerAccountRoutes(app, { auth, sync: syncService });
   registerReviewRoutes(app, { service: reviewService });
+  registerTranslationRoutes(app, {
+    service: translationService,
+    store: translationStore,
+    resolveTourPath: (tourId) => resolveTourJsonPath(tourJsonPath, tourId),
+  });
 
   app.get('/api/health', (context) =>
     context.json({
@@ -431,7 +483,11 @@ export function createApp(options: AppOptions = {}): Hono {
     if (!resolvedPath) {
       return context.json({ error: `unknown tour: ${tourId}` }, 404);
     }
-    const tour = await loadCompiledTour(resolvedPath);
+    const locale = context.req.query('locale');
+    if (locale !== undefined && !LocaleSchema.safeParse(locale).success) {
+      return context.json({ error: `invalid locale: ${locale}` }, 400);
+    }
+    const tour = await loadCompiledTour(translationStore, resolvedPath, tourId, locale);
     context.header('cache-control', 'no-store');
     return context.json(tour);
   });
@@ -452,7 +508,7 @@ export function createApp(options: AppOptions = {}): Hono {
     if (!resolvedPath) {
       return context.json({ error: `unknown tour: ${requestedTourId}` }, 404);
     }
-    const tour = await loadCompiledTour(resolvedPath);
+    const tour = await loadCompiledTour(translationStore, resolvedPath, requestedTourId);
     const location = findAnchor(tour, anchorId);
     if (!location) {
       return context.json({ error: `unknown anchor: ${anchorId}` }, 404);

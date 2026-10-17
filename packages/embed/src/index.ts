@@ -63,7 +63,5 @@ export type {
   EmbedListener,
   EmbedSnapshot,
   EmbedTour,
-  EmbedTranslation,
-  EmbedTranslationBeat,
-  EmbedTranslationChapter,
+  TourTranslation,
 } from './types.js';

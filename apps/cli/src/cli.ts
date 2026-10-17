@@ -14,6 +14,7 @@ import {
   buildContextPack,
   createAiSdkGuideModel,
   createFixtureGuideModel,
+  type GuideModel,
   type TourPlan,
 } from '@sothspell/authoring';
 import {
@@ -28,6 +29,7 @@ import { parseExportArgs, runExport } from './export.js';
 import { runReview } from './review.js';
 import { runServe, type ServeArgs } from './serve.js';
 import { runAccountCommand } from './account.js';
+import { parseTranslateArgs, runTranslate } from './translate.js';
 
 export interface CliIO {
   stdout: (line: string) => void;
@@ -39,6 +41,8 @@ export interface CliDependencies {
   settings?: SettingsService;
   /** Injected review service; tests keep the real database untouched. */
   review?: ReviewService;
+  /** Injected translation model; tests avoid a provider call. */
+  translateModel?: GuideModel;
 }
 
 const USAGE = `Usage:
@@ -48,6 +52,7 @@ const USAGE = `Usage:
                           [--max-minutes <n>] [--no-cache]
   sothspell import <url> [--ref <ref>] [--json]
   sothspell export <tour.json> --embed --out <dir> [--source-root <path>]
+  sothspell translate <tour.json> --locale <code> [--out <file>] [--model <provider/model>]
   sothspell serve [--port <n>] [--host <host>] [--no-open]
   sothspell doctor
   sothspell review list|show|approve|reject [<reviewId>] [--reason <text>]
@@ -57,6 +62,7 @@ Commands:
   author <path>     Plan and write a Sóþspell tour from the snapshot.
   import <url>      Shallow-clone a public GitHub repository into SOTHSPELL_HOME.
   export <tour>     Write a self-contained embed bundle for a docs page.
+  translate <tour>  Translate one tour into another locale and write it out.
   serve             Start the local API and web player.
   doctor            Check the local runtime and optional integrations.
   review            List, show, approve, or reject a stored review session.
@@ -64,11 +70,13 @@ Commands:
 Options:
   --json            Print the snapshot JSON (analyze), or the import record (import).
   --brief           Print the project brief as Markdown (analyze).
-  --out <file|dir>  Write the snapshot JSON, or the authored tour directory.
+  --out <file|dir>  Write the snapshot JSON, the authored tour directory, or the
+                    translated tour file.
   --save            Save the snapshot under SOTHSPELL_HOME/projects/<slug>/.
   --model <id>      provider/model, or "fixture" for a deterministic offline tour.
                     Defaults to SOTHSPELL_MODEL, then the active authoring
                     profile from /settings.
+  --locale <code>   Target locale for translate (for example es or ar).
   --audience <kind> new-contributor, technical-evaluator, or maintainer.
   --max-minutes <n> Target tour runtime for the curriculum planner.
   --ref <ref>       Branch or tag to import (import).
@@ -414,6 +422,22 @@ export async function runCli(
   if (argv[0] === 'author') {
     try {
       return await runAuthor(parseAuthorArgs(argv.slice(1)), io, dependencies);
+    } catch (error) {
+      io.stderr(error instanceof Error ? error.message : String(error));
+      return 2;
+    }
+  }
+
+  if (argv[0] === 'translate') {
+    try {
+      return await runTranslate(parseTranslateArgs(argv.slice(1)), io, {
+        ...(dependencies.translateModel === undefined
+          ? {}
+          : { model: dependencies.translateModel }),
+        ...(dependencies.settings === undefined
+          ? {}
+          : { settings: dependencies.settings }),
+      });
     } catch (error) {
       io.stderr(error instanceof Error ? error.message : String(error));
       return 2;

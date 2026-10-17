@@ -209,8 +209,26 @@ describe('embed export pipeline', () => {
       locale: 'en',
       translations: {
         de: {
+          locale: 'de',
+          sourceLocale: 'en',
           title: 'Fixture-Tour',
-          chapters: [{ id: 'chapter_one', title: 'Eins' }],
+          subtitle: 'Eine kleine Tour für die Exporttests',
+          chapters: [
+            {
+              id: 'chapter_one',
+              title: 'Eins',
+              summary: 'Erste Kapitelzusammenfassung für die Fixture-Tour.',
+              diagrams: [{ id: 'diagram_one', title: 'Fluss' }],
+              beats: [
+                {
+                  id: 'beat_one',
+                  title: 'Schlag eins',
+                  narration:
+                    'Dieser Schlag erklärt die Antwortkonstante in der Quelldatei.',
+                },
+              ],
+            },
+          ],
         },
       },
     });

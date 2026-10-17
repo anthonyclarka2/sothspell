@@ -1,6 +1,7 @@
 import { splitSentences } from '@sothspell/narration/sentences';
 import type { CompiledBeat, CompiledChapter } from '@sothspell/core';
 import type { NarrationProviderChoice, NarrationStatus } from '../lib/use-narration.js';
+import { useLocale } from '../i18n/locale.js';
 
 export interface NarrationRailProps {
   chapter: CompiledChapter;
@@ -27,31 +28,44 @@ export function NarrationRail({
   onProviderChange,
   onAsk,
 }: NarrationRailProps) {
+  const { locale, t } = useLocale();
   const sentences = splitSentences(beat.narration);
 
+  const statusText =
+    narrationStatus === 'playing'
+      ? t(provider === 'cloud' ? 'narration.playingCloud' : 'narration.playingBrowser')
+      : narrationStatus === 'paused'
+        ? t('narration.paused')
+        : narrationStatus === 'loading'
+          ? t('narration.preparing')
+          : narrationStatus === 'error'
+            ? t('narration.unavailable')
+            : t('narration.listenMode');
+
   return (
-    <section className="narration" aria-label="Narration">
+    <section className="narration" aria-label={t('narration.label')}>
       <div className="narration-main">
         <div className="narration-toolbar">
           <h2>{beat.title}</h2>
           <div className="narration-mode">
             <button type="button" className="secondary-action" onClick={onToggleMode}>
-              {mode === 'listen' ? 'Read mode' : 'Listen'}
+              {mode === 'listen' ? t('narration.readMode') : t('narration.listen')}
             </button>
             <select
-              aria-label="Narration voice"
+              aria-label={t('narration.voice')}
               value={provider}
               onChange={(event) =>
                 onProviderChange(event.target.value as NarrationProviderChoice)
               }
             >
-              <option value="browser">Browser voice</option>
-              <option value="cloud">Cloud voice</option>
+              <option value="browser">{t('narration.browserVoice')}</option>
+              <option value="cloud">{t('narration.cloudVoice')}</option>
             </select>
           </div>
         </div>
 
-        <p className="narration-copy">
+        {/* The narration language is the tour locale; the markup says so. */}
+        <p className="narration-copy" lang={locale}>
           {sentences.map((sentence, index) => (
             <span
               key={`${sentence.charStart}-${index}`}
@@ -69,38 +83,32 @@ export function NarrationRail({
 
         {mode === 'listen' ? (
           <p className="narration-status" role="status">
-            {narrationStatus === 'playing'
-              ? `Listening · ${provider === 'cloud' ? 'cloud voice' : 'browser voice'}`
-              : narrationStatus === 'paused'
-                ? 'Narration paused'
-                : narrationStatus === 'loading'
-                  ? 'Preparing narration…'
-                  : narrationStatus === 'error'
-                    ? 'Narration unavailable'
-                    : 'Listen mode'}
+            {statusText}
           </p>
         ) : null}
 
         {narrationError ? <p className="notice">{narrationError}</p> : null}
       </div>
       <aside className="narration-aside">
-        <h3>Ask yourself</h3>
+        <h3>{t('narration.askYourself')}</h3>
         {beat.suggestedQuestions.length > 0 ? (
-          <ul className="question-list">
+          <ul className="question-list" lang={locale}>
             {beat.suggestedQuestions.map((question) => (
               <li key={question}>{question}</li>
             ))}
           </ul>
         ) : (
-          <p className="notice">No suggested questions for this beat.</p>
+          <p className="notice">{t('narration.noQuestions')}</p>
         )}
         <button type="button" className="secondary-action ask-open" onClick={onAsk}>
-          Ask about this beat
+          {t('narration.askAbout')}
         </button>
         <p className="anchor-meta">
-          Chapter: {chapter.title}
+          {t('narration.chapter', { title: chapter.title })}
           <br />
-          Evidence: {beat.anchors.length} anchor{beat.anchors.length === 1 ? '' : 's'}
+          {beat.anchors.length === 1
+            ? t('narration.evidenceOne')
+            : t('narration.evidenceMany', { count: beat.anchors.length })}
         </p>
       </aside>
     </section>

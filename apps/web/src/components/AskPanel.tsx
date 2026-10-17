@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { PaperPlaneTilt, X } from '@phosphor-icons/react';
 import { askQuestion, type AskResponse } from '../lib/api.js';
+import { useLocale } from '../i18n/locale.js';
 
 export interface AskPanelProps {
   tourId: string;
@@ -18,6 +19,7 @@ export function AskPanel({
   onClose,
   onContinue,
 }: AskPanelProps) {
+  const { t } = useLocale();
   const [question, setQuestion] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [answer, setAnswer] = useState<AskResponse | null>(null);
@@ -45,42 +47,35 @@ export function AskPanel({
       ]);
       setQuestion('');
     } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : 'The question could not be answered.',
-      );
+      setError(requestError instanceof Error ? requestError.message : t('ask.error'));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <section className="ask-panel" aria-label="Ask about this beat">
+    <section className="ask-panel" aria-label={t('ask.label')}>
       <div className="ask-header">
         <div>
-          <h2>Ask about this beat</h2>
-          <p>
-            The tour pauses while the guide answers. Citations open the pinned code beside
-            the explanation.
-          </p>
+          <h2>{t('ask.title')}</h2>
+          <p>{t('ask.intro')}</p>
         </div>
         <button
           type="button"
           className="secondary-action"
           onClick={onClose}
-          aria-label="Close question panel"
+          aria-label={t('ask.close')}
         >
           <X size={16} weight="bold" />
         </button>
       </div>
 
       <label className="ask-field">
-        <span>Your question</span>
+        <span>{t('ask.question')}</span>
         <textarea
           value={question}
           rows={3}
-          placeholder="How does this hand-off work?"
+          placeholder={t('ask.placeholder')}
           onChange={(event) => setQuestion(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
@@ -99,11 +94,11 @@ export function AskPanel({
           disabled={submitting || question.trim().length < 3}
         >
           <PaperPlaneTilt size={15} weight="fill" />
-          {submitting ? 'Asking…' : 'Ask'}
+          {submitting ? t('ask.submitting') : t('ask.submit')}
         </button>
         {answer ? (
           <button type="button" className="secondary-action" onClick={onContinue}>
-            Continue tour
+            {t('ask.continue')}
           </button>
         ) : null}
       </div>
@@ -117,7 +112,7 @@ export function AskPanel({
           ))}
           {answer.citations.length > 0 ? (
             <div className="ask-citations">
-              <h3>Evidence</h3>
+              <h3>{t('ask.evidence')}</h3>
               <ul>
                 {answer.citations.map((citation) => (
                   <li key={citation.id}>
@@ -140,7 +135,7 @@ export function AskPanel({
           ) : null}
           {answer.answer.followUps.length > 0 ? (
             <div className="ask-followups">
-              <h3>Ask next</h3>
+              <h3>{t('ask.next')}</h3>
               {answer.answer.followUps.map((followUp) => (
                 <button
                   key={followUp}

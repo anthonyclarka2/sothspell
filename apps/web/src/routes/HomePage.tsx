@@ -3,14 +3,16 @@ import { ArrowRight, Play } from '@phosphor-icons/react';
 import { fetchTour, firstBeatId, formatDuration, GOLDEN_TOUR_ID } from '../lib/api.js';
 import { useAsync } from '../lib/use-async.js';
 import { SignInNudge } from '../components/account/SignInNudge.js';
+import { useLocale } from '../i18n/locale.js';
 
 export function HomePage() {
-  const tour = useAsync(() => fetchTour(GOLDEN_TOUR_ID), []);
+  const { locale, t } = useLocale();
+  const tour = useAsync(() => fetchTour(GOLDEN_TOUR_ID, locale), [locale]);
 
   if (tour.status === 'loading') {
     return (
       <div className="page">
-        <p className="notice">Loading the golden tour…</p>
+        <p className="notice">{t('home.loading')}</p>
       </div>
     );
   }
@@ -19,7 +21,7 @@ export function HomePage() {
     return (
       <div className="page">
         <div className="notice">
-          <strong>The golden tour did not load.</strong> {tour.error?.message}
+          <strong>{t('home.loadError')}</strong> {tour.error?.message}
         </div>
       </div>
     );
@@ -45,25 +47,25 @@ export function HomePage() {
               params={{ tourId: tourData.id, beatId }}
             >
               <Play size={16} weight="fill" />
-              Play the tour
+              {t('home.play')}
             </Link>
             <a className="secondary-action" href="#chapters">
-              Read the chapters
-              <ArrowRight size={16} weight="bold" />
+              {t('home.readChapters')}
+              <ArrowRight size={16} weight="bold" className="rtl-flip" />
             </a>
           </div>
         </div>
         <aside className="revision-card">
           <dl>
-            <dt>Project</dt>
+            <dt>{t('home.project')}</dt>
             <dd>{tourData.project.name}</dd>
-            <dt>Revision</dt>
+            <dt>{t('home.revision')}</dt>
             <dd className="mono">{tourData.project.revision.commit}</dd>
-            <dt>Chapters</dt>
+            <dt>{t('home.chapters')}</dt>
             <dd>{tourData.chapters.length}</dd>
-            <dt>Beats</dt>
+            <dt>{t('home.beats')}</dt>
             <dd>{beatCount}</dd>
-            <dt>Runtime</dt>
+            <dt>{t('home.runtime')}</dt>
             <dd>{formatDuration(tourData.estimatedDurationMs)}</dd>
           </dl>
         </aside>
@@ -71,7 +73,11 @@ export function HomePage() {
 
       <SignInNudge />
 
-      <section id="chapters" className="chapter-index" aria-label="Tour chapters">
+      <section
+        id="chapters"
+        className="chapter-index"
+        aria-label={t('home.chapterIndex')}
+      >
         {tourData.chapters.map((chapter, index) => (
           <article className="chapter-card" key={chapter.id}>
             <div className="chapter-card-number">
@@ -82,13 +88,13 @@ export function HomePage() {
               <p>{chapter.summary}</p>
             </div>
             <div className="chapter-card-meta">
-              {chapter.beats.length} beats
+              {t('home.beatCount', { count: chapter.beats.length })}
               <br />
               <Link
                 to="/t/$tourId/$beatId"
                 params={{ tourId: tourData.id, beatId: chapter.beats[0]?.id ?? beatId }}
               >
-                Start chapter
+                {t('home.startChapter')}
               </Link>
             </div>
           </article>

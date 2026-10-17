@@ -4,6 +4,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowLeft, Code, Warning } from '@phosphor-icons/react';
 import { fetchAnchor, type AnchorLine } from '../lib/api.js';
 import { useAsync } from '../lib/use-async.js';
+import { useLocale } from '../i18n/locale.js';
 
 interface CodeParams {
   projectId: string;
@@ -16,6 +17,7 @@ interface CodeSearch {
 }
 
 function VirtualCode({ lines, startLine }: { lines: AnchorLine[]; startLine: number }) {
+  const { t } = useLocale();
   const parentRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: lines.length,
@@ -36,7 +38,7 @@ function VirtualCode({ lines, startLine }: { lines: AnchorLine[]; startLine: num
       className="code-viewport"
       data-testid="code-viewport"
       role="region"
-      aria-label="Source code"
+      aria-label={t('code.sourceLabel')}
       tabIndex={0}
     >
       <div className="code-virtual" style={{ height: `${virtualizer.getTotalSize()}px` }}>
@@ -77,6 +79,7 @@ export function CodePage() {
   const params = useParams({ strict: false }) as CodeParams;
   const search = useSearch({ strict: false }) as CodeSearch;
   const navigate = useNavigate();
+  const { t } = useLocale();
   const anchorId = search.anchor ?? '';
   const filePath = params['_splat'];
 
@@ -88,9 +91,7 @@ export function CodePage() {
   if (!anchorId) {
     return (
       <div className="page">
-        <div className="notice">
-          This code page needs an anchor. Open it from a beat or a diagram node.
-        </div>
+        <div className="notice">{t('code.needsAnchor')}</div>
       </div>
     );
   }
@@ -98,7 +99,7 @@ export function CodePage() {
   if (anchor.status === 'loading') {
     return (
       <div className="page">
-        <p className="notice">Loading the evidence…</p>
+        <p className="notice">{t('code.loading')}</p>
       </div>
     );
   }
@@ -107,7 +108,7 @@ export function CodePage() {
     return (
       <div className="page">
         <div className="notice">
-          <strong>The code page did not load.</strong> {anchor.error?.message}
+          <strong>{t('code.loadError')}</strong> {anchor.error?.message}
         </div>
       </div>
     );
@@ -124,19 +125,24 @@ export function CodePage() {
           </div>
           <h1>{data.label ?? data.symbol ?? data.path}</h1>
           <div className="crumbs mono">
-            lines {data.startLine}–{data.endLine} of {data.totalLines} · {data.language}
+            {t('code.lines', {
+              start: data.startLine,
+              end: data.endLine,
+              total: data.totalLines,
+              language: data.language,
+            })}
           </div>
         </div>
         <div className="code-page-actions">
           {data.stale ? (
             <span className="stale-badge" role="status">
               <Warning size={14} weight="fill" />
-              Source changed since this tour
+              {t('code.stale')}
             </span>
           ) : (
             <span className="fresh-badge" role="status">
               <Code size={14} weight="bold" />
-              Matches the pinned snapshot
+              {t('code.fresh')}
             </span>
           )}
           {search.beat ? (
@@ -145,18 +151,18 @@ export function CodePage() {
               to="/t/$tourId/$beatId"
               params={{ tourId: data.tourId, beatId: search.beat }}
             >
-              <ArrowLeft size={16} weight="bold" />
-              Back to the beat
+              <ArrowLeft size={16} weight="bold" className="rtl-flip" />
+              {t('code.backToBeat')}
             </Link>
           ) : null}
         </div>
       </header>
 
       <div className="code-browser">
-        <aside className="code-outline" aria-label="Anchors in this file">
-          <h2>Anchors</h2>
+        <aside className="code-outline" aria-label={t('code.outlineLabel')}>
+          <h2>{t('code.anchors')}</h2>
           {data.outline.length === 0 ? (
-            <p className="notice">No tour anchors point at this file.</p>
+            <p className="notice">{t('code.noAnchors')}</p>
           ) : (
             <ol>
               {data.outline.map((entry) => (
@@ -183,7 +189,7 @@ export function CodePage() {
           )}
         </aside>
 
-        <section className="code-card" aria-label="Source">
+        <section className="code-card" aria-label={t('code.sourceLabel')}>
           <div className="code-card-header">
             <span className="mono">{data.path}</span>
             <span className="mono">
@@ -194,10 +200,7 @@ export function CodePage() {
         </section>
       </div>
 
-      <p className="anchor-meta">
-        Read-only evidence from the pinned project snapshot. The full tour never writes to
-        the project.
-      </p>
+      <p className="anchor-meta">{t('code.readOnly')}</p>
     </div>
   );
 }

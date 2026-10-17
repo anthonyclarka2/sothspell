@@ -18,7 +18,7 @@ import type {
   EmbedListener,
   EmbedSnapshot,
   EmbedTour,
-  EmbedTranslation,
+  TourTranslation,
 } from './types.js';
 
 export interface EmbedController {
@@ -100,7 +100,7 @@ function localizeTour(tour: EmbedTour, locale: string | null): EmbedTour {
   if (locale === null) {
     return tour;
   }
-  const translation: EmbedTranslation | undefined = tour.translations?.[locale];
+  const translation: TourTranslation | undefined = tour.translations?.[locale];
   if (!translation) {
     return tour;
   }

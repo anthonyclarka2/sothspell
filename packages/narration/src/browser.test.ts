@@ -110,6 +110,28 @@ describe('createBrowserNarration', () => {
     expect(harness.narration.getSnapshot().sentenceIndex).toBe(1);
   });
 
+  it('sets the utterance locale and voice for the requested language', () => {
+    const spoken: BrowserUtterance[] = [];
+    const voice = { name: 'Paulina', lang: 'es-MX' };
+    const narration = createBrowserNarration({
+      text: 'Hola. Adiós.',
+      speechSupported: true,
+      locale: 'es',
+      voice,
+      createUtterance: (text) => new FakeUtterance(text),
+      synthesize: (utterance) => {
+        spoken.push(utterance);
+      },
+      cancel: () => undefined,
+      now: () => 0,
+    });
+
+    narration.play();
+
+    expect(spoken[0]?.lang).toBe('es');
+    expect(spoken[0]?.voice).toBe(voice);
+  });
+
   it('pause cancels the current utterance and resume restarts that sentence', () => {
     const harness = createHarness('First one. Second one.');
     harness.narration.play();

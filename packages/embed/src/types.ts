@@ -3,39 +3,22 @@ import type {
   CompiledBeat,
   CompiledChapter,
   CompiledTour,
+  TourTranslation,
 } from '@sothspell/core';
 import type { PlaybackStatus } from '@sothspell/player';
 import type { StorageLike } from './progress.js';
 
 /**
  * The embed consumes the same compiled tour the web player plays, plus an
- * additive locale overlay. The overlay is optional and shaped so a translation
- * (Phase 14) can ride along without changing anchors, ids, or code.
+ * additive locale overlay. Translations use the core schema (Phase 14) so an
+ * exported bundle cannot carry an invalid overlay.
  */
-export interface EmbedTranslationBeat {
-  id: string;
-  title?: string;
-  narration?: string;
-}
+export type { TourTranslation };
 
-export interface EmbedTranslationChapter {
-  id: string;
-  title?: string;
-  summary?: string;
-  beats?: EmbedTranslationBeat[];
-}
-
-export interface EmbedTranslation {
-  title?: string;
-  subtitle?: string;
-  chapters?: EmbedTranslationChapter[];
-}
-
-export interface EmbedTour extends CompiledTour {
-  /** The locale the tour was authored in; code and anchors are locale-free. */
-  locale?: string;
-  translations?: Record<string, EmbedTranslation>;
-}
+export type EmbedTour = CompiledTour & {
+  /** Optional additive overlay for hosts that pre-translate a tour. */
+  translations?: Record<string, TourTranslation>;
+};
 
 export type { CompiledAnchor, CompiledBeat, CompiledChapter, CompiledTour };
 

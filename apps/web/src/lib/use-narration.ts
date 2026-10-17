@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CompiledBeat } from '@sothspell/core';
 import type { NarrationSegment } from '@sothspell/narration';
 import { createBrowserNarration } from '@sothspell/narration/browser';
+import { pickBrowserVoice } from '@sothspell/narration/voices';
 import { wordAt } from '@sothspell/player';
 
 export type NarrationProviderChoice = 'browser' | 'cloud';
@@ -21,6 +22,9 @@ export interface UseNarrationOptions {
   enabled: boolean;
   provider: NarrationProviderChoice;
   speed: number;
+  /** The active locale; browser speech sets it on the utterance and the voice
+   * list is filtered by it, and cloud narration passes it through. */
+  locale: string;
   onBeatEnd: () => void;
   onProgress?: (offsetMs: number) => void;
 }
@@ -36,6 +40,19 @@ interface ActiveNarration {
   pause: () => void;
   resume: () => void;
   stop: () => void;
+}
+
+/** The best installed browser voice for the locale, when the API exposes one. */
+function browserVoiceForLocale(locale: string): unknown {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    return null;
+  }
+  // `getVoices` is absent in minimal fakes (and before the voice list loads).
+  const synthesis = window.speechSynthesis as SpeechSynthesis & {
+    getVoices?: () => SpeechSynthesisVoice[];
+  };
+  const voices = typeof synthesis.getVoices === 'function' ? synthesis.getVoices() : [];
+  return pickBrowserVoice(voices, locale);
 }
 
 /**
@@ -102,9 +119,12 @@ export function useNarration(options: UseNarrationOptions): NarrationController 
       if (cancelled) {
         return;
       }
+      const voice = browserVoiceForLocale(options.locale);
       const narration = createBrowserNarration({
         text: beat.narration,
         rate: options.speed,
+        locale: options.locale,
+        ...(voice === null ? {} : { voice }),
         onSentence: (index) => {
           if (!cancelled) {
             setState((current) => ({ ...current, activeSentenceIndex: index }));
@@ -155,6 +175,7 @@ export function useNarration(options: UseNarrationOptions): NarrationController 
           body: JSON.stringify({
             beatId: beat.id,
             text: beat.narration,
+            locale: options.locale,
           }),
         });
         if (!response.ok) {
@@ -251,6 +272,7 @@ export function useNarration(options: UseNarrationOptions): NarrationController 
     options.beat?.id,
     options.beat?.narration,
     options.enabled,
+    options.locale,
     options.provider,
     options.speed,
   ]);

@@ -184,6 +184,35 @@ describe('synthesizeElevenLabs', () => {
     expect(result.segment.modelId).toBeUndefined();
   });
 
+  it('uses the multilingual model and a locale-aware cache key for a locale', async () => {
+    const { fetchImpl, calls } = recordingFetch(() => responseWith(successPayload()));
+
+    const result = await synthesizeElevenLabs({
+      ...baseOptions,
+      modelId: undefined,
+      locale: 'es',
+      fetchImpl,
+    });
+
+    expect(JSON.parse(String(calls[0]?.init.body))).toEqual({
+      text: TEXT,
+      model_id: 'eleven_multilingual_v2',
+    });
+    expect(result.record.modelId).toBe('eleven_multilingual_v2');
+    expect(result.record.contentHash).toBe(
+      narrationContentHash(
+        TEXT,
+        'voice_1',
+        'eleven_multilingual_v2',
+        'mp3_44100_128',
+        'es',
+      ),
+    );
+    expect(result.record.contentHash).not.toBe(
+      narrationContentHash(TEXT, 'voice_1', 'eleven_multilingual_v2'),
+    );
+  });
+
   it('retries once on 429 and then succeeds', async () => {
     const slept: number[] = [];
     const { fetchImpl, calls } = recordingFetch((_, index) =>

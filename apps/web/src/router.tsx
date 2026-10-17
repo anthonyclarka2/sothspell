@@ -14,18 +14,23 @@ import { SettingsPage } from './routes/SettingsPage.js';
 import { AccountPage } from './routes/AccountPage.js';
 import { SyncBadge } from './components/account/SyncBadge.js';
 import { ReviewPage } from './routes/ReviewPage.js';
+import { LocaleSwitcher } from './components/LocaleSwitcher.js';
+import { useLocale } from './i18n/locale.js';
 
 function RootLayout() {
+  const { t } = useLocale();
+
   return (
     <div className="app-shell">
       <header className="topbar">
         <Link to="/" className="brand">
           <span className="brand-mark">sóþspell</span>
-          <span className="brand-sub">truth story</span>
+          <span className="brand-sub">{t('shell.tagline')}</span>
         </Link>
         <div className="topbar-meta">
+          <LocaleSwitcher />
           <Link to="/settings" className="topbar-link">
-            Settings
+            {t('shell.settings')}
           </Link>
           <SyncBadge />
           <span className="mono">phase 1</span>
