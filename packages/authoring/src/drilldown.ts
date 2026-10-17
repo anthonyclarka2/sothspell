@@ -50,9 +50,7 @@ function candidateFromTour(
  * document with one chapter, so the player and compiler treat it like any other
  * tour; the caller links it to the parent beat.
  */
-export async function generateDrilldown(
-  input: DrilldownInput,
-): Promise<DrilldownResult> {
+export async function generateDrilldown(input: DrilldownInput): Promise<DrilldownResult> {
   const target = candidateFromTour(input.tour, input.anchorId);
   if (!target) {
     throw new Error(`unknown anchor: ${input.anchorId}`);
@@ -65,7 +63,10 @@ export async function generateDrilldown(
         if (nearby.length >= 8 || anchor.id === input.anchorId) {
           continue;
         }
-        if (anchor.path === target.path || beat.anchors.some((a) => a.id === input.anchorId)) {
+        if (
+          anchor.path === target.path ||
+          beat.anchors.some((a) => a.id === input.anchorId)
+        ) {
           nearby.push({
             id: anchor.id,
             label: anchor.label ?? anchor.symbol ?? anchor.path,

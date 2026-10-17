@@ -20,10 +20,7 @@ import { DiagramStage } from '../components/DiagramStage.js';
 import { NarrationRail } from '../components/NarrationRail.js';
 import { Transport } from '../components/Transport.js';
 import { AskPanel } from '../components/AskPanel.js';
-import {
-  useNarration,
-  type NarrationProviderChoice,
-} from '../lib/use-narration.js';
+import { useNarration, type NarrationProviderChoice } from '../lib/use-narration.js';
 
 interface PlayerParams {
   tourId: string;
@@ -82,11 +79,12 @@ export function PlayerPage() {
     tourState.data && snapshot
       ? (tourState.data.chapters.find(
           (candidate) => candidate.id === snapshot.chapterId,
-        ) ?? tourState.data.chapters[0] ?? null)
+        ) ??
+        tourState.data.chapters[0] ??
+        null)
       : null;
   const currentBeat =
-    currentChapter?.beats.find((candidate) => candidate.id === snapshot?.beatId) ??
-    null;
+    currentChapter?.beats.find((candidate) => candidate.id === snapshot?.beatId) ?? null;
 
   const narration = useNarration({
     tourId: params.tourId,

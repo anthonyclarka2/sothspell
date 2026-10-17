@@ -50,9 +50,7 @@ function DiagramNodeView({ data }: NodeProps<DiagramFlowNode>) {
         }
       }}
     >
-      {data.label}
-      {' '}
-      <span className="node-kind">{data.kind}</span>
+      {data.label} <span className="node-kind">{data.kind}</span>
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
     </div>

@@ -73,9 +73,7 @@ export type AlignmentNormalizer = (
  *   createFileNarrationStore({ root }) -> NarrationAssetStore
  */
 interface NarrationModule {
-  synthesizeElevenLabs?: (
-    request: CloudSynthesisRequest,
-  ) => Promise<{
+  synthesizeElevenLabs?: (request: CloudSynthesisRequest) => Promise<{
     audio: Uint8Array;
     mimeType: string;
     record: { durationMs: number; alignment: CharacterAlignment };
@@ -133,11 +131,7 @@ export async function normalizeWithNarrationPackage(
       '@sothspell/narration does not export normalizeAlignment/splitSentences',
     );
   }
-  return narration.normalizeAlignment(
-    text,
-    narration.splitSentences(text),
-    alignment,
-  );
+  return narration.normalizeAlignment(text, narration.splitSentences(text), alignment);
 }
 
 /**

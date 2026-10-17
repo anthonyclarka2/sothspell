@@ -35,7 +35,13 @@ export interface AskQuestionInput {
 export interface AskQuestionResult {
   answer: AskAnswer;
   usage?: ModelUsage;
-  citations: Array<{ id: string; label: string; path: string; startLine: number; endLine: number }>;
+  citations: Array<{
+    id: string;
+    label: string;
+    path: string;
+    startLine: number;
+    endLine: number;
+  }>;
   warnings: string[];
 }
 
@@ -51,7 +57,12 @@ interface AnchorCandidate {
 function collectCandidates(
   tour: SothspellDocument,
   beatId: string,
-): { currentBeat: SothspellDocument['chapters'][number]['beats'][number] | null; chapter: SothspellDocument['chapters'][number] | null; candidates: AnchorCandidate[]; outline: string[] } {
+): {
+  currentBeat: SothspellDocument['chapters'][number]['beats'][number] | null;
+  chapter: SothspellDocument['chapters'][number] | null;
+  candidates: AnchorCandidate[];
+  outline: string[];
+} {
   let currentBeat = null;
   let chapter = null;
   const candidates: AnchorCandidate[] = [];

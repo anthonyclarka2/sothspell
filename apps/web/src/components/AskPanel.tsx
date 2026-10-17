@@ -61,11 +61,16 @@ export function AskPanel({
         <div>
           <h2>Ask about this beat</h2>
           <p>
-            The tour pauses while the guide answers. Citations open the pinned code
-            beside the explanation.
+            The tour pauses while the guide answers. Citations open the pinned code beside
+            the explanation.
           </p>
         </div>
-        <button type="button" className="secondary-action" onClick={onClose} aria-label="Close question panel">
+        <button
+          type="button"
+          className="secondary-action"
+          onClick={onClose}
+          aria-label="Close question panel"
+        >
           <X size={16} weight="bold" />
         </button>
       </div>

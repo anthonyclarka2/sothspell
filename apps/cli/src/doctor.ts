@@ -37,7 +37,8 @@ async function portAvailable(port: number): Promise<boolean> {
 export async function collectDoctorReport(
   options: DoctorOptions = {},
 ): Promise<DoctorCheck[]> {
-  const home = options.home ?? process.env.SOTHSPELL_HOME ?? path.join(os.homedir(), '.sothspell');
+  const home =
+    options.home ?? process.env.SOTHSPELL_HOME ?? path.join(os.homedir(), '.sothspell');
   const bunbunRoot =
     options.bunbunRoot ??
     process.env.SOTHSPELL_PROJECT_ROOT ??
@@ -139,10 +140,7 @@ export async function collectDoctorReport(
   return checks;
 }
 
-export async function runDoctor(
-  options: DoctorOptions,
-  io: CliIO,
-): Promise<number> {
+export async function runDoctor(options: DoctorOptions, io: CliIO): Promise<number> {
   const checks = await collectDoctorReport(options);
   let failed = false;
   for (const check of checks) {

@@ -1,9 +1,6 @@
 import { splitSentences } from '@sothspell/narration/sentences';
 import type { CompiledBeat, CompiledChapter } from '@sothspell/core';
-import type {
-  NarrationProviderChoice,
-  NarrationStatus,
-} from '../lib/use-narration.js';
+import type { NarrationProviderChoice, NarrationStatus } from '../lib/use-narration.js';
 
 export interface NarrationRailProps {
   chapter: CompiledChapter;
@@ -59,7 +56,9 @@ export function NarrationRail({
             <span
               key={`${sentence.charStart}-${index}`}
               className={
-                index === activeSentenceIndex ? 'narration-sentence is-active' : 'narration-sentence'
+                index === activeSentenceIndex
+                  ? 'narration-sentence is-active'
+                  : 'narration-sentence'
               }
               data-sentence-index={index}
             >

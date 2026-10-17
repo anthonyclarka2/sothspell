@@ -82,9 +82,5 @@ export interface NarrationAssetStore {
   read(
     contentHash: string,
   ): Promise<{ audio: Buffer; record: NarrationAssetRecord } | null>;
-  write(
-    contentHash: string,
-    audio: Buffer,
-    record: NarrationAssetRecord,
-  ): Promise<void>;
+  write(contentHash: string, audio: Buffer, record: NarrationAssetRecord): Promise<void>;
 }

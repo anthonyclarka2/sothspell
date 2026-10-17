@@ -5,12 +5,7 @@ import { createBrowserNarration } from '@sothspell/narration/browser';
 import { wordAt } from '@sothspell/player';
 
 export type NarrationProviderChoice = 'browser' | 'cloud';
-export type NarrationStatus =
-  | 'idle'
-  | 'loading'
-  | 'playing'
-  | 'paused'
-  | 'error';
+export type NarrationStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
 
 export interface NarrationState {
   status: NarrationStatus;
@@ -194,15 +189,12 @@ export function useNarration(options: UseNarrationOptions): NarrationController 
           options.onProgress?.(timeMs);
           const word = wordAt(payload.segment.words, timeMs);
           const sentenceIndex = payload.segment.sentences.findIndex(
-            (sentence) =>
-              timeMs >= sentence.startMs && timeMs <= sentence.endMs,
+            (sentence) => timeMs >= sentence.startMs && timeMs <= sentence.endMs,
           );
           setState((current) => ({
             ...current,
             activeSentenceIndex:
-              sentenceIndex === -1
-                ? current.activeSentenceIndex
-                : sentenceIndex,
+              sentenceIndex === -1 ? current.activeSentenceIndex : sentenceIndex,
             activeWord: word?.word ?? current.activeWord,
           }));
         });

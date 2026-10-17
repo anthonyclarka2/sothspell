@@ -168,16 +168,12 @@ test('asks a question, opens a cited anchor, and continues', async ({ page }) =>
   await page.getByLabel('Your question').fill('What is the source of truth?');
   await page.getByRole('button', { name: 'Ask', exact: true }).click();
 
-  await expect(
-    page.getByText('The PDS is the source of truth.'),
-  ).toBeVisible();
+  await expect(page.getByText('The PDS is the source of truth.')).toBeVisible();
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.getByRole('link', { name: 'What Bunbun is' }).click(),
   ]);
-  await expect(
-    popup.getByRole('heading', { name: 'What Bunbun is' }),
-  ).toBeVisible();
+  await expect(popup.getByRole('heading', { name: 'What Bunbun is' })).toBeVisible();
   await popup.close();
   await page.getByRole('button', { name: 'Continue tour' }).click();
   await expect(

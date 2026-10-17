@@ -14,7 +14,14 @@ const sentences = [
 
 const words = [
   { word: 'First', text: 'First', startMs: 0, endMs: 500, charStart: 0, charEnd: 5 },
-  { word: 'Second', text: 'Second', startMs: 1200, endMs: 1700, charStart: 7, charEnd: 13 },
+  {
+    word: 'Second',
+    text: 'Second',
+    startMs: 1200,
+    endMs: 1700,
+    charStart: 7,
+    charEnd: 13,
+  },
 ];
 
 describe('narration synchronization', () => {

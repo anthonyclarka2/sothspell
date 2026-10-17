@@ -111,17 +111,14 @@ export async function askQuestion(input: {
   question: string;
   history: Array<{ question: string; answer: string }>;
 }): Promise<AskResponse> {
-  const response = await fetch(
-    `/api/tours/${encodeURIComponent(input.tourId)}/ask`,
-    {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        beatId: input.beatId,
-        question: input.question,
-        history: input.history.slice(-3),
-      }),
-    },
-  );
+  const response = await fetch(`/api/tours/${encodeURIComponent(input.tourId)}/ask`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      beatId: input.beatId,
+      question: input.question,
+      history: input.history.slice(-3),
+    }),
+  });
   return readJson<AskResponse>(response);
 }

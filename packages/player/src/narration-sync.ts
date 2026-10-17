@@ -22,10 +22,7 @@ export function sentenceAt(
   return active;
 }
 
-export function wordAt(
-  words: readonly WordTiming[],
-  timeMs: number,
-): WordTiming | null {
+export function wordAt(words: readonly WordTiming[], timeMs: number): WordTiming | null {
   if (words.length === 0) {
     return null;
   }
