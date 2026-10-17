@@ -17,15 +17,22 @@ const CLAUSE_PAUSE_MS = 150;
  * Cache key for a cloud narration asset. The inputs are encoded as a JSON array
  * so that field boundaries cannot collide (`["ab","c"]` and `["a","bc"]` hash
  * differently). The provider's output format is part of the key because the
- * same words in a different format are a different asset.
+ * same words in a different format are a different asset, and the locale joins
+ * the key when known so the same words narrated for two locales never share a
+ * clip.
  */
 export function narrationContentHash(
   text: string,
   voiceId: string,
   modelId?: string,
   outputFormat = 'mp3_44100_128',
+  locale?: string,
 ): string {
-  const material = JSON.stringify([text, voiceId, modelId ?? null, outputFormat]);
+  const material = JSON.stringify(
+    locale === undefined
+      ? [text, voiceId, modelId ?? null, outputFormat]
+      : [text, voiceId, modelId ?? null, outputFormat, locale],
+  );
   return `sha256:${createHash('sha256').update(material, 'utf8').digest('hex')}`;
 }
 

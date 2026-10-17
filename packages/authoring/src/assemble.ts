@@ -1,4 +1,10 @@
-import { parseSothspell, type CodeAnchor, type SothspellDocument } from '@sothspell/core';
+import {
+  DEFAULT_LOCALE,
+  parseSothspell,
+  SCHEMA_VERSION,
+  type CodeAnchor,
+  type SothspellDocument,
+} from '@sothspell/core';
 import { DiagramInstructionSchema } from '@sothspell/diagram';
 import type { ProjectSnapshot } from '@sothspell/analyzer';
 import type { AnchorCandidate } from './context.js';
@@ -114,11 +120,12 @@ export function assembleDocument(input: {
   });
 
   const document = {
-    schemaVersion: '1.0.0' as const,
+    schemaVersion: SCHEMA_VERSION,
     id: `tour_${input.snapshot.project.slug}_${input.snapshot.id.slice(-8)}`,
     title: input.plan.title,
     subtitle: input.plan.subtitle,
     audience: input.plan.audience,
+    locale: DEFAULT_LOCALE,
     project: {
       slug: input.snapshot.project.slug,
       name: input.snapshot.project.name,

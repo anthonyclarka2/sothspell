@@ -8,6 +8,7 @@ import {
 } from '@phosphor-icons/react';
 import type { PlaybackSnapshot } from '@sothspell/player';
 import { formatDuration } from '../lib/api.js';
+import { useLocale } from '../i18n/locale.js';
 
 export interface TransportProps {
   snapshot: PlaybackSnapshot;
@@ -32,40 +33,50 @@ export function Transport({
   onSpeed,
   onToggleTheater,
 }: TransportProps) {
+  const { t } = useLocale();
   const playing = playingOverride ?? snapshot.status === 'playing';
 
   return (
-    <div className="transport" role="group" aria-label="Playback controls">
+    <div className="transport" role="group" aria-label={t('transport.label')}>
       <button
         type="button"
         onClick={onPrevious}
-        aria-label="Previous beat"
-        title="Previous beat"
+        aria-label={t('transport.previous')}
+        title={t('transport.previous')}
       >
-        <CaretLeft size={18} weight="bold" />
+        {/* Directional icons mirror in RTL; the controls stay in reading order. */}
+        <CaretLeft size={18} weight="bold" className="rtl-flip" />
       </button>
       <button
         type="button"
         className="transport-primary"
         onClick={onToggle}
-        aria-label={playing ? 'Pause' : 'Play'}
-        title={playing ? 'Pause' : 'Play'}
+        aria-label={playing ? t('transport.pause') : t('transport.play')}
+        title={playing ? t('transport.pause') : t('transport.play')}
       >
         {playing ? <Pause size={19} weight="fill" /> : <Play size={19} weight="fill" />}
       </button>
-      <button type="button" onClick={onNext} aria-label="Next beat" title="Next beat">
-        <CaretRight size={18} weight="bold" />
+      <button
+        type="button"
+        onClick={onNext}
+        aria-label={t('transport.next')}
+        title={t('transport.next')}
+      >
+        <CaretRight size={18} weight="bold" className="rtl-flip" />
       </button>
 
       <label className="transport-scrubber">
-        <span className="visually-hidden">Seek through the tour</span>
+        <span className="visually-hidden">{t('transport.seek')}</span>
         <input
           type="range"
           min={0}
           max={1000}
           step={1}
           value={Math.round(snapshot.progress * 1000)}
-          aria-valuetext={`${formatDuration(snapshot.elapsedMs)} of ${formatDuration(snapshot.totalDurationMs)}`}
+          aria-valuetext={t('transport.position', {
+            elapsed: formatDuration(snapshot.elapsedMs),
+            total: formatDuration(snapshot.totalDurationMs),
+          })}
           onChange={(event) => onSeek(Number(event.target.value) / 1000)}
         />
       </label>
@@ -77,7 +88,7 @@ export function Transport({
           {formatDuration(snapshot.totalDurationMs)}
         </span>
         <label className="transport-speed">
-          <span className="visually-hidden">Playback speed</span>
+          <span className="visually-hidden">{t('transport.speed')}</span>
           <select
             value={String(snapshot.speed)}
             onChange={(event) => onSpeed(Number(event.target.value))}
@@ -93,8 +104,8 @@ export function Transport({
           type="button"
           className="transport-theater"
           onClick={onToggleTheater}
-          aria-label={theater ? 'Exit theater mode' : 'Enter theater mode'}
-          title={theater ? 'Exit theater mode' : 'Enter theater mode'}
+          aria-label={theater ? t('transport.theaterExit') : t('transport.theaterEnter')}
+          title={theater ? t('transport.theaterExit') : t('transport.theaterEnter')}
         >
           {theater ? <ArrowsIn size={18} /> : <ArrowsOut size={18} />}
         </button>

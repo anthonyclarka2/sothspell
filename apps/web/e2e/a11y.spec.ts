@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { installFakeSettings, makeProfile } from './settings-fake.js';
+import { installTranslatedTours } from './locale-fake.js';
 
 const pages = [
   '/',
@@ -87,6 +88,29 @@ async function expectNoBlockingViolations(page: Page): Promise<void> {
     blocking.map((violation) => `${violation.id}: ${violation.help}`).join('\n'),
   ).toEqual([]);
 }
+
+test('translated player has no blocking axe violations: Spanish', async ({ page }) => {
+  installTranslatedTours(page);
+  await page.goto('/t/tour_bunbun_golden/beat_purpose_01');
+  await page.getByLabel('Language').selectOption('es');
+  await expect(page.locator('.narration-copy')).toContainText('«es»');
+  await page.waitForLoadState('networkidle');
+
+  await expectNoBlockingViolations(page);
+});
+
+test('translated player has no blocking axe violations: Arabic (RTL)', async ({
+  page,
+}) => {
+  installTranslatedTours(page);
+  await page.goto('/t/tour_bunbun_golden/beat_purpose_01');
+  await page.getByLabel('Language').selectOption('ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(page.locator('.narration-copy')).toContainText('«ar»');
+  await page.waitForLoadState('networkidle');
+
+  await expectNoBlockingViolations(page);
+});
 
 test('settings page has no blocking axe violations: empty state', async ({ page }) => {
   await installFakeSettings(page);

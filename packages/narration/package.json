@@ -7,7 +7,8 @@
     ".": "./src/index.ts",
     "./browser": "./src/browser.ts",
     "./sentences": "./src/sentences.ts",
-    "./content": "./src/content.ts"
+    "./content": "./src/content.ts",
+    "./voices": "./src/voices.ts"
   },
   "types": "./src/index.ts"
 }

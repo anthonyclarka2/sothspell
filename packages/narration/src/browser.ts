@@ -50,6 +50,10 @@ export interface BrowserNarrationOptions {
   text: string;
   rate?: number;
   pitch?: number;
+  /** Sets the utterance language so the browser picks a matching voice. */
+  locale?: string;
+  /** An already-resolved voice from `pickBrowserVoice`; passed through as-is. */
+  voice?: unknown;
   onSentence?: (index: number) => void;
   /** Receives the boundary character as an offset into the full narration text. */
   onWord?: (charIndex: number) => void;
@@ -168,6 +172,12 @@ export function createBrowserNarration(
     }
     if (options.pitch !== undefined) {
       utterance.pitch = options.pitch;
+    }
+    if (options.locale !== undefined) {
+      utterance.lang = options.locale;
+    }
+    if (options.voice !== undefined) {
+      utterance.voice = options.voice;
     }
 
     generation += 1;

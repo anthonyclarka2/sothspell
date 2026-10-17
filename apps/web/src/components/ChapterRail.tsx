@@ -1,5 +1,6 @@
 import { CheckCircle } from '@phosphor-icons/react';
 import type { CompiledChapter } from '@sothspell/core';
+import { useLocale } from '../i18n/locale.js';
 
 export interface ChapterRailProps {
   chapters: CompiledChapter[];
@@ -16,11 +17,12 @@ export function ChapterRail({
   completedBeatIds,
   onSeekBeat,
 }: ChapterRailProps) {
+  const { t } = useLocale();
   const completed = new Set(completedBeatIds);
 
   return (
-    <aside className="chapter-rail" aria-label="Chapters and beats">
-      <h2>Chapters</h2>
+    <aside className="chapter-rail" aria-label={t('rail.label')}>
+      <h2>{t('rail.chapters')}</h2>
       <ol>
         {chapters.map((chapter) => (
           <li key={chapter.id}>
@@ -39,7 +41,7 @@ export function ChapterRail({
                         size={12}
                         weight="fill"
                         className="beat-complete"
-                        aria-label="completed"
+                        aria-label={t('rail.completed')}
                       />
                     ) : (
                       <span className="beat-dot" aria-hidden="true" />
@@ -52,8 +54,8 @@ export function ChapterRail({
           </li>
         ))}
       </ol>
-      {chapters.length === 0 ? <p className="notice">No chapters yet.</p> : null}
-      <p className="anchor-meta">Current chapter: {activeChapterId}</p>
+      {chapters.length === 0 ? <p className="notice">{t('rail.empty')}</p> : null}
+      <p className="anchor-meta">{t('rail.current', { id: activeChapterId })}</p>
     </aside>
   );
 }

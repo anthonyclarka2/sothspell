@@ -45,6 +45,39 @@ export {
 
 export { AuthoringCache } from './cache.js';
 export {
+  createFixtureTranslationModel,
+  sourceUnitFromPrompt,
+} from './fixture-translation.js';
+export {
+  BeatTranslationUnitSchema,
+  ChapterTranslationUnitSchema,
+  DiagramTranslationUnitSchema,
+  TourTranslationUnitSchema,
+  TRANSLATION_PROMPT_VERSION,
+  TranslationError,
+  translateTour,
+  validateTranslation,
+  vocabularyFor,
+  type BeatTranslationUnit,
+  type ChapterTranslationUnit,
+  type DiagramTranslationUnit,
+  type TourTranslationUnit,
+  type TranslateTourOptions,
+  type TranslationCache,
+  type TranslationProgress,
+  type TranslationQuality,
+  type TranslationResult,
+} from './translate.js';
+export {
+  protectText,
+  protectValue,
+  restoreText,
+  restoreValue,
+  type ProtectedSpan,
+  type ProtectedSpanKind,
+  type ProtectedText,
+} from './protect.js';
+export {
   answerQuestion,
   AskAnswerSchema,
   mergeUsage,

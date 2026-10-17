@@ -70,8 +70,9 @@ async function readJson<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
-export async function fetchTour(tourId: string): Promise<CompiledTour> {
-  const response = await fetch(`/api/tours/${encodeURIComponent(tourId)}`);
+export async function fetchTour(tourId: string, locale?: string): Promise<CompiledTour> {
+  const query = locale === undefined ? '' : `?locale=${encodeURIComponent(locale)}`;
+  const response = await fetch(`/api/tours/${encodeURIComponent(tourId)}${query}`);
   return readJson<CompiledTour>(response);
 }
 

@@ -1,7 +1,32 @@
 import { z } from 'zod';
 import { DiagramInstructionSchema } from '@sothspell/diagram';
 
-export const SCHEMA_VERSION = '1.0.0' as const;
+/**
+ * Schema versions. `1.1.0` adds a tour locale and per-locale translations;
+ * `parseSothspell` migrates `1.0.0` documents so the checked-in golden tour and
+ * older artifacts keep parsing without a rewrite.
+ */
+export const SCHEMA_VERSION = '1.1.0' as const;
+export const PREVIOUS_SCHEMA_VERSION = '1.0.0' as const;
+export const DEFAULT_LOCALE = 'en' as const;
+
+/**
+ * Both versions stay parseable during the transition; `parseSothspell` migrates
+ * a `1.0.0` tour forward, so every document that leaves the parser is current.
+ */
+export const SUPPORTED_SCHEMA_VERSIONS = [
+  PREVIOUS_SCHEMA_VERSION,
+  SCHEMA_VERSION,
+] as const;
+
+/**
+ * A BCP-47-style locale tag. Sóþspell only needs the language and an optional
+ * region/script suffix (`es`, `ar`, `pt-BR`), so the pattern stays deliberately
+ * narrow instead of accepting arbitrary strings.
+ */
+export const LocaleSchema = z
+  .string()
+  .regex(/^[a-z]{2,8}(-[a-z0-9]{2,8})*$/i, 'expected a locale like en, es, ar, or pt-BR');
 
 const Sha256Schema = z.string().regex(/^sha256:[a-f0-9]{64}$/, 'expected a sha256 hash');
 
@@ -75,16 +100,56 @@ export const ChapterSchema = z.object({
   beats: z.array(BeatSchema).min(1),
 });
 
+/**
+ * A translation carries only human-facing strings. It deliberately has no
+ * field for anchors, paths, line ranges, or ids beyond the identifiers needed
+ * to bind each string to its source, so a translated tour cannot rename or
+ * move evidence.
+ */
+export const TranslationBeatSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1).max(96),
+  narration: z.string().min(20).max(1200),
+  suggestedQuestions: z.array(z.string().min(4).max(240)).max(3).optional(),
+});
+
+export const TranslationDiagramSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1).max(96),
+  nodeLabels: z.record(z.string().min(1), z.string().min(1).max(48)).optional(),
+  edgeLabels: z.record(z.string().min(1), z.string().min(1).max(32)).optional(),
+});
+
+export const TranslationChapterSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1).max(96),
+  summary: z.string().min(10).max(400),
+  diagrams: z.array(TranslationDiagramSchema),
+  beats: z.array(TranslationBeatSchema),
+});
+
+export const TourTranslationSchema = z.object({
+  locale: LocaleSchema,
+  sourceLocale: LocaleSchema,
+  title: z.string().min(1).max(96),
+  subtitle: z.string().min(1).max(160),
+  chapters: z.array(TranslationChapterSchema).min(1),
+  modelId: z.string().min(1).max(128).optional(),
+  promptVersion: z.string().min(1).max(32).optional(),
+});
+
 export const SothspellDocumentSchema = z
   .object({
-    schemaVersion: z.literal(SCHEMA_VERSION),
+    schemaVersion: z.enum(SUPPORTED_SCHEMA_VERSIONS),
     id: z.string().min(1),
     title: z.string().min(1).max(96),
     subtitle: z.string().min(1).max(160),
     audience: z.enum(['new-contributor', 'technical-evaluator', 'maintainer']),
     project: ProjectRefSchema,
+    locale: LocaleSchema.optional(),
     estimatedDurationMs: z.number().int().min(60000).max(3600000).optional(),
     chapters: z.array(ChapterSchema).min(1).max(12),
+    translations: z.record(LocaleSchema, TourTranslationSchema).optional(),
   })
   .superRefine((document, context) => {
     const seenDocumentIds = new Map<string, string>();
@@ -171,6 +236,18 @@ export const SothspellDocumentSchema = z
         }
       }
     }
+
+    for (const [locale, translation] of Object.entries(document.translations ?? {})) {
+      if (translation.locale !== locale) {
+        context.addIssue({
+          code: 'custom',
+          message: `translation key ${locale} does not match its locale ${translation.locale}`,
+        });
+      }
+      for (const issue of translationIssues(document, translation)) {
+        context.addIssue({ code: 'custom', message: `translation ${locale}: ${issue}` });
+      }
+    }
   });
 
 export type Revision = z.infer<typeof RevisionSchema>;
@@ -179,7 +256,160 @@ export type CodeAnchor = z.infer<typeof CodeAnchorSchema>;
 export type Stage = z.infer<typeof StageSchema>;
 export type Beat = z.infer<typeof BeatSchema>;
 export type Chapter = z.infer<typeof ChapterSchema>;
+export type TranslationBeat = z.infer<typeof TranslationBeatSchema>;
+export type TranslationDiagram = z.infer<typeof TranslationDiagramSchema>;
+export type TranslationChapter = z.infer<typeof TranslationChapterSchema>;
+export type TourTranslation = z.infer<typeof TourTranslationSchema>;
 export type SothspellDocument = z.infer<typeof SothspellDocumentSchema>;
+
+/** The language a tour was authored in; a missing locale means the default. */
+export function sourceLocaleOf(document: SothspellDocument): string {
+  return document.locale ?? DEFAULT_LOCALE;
+}
+
+/**
+ * Structural comparison between a source tour and one translation. The
+ * translation must bind every chapter, diagram, and beat by the source's own
+ * id and in the source's order; anything else is a renamed or moved element and
+ * fails. This is the shared rule behind schema validation and the authoring
+ * pipeline's strict acceptance check.
+ */
+export function translationIssues(
+  document: SothspellDocument,
+  translation: TourTranslation,
+): string[] {
+  const issues: string[] = [];
+  const sourceLocale = sourceLocaleOf(document);
+
+  if (translation.sourceLocale !== sourceLocale) {
+    issues.push(
+      `translation declares source locale ${translation.sourceLocale} but the tour is ${sourceLocale}`,
+    );
+  }
+  if (translation.locale === sourceLocale) {
+    issues.push(`translation targets the source locale ${sourceLocale}`);
+  }
+
+  if (translation.chapters.length !== document.chapters.length) {
+    issues.push(
+      `translation has ${translation.chapters.length} chapters; the tour has ${document.chapters.length}`,
+    );
+  }
+
+  const chapterCount = Math.min(translation.chapters.length, document.chapters.length);
+  for (let index = 0; index < chapterCount; index += 1) {
+    const sourceChapter = document.chapters[index];
+    const translatedChapter = translation.chapters[index];
+    if (!sourceChapter || !translatedChapter) {
+      continue;
+    }
+
+    if (translatedChapter.id !== sourceChapter.id) {
+      issues.push(
+        `chapter ${index + 1} is ${translatedChapter.id}; the tour has ${sourceChapter.id}`,
+      );
+      continue;
+    }
+
+    if (translatedChapter.diagrams.length !== sourceChapter.diagrams.length) {
+      issues.push(
+        `chapter ${sourceChapter.id} translation has ${translatedChapter.diagrams.length} diagrams; the tour has ${sourceChapter.diagrams.length}`,
+      );
+    }
+    const diagramCount = Math.min(
+      translatedChapter.diagrams.length,
+      sourceChapter.diagrams.length,
+    );
+    for (let diagramIndex = 0; diagramIndex < diagramCount; diagramIndex += 1) {
+      const sourceDiagram = sourceChapter.diagrams[diagramIndex];
+      const translatedDiagram = translatedChapter.diagrams[diagramIndex];
+      if (!sourceDiagram || !translatedDiagram) {
+        continue;
+      }
+      if (translatedDiagram.id !== sourceDiagram.id) {
+        issues.push(
+          `chapter ${sourceChapter.id} diagram ${diagramIndex + 1} is ${translatedDiagram.id}; the tour has ${sourceDiagram.id}`,
+        );
+        continue;
+      }
+      const nodeIds = new Set(sourceDiagram.nodes.map((node) => node.id));
+      for (const nodeId of Object.keys(translatedDiagram.nodeLabels ?? {})) {
+        if (!nodeIds.has(nodeId)) {
+          issues.push(
+            `diagram ${sourceDiagram.id} translation labels unknown node ${nodeId}`,
+          );
+        }
+      }
+      const edgeIds = new Set(sourceDiagram.edges.map((edge) => edge.id));
+      for (const edgeId of Object.keys(translatedDiagram.edgeLabels ?? {})) {
+        if (!edgeIds.has(edgeId)) {
+          issues.push(
+            `diagram ${sourceDiagram.id} translation labels unknown edge ${edgeId}`,
+          );
+        }
+      }
+    }
+
+    if (translatedChapter.beats.length !== sourceChapter.beats.length) {
+      issues.push(
+        `chapter ${sourceChapter.id} translation has ${translatedChapter.beats.length} beats; the tour has ${sourceChapter.beats.length}`,
+      );
+    }
+    const beatCount = Math.min(
+      translatedChapter.beats.length,
+      sourceChapter.beats.length,
+    );
+    for (let beatIndex = 0; beatIndex < beatCount; beatIndex += 1) {
+      const sourceBeat = sourceChapter.beats[beatIndex];
+      const translatedBeat = translatedChapter.beats[beatIndex];
+      if (!sourceBeat || !translatedBeat) {
+        continue;
+      }
+      if (translatedBeat.id !== sourceBeat.id) {
+        issues.push(
+          `chapter ${sourceChapter.id} beat ${beatIndex + 1} is ${translatedBeat.id}; the tour has ${sourceBeat.id}`,
+        );
+        continue;
+      }
+      const sourceQuestions = sourceBeat.suggestedQuestions ?? [];
+      const translatedQuestions = translatedBeat.suggestedQuestions;
+      if (
+        translatedQuestions !== undefined &&
+        translatedQuestions.length !== sourceQuestions.length
+      ) {
+        issues.push(
+          `beat ${sourceBeat.id} translation has ${translatedQuestions.length} suggested questions; the tour has ${sourceQuestions.length}`,
+        );
+      } else if (translatedQuestions === undefined && sourceQuestions.length > 0) {
+        issues.push(
+          `beat ${sourceBeat.id} translation is missing its ${sourceQuestions.length} suggested questions`,
+        );
+      }
+    }
+  }
+
+  return issues;
+}
+
+/**
+ * Turns an unknown artifact into a current-version document. The only migration
+ * so far records the source locale on `1.0.0` tours; their shape is otherwise
+ * unchanged.
+ */
+export function migrateSothspell(input: unknown): unknown {
+  if (!input || typeof input !== 'object') {
+    return input;
+  }
+  const record = input as Record<string, unknown>;
+  if (record.schemaVersion !== PREVIOUS_SCHEMA_VERSION) {
+    return input;
+  }
+  return {
+    ...record,
+    schemaVersion: SCHEMA_VERSION,
+    locale: record.locale ?? DEFAULT_LOCALE,
+  };
+}
 
 /**
  * The single entry point for turning unknown input (an artifact on disk or a
@@ -188,5 +418,97 @@ export type SothspellDocument = z.infer<typeof SothspellDocumentSchema>;
  * carries code evidence.
  */
 export function parseSothspell(input: unknown): SothspellDocument {
-  return SothspellDocumentSchema.parse(input);
+  return SothspellDocumentSchema.parse(migrateSothspell(input));
+}
+
+/**
+ * Embeds one translation into its source tour, keeping the source locale
+ * recorded on the tour. The CLI and API use this to write a tour that carries
+ * both the source and the translation.
+ */
+export function withTranslation(
+  document: SothspellDocument,
+  translation: TourTranslation,
+): SothspellDocument {
+  return {
+    ...document,
+    schemaVersion: SCHEMA_VERSION,
+    locale: sourceLocaleOf(document),
+    translations: {
+      ...document.translations,
+      [translation.locale]: translation,
+    },
+  };
+}
+
+/**
+ * Renders the document with one translation applied. The result keeps every id,
+ * anchor, path, and line range byte-for-byte from the source; only
+ * human-facing strings change. The translation records are stripped and the
+ * document locale becomes the target locale, so the result is a valid
+ * single-locale document that can be parsed or compiled again.
+ */
+export function applyTranslation(
+  document: SothspellDocument,
+  locale: string,
+): SothspellDocument {
+  if (locale === sourceLocaleOf(document)) {
+    return document;
+  }
+  const translation = document.translations?.[locale];
+  if (!translation) {
+    throw new Error(`the tour has no ${locale} translation`);
+  }
+
+  return {
+    ...document,
+    schemaVersion: SCHEMA_VERSION,
+    locale: translation.locale,
+    title: translation.title,
+    subtitle: translation.subtitle,
+    chapters: document.chapters.map((chapter, chapterIndex) => {
+      const translatedChapter = translation.chapters[chapterIndex];
+      if (!translatedChapter) {
+        return chapter;
+      }
+      return {
+        ...chapter,
+        title: translatedChapter.title,
+        summary: translatedChapter.summary,
+        diagrams: chapter.diagrams.map((diagram, diagramIndex) => {
+          const translatedDiagram = translatedChapter.diagrams[diagramIndex];
+          if (!translatedDiagram) {
+            return diagram;
+          }
+          return {
+            ...diagram,
+            title: translatedDiagram.title,
+            nodes: diagram.nodes.map((node) => {
+              const label = translatedDiagram.nodeLabels?.[node.id];
+              return label === undefined ? node : { ...node, label };
+            }),
+            edges: diagram.edges.map((edge) => {
+              const label = translatedDiagram.edgeLabels?.[edge.id];
+              return label === undefined ? edge : { ...edge, label };
+            }),
+          };
+        }),
+        beats: chapter.beats.map((beat, beatIndex) => {
+          const translatedBeat = translatedChapter.beats[beatIndex];
+          if (!translatedBeat) {
+            return beat;
+          }
+          return {
+            ...beat,
+            title: translatedBeat.title,
+            narration: translatedBeat.narration,
+            ...(translatedBeat.suggestedQuestions === undefined
+              ? {}
+              : { suggestedQuestions: translatedBeat.suggestedQuestions }),
+          };
+        }),
+      };
+    }),
+    translations: undefined,
+  };
 }

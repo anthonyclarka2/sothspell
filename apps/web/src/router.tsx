@@ -10,18 +10,23 @@ import { PlayerPage } from './routes/PlayerPage.js';
 import { CodePage } from './routes/CodePage.js';
 import { NotFoundPage } from './routes/NotFoundPage.js';
 import { SettingsPage } from './routes/SettingsPage.js';
+import { LocaleSwitcher } from './components/LocaleSwitcher.js';
+import { useLocale } from './i18n/locale.js';
 
 function RootLayout() {
+  const { t } = useLocale();
+
   return (
     <div className="app-shell">
       <header className="topbar">
         <Link to="/" className="brand">
           <span className="brand-mark">sóþspell</span>
-          <span className="brand-sub">truth story</span>
+          <span className="brand-sub">{t('shell.tagline')}</span>
         </Link>
         <div className="topbar-meta">
+          <LocaleSwitcher />
           <Link to="/settings" className="topbar-link">
-            Settings
+            {t('shell.settings')}
           </Link>
           <span className="mono">phase 1</span>
         </div>

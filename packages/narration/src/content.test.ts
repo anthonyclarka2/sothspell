@@ -31,6 +31,27 @@ describe('narrationContentHash', () => {
       narrationContentHash('Hello.', 'voice_a', 'model_a', 'mp3_44100_128'),
     );
   });
+
+  it('keeps the pre-locale digest when no locale is given', () => {
+    expect(narrationContentHash('Hello.', 'voice_a', 'model_a')).toBe(
+      narrationContentHash('Hello.', 'voice_a', 'model_a', 'mp3_44100_128', undefined),
+    );
+  });
+
+  it('includes the locale in the key when known', () => {
+    const base = narrationContentHash(
+      'Hello.',
+      'voice_a',
+      'model_a',
+      'mp3_44100_128',
+      'es',
+    );
+
+    expect(base).not.toBe(
+      narrationContentHash('Hello.', 'voice_a', 'model_a', 'mp3_44100_128', 'ar'),
+    );
+    expect(base).not.toBe(narrationContentHash('Hello.', 'voice_a', 'model_a'));
+  });
 });
 
 describe('estimateDurationMs', () => {
