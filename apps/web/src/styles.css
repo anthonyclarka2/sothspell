@@ -1636,3 +1636,261 @@ pre,
     flex-direction: column;
   }
 }
+
+/* Account page (merged from phase-12) */
+
+/* Phase 12 — accounts and cross-device sync */
+
+.account-nudge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.account-nudge strong {
+  color: var(--ink);
+}
+
+.account-nudge-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sync-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 520;
+}
+
+.sync-badge:hover {
+  text-decoration: none;
+  background: var(--panel-strong);
+}
+
+.sync-badge--on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.account-page {
+  display: grid;
+  gap: 18px;
+}
+
+.account-header h1 {
+  margin: 0 0 6px;
+  font-size: clamp(26px, 3vw, 36px);
+  letter-spacing: -0.03em;
+}
+
+.account-header p {
+  margin: 0;
+  max-width: 72ch;
+  color: var(--muted);
+}
+
+.account-card {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.account-card h2 {
+  margin: 0;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+
+.account-card p {
+  margin: 0;
+  max-width: 76ch;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.account-muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.account-error {
+  color: #b3261e;
+  font-size: 13px;
+}
+
+.account-profile {
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+}
+
+.account-avatar {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+
+.account-avatar--placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 620;
+}
+
+.account-profile-name h2 {
+  font-size: 16px;
+}
+
+.account-profile-name p {
+  margin: 0;
+}
+
+.sync-counts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.sync-counts dt {
+  color: var(--muted);
+}
+
+.sync-counts dd {
+  margin: 0;
+  font-family: 'Geist Mono Variable', monospace;
+}
+
+.session-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.session-item {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
+}
+
+.session-device {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.session-current {
+  padding: 1px 7px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 11.5px;
+}
+
+.claim-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.claim-banner-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.account-field {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.account-field input {
+  max-width: 280px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.delete-confirm {
+  display: grid;
+  gap: 12px;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.danger-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #b3261e;
+  color: #ffffff;
+  font-weight: 560;
+  cursor: pointer;
+}
+
+.danger-action:hover {
+  filter: brightness(1.05);
+}
+
+.danger-action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.account-danger {
+  border-color: color-mix(in srgb, #b3261e 35%, var(--line));
+}
+
+.notice .secondary-action {
+  margin-left: 12px;
+}
+
+@media (max-width: 720px) {
+  .account-profile {
+    grid-template-columns: auto 1fr;
+  }
+
+  .account-profile .secondary-action {
+    grid-column: 2;
+    justify-self: start;
+  }
+}

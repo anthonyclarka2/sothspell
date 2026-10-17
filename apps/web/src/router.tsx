@@ -11,6 +11,8 @@ import { CodePage } from './routes/CodePage.js';
 import { ImportPage } from './routes/ImportPage.js';
 import { NotFoundPage } from './routes/NotFoundPage.js';
 import { SettingsPage } from './routes/SettingsPage.js';
+import { AccountPage } from './routes/AccountPage.js';
+import { SyncBadge } from './components/account/SyncBadge.js';
 
 function RootLayout() {
   return (
@@ -24,6 +26,7 @@ function RootLayout() {
           <Link to="/settings" className="topbar-link">
             Settings
           </Link>
+          <SyncBadge />
           <span className="mono">phase 1</span>
         </div>
       </header>
@@ -73,12 +76,19 @@ const importRoute = createRoute({
   component: ImportPage,
 });
 
+const accountRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/account',
+  component: AccountPage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   settingsRoute,
   importRoute,
   playerRoute,
   codeRoute,
+  accountRoute,
 ]);
 
 export const router = createRouter({
@@ -86,7 +96,7 @@ export const router = createRouter({
   defaultPreload: 'intent',
 });
 
-export { codeRoute, homeRoute, importRoute, playerRoute, settingsRoute };
+export { accountRoute, codeRoute, homeRoute, importRoute, playerRoute, settingsRoute };
 
 declare module '@tanstack/react-router' {
   interface Register {

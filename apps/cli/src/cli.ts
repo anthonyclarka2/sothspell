@@ -24,6 +24,7 @@ import {
 import { runDoctor } from './doctor.js';
 import { parseImportArgs, runImport } from './import.js';
 import { runServe, type ServeArgs } from './serve.js';
+import { runAccountCommand } from './account.js';
 
 export interface CliIO {
   stdout: (line: string) => void;
@@ -415,6 +416,10 @@ export async function runCli(
       io.stderr(error instanceof Error ? error.message : String(error));
       return 2;
     }
+  }
+
+  if (argv[0] === 'account' || argv[0] === 'sync') {
+    return runAccountCommand(argv, io);
   }
 
   if (argv[0] !== 'analyze') {

@@ -155,3 +155,71 @@ test('settings page has no blocking axe violations: error state', async ({ page 
 
   await expectNoBlockingViolations(page);
 });
+
+test('signed-in account state has no blocking axe violations', async ({ page }) => {
+  await page.route('**/api/auth/session', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        signedIn: true,
+        configured: true,
+        sessionSecretConfigured: true,
+        redirectUri: 'http://127.0.0.1:4319/api/auth/github/callback',
+        user: { id: 'user_1', login: 'octocat', name: 'The Octocat', avatarUrl: null },
+        session: {
+          id: 'session_current',
+          createdAt: 1_700_000_000_000,
+          lastSeenAt: 1_700_000_000_000,
+          expiresAt: 1_700_600_000_000,
+          userAgent: 'Playwright Chrome',
+        },
+      }),
+    }),
+  );
+  await page.route('**/api/account', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        user: { id: 'user_1', login: 'octocat', name: 'The Octocat', avatarUrl: null },
+        sessions: [
+          {
+            id: 'session_current',
+            createdAt: 1_700_000_000_000,
+            lastSeenAt: 1_700_000_000_000,
+            expiresAt: 1_700_600_000_000,
+            userAgent: 'Playwright Chrome',
+          },
+        ],
+      }),
+    }),
+  );
+  await page.route('**/api/sync/pull', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ runs: [], tombstones: [], serverTime: 1_700_000_000_000 }),
+    }),
+  );
+
+  await page.goto('/account');
+  await page.waitForLoadState('networkidle');
+
+  await expectNoBlockingViolations(page);
+});
+
+test('account error state has no blocking axe violations', async ({ page }) => {
+  await page.route('**/api/auth/session', (route) =>
+    route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'internal server error' }),
+    }),
+  );
+
+  await page.goto('/account');
+  await page.waitForLoadState('networkidle');
+
+  await expectNoBlockingViolations(page);
+});

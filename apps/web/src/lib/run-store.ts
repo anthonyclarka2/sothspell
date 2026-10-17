@@ -54,6 +54,20 @@ export async function loadRun(tourId: string): Promise<StoredRun | null> {
   return run ?? null;
 }
 
+export async function listRuns(): Promise<StoredRun[]> {
+  const db = await database();
+  return (await db.getAll(RUNS_STORE)) as StoredRun[];
+}
+
+/**
+ * Local-only removal. `clearRun` also deletes the anonymous server copy; a
+ * tombstone pulled from sync must not touch that copy, only the local one.
+ */
+export async function deleteLocalRun(tourId: string): Promise<void> {
+  const db = await database();
+  await db.delete(RUNS_STORE, tourId);
+}
+
 export async function saveRun(run: StoredRun): Promise<void> {
   const db = await database();
   await db.put(RUNS_STORE, { ...run, updatedAt: Date.now() });

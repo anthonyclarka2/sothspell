@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { ArrowRight, Play } from '@phosphor-icons/react';
 import { fetchTour, firstBeatId, formatDuration, GOLDEN_TOUR_ID } from '../lib/api.js';
 import { useAsync } from '../lib/use-async.js';
+import { SignInNudge } from '../components/account/SignInNudge.js';
 
 export function HomePage() {
   const tour = useAsync(() => fetchTour(GOLDEN_TOUR_ID), []);
@@ -67,6 +68,8 @@ export function HomePage() {
           </dl>
         </aside>
       </section>
+
+      <SignInNudge />
 
       <section id="chapters" className="chapter-index" aria-label="Tour chapters">
         {tourData.chapters.map((chapter, index) => (
