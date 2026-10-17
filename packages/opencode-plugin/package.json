@@ -15,6 +15,7 @@
     "@sothspell/analyzer": "workspace:*",
     "@sothspell/authoring": "workspace:*",
     "@sothspell/core": "workspace:*",
+    "@sothspell/harness": "workspace:*",
     "zod": "4.6.7"
   },
   "devDependencies": {

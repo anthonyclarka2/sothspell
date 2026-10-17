@@ -1,0 +1,22 @@
+{
+  "name": "sothspell",
+  "version": "0.1.0",
+  "description": "Generate, open, and ask about a sóþspell walkthrough of this project. Read-only analysis; the browser player does the storytelling.",
+  "author": {
+    "name": "Sóþspell"
+  },
+  "keywords": ["walkthrough", "codebase", "documentation"],
+  "userConfig": {
+    "player_url": {
+      "type": "string",
+      "title": "Player URL",
+      "description": "Base URL of the `sothspell serve` player and local API.",
+      "default": "http://127.0.0.1:4319"
+    },
+    "model": {
+      "type": "string",
+      "title": "Model",
+      "description": "Optional Claude model alias or full name used to author tours. Leave empty for the session model."
+    }
+  }
+}

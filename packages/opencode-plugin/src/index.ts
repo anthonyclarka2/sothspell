@@ -1,5 +1,6 @@
 import { Plugin } from '@opencode/plugin';
 import type { Context as PluginContext } from '@opencode/plugin/promise/plugin';
+import { formatAnswer, formatStatus } from '@sothspell/harness';
 import { z } from 'zod';
 import {
   AskInputSchema,
@@ -11,7 +12,6 @@ import {
   ProgressOutputSchema,
   SothspellRpc,
   StatusOutputSchema,
-  type SothspellStatusOutput,
 } from './rpc.js';
 import {
   completedBeatCount,
@@ -61,50 +61,6 @@ function parseOptions(
     throw new Error(`invalid @sothspell/opencode-plugin options: ${issues}`);
   }
   return parsed.data;
-}
-
-function formatStatus(status: SothspellStatusOutput): string {
-  const lines = [
-    `Project: ${status.projectRoot}`,
-    `Tour: ${status.tourId ?? 'none yet'}`,
-    `Player: ${status.playerUrl}`,
-  ];
-  if (status.run) {
-    lines.push(`Run: ${status.run.beatId}, ${status.run.completed} beat(s) completed`);
-  } else {
-    lines.push('Run: no saved progress');
-  }
-  return lines.join('\n');
-}
-
-function formatAnswer(answer: unknown): string {
-  if (answer !== null && typeof answer === 'object') {
-    const record = answer as {
-      answer?: { markdown?: unknown };
-      citations?: unknown;
-    };
-    if (typeof record.answer?.markdown === 'string') {
-      const citations = Array.isArray(record.citations)
-        ? record.citations
-            .map((citation) => {
-              if (citation === null || typeof citation !== 'object') {
-                return null;
-              }
-              const entry = citation as { label?: unknown; path?: unknown };
-              if (typeof entry.path !== 'string') {
-                return null;
-              }
-              return `- ${typeof entry.label === 'string' ? entry.label : entry.path} (${entry.path})`;
-            })
-            .filter((line): line is string => line !== null)
-        : [];
-      return [
-        record.answer.markdown,
-        ...(citations.length > 0 ? ['', 'Citations:', ...citations] : []),
-      ].join('\n');
-    }
-  }
-  return JSON.stringify(answer, null, 2) ?? 'No answer returned.';
 }
 
 function commandArguments(text: string): string[] {

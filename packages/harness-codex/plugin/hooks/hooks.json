@@ -1,0 +1,17 @@
+{
+  "description": "Announce an existing sóþspell tour at session start. Silent when none exists.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$PLUGIN_ROOT/scripts/sothspell.sh\" hook session-start",
+            "timeout": 15,
+            "statusMessage": "Checking for a sóþspell tour"
+          }
+        ]
+      }
+    ]
+  }
+}

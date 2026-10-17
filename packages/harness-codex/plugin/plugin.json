@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "sothspell",
+  "version": "0.1.0",
+  "description": "Generate, open, and ask about a sóþspell walkthrough of this project. Read-only analysis; the browser player does the storytelling.",
+  "author": {
+    "name": "Sóþspell"
+  },
+  "keywords": ["walkthrough", "codebase", "documentation"],
+  "extensions": {
+    "com.openai": {
+      "hooks": "./hooks/hooks.json",
+      "interface": {
+        "displayName": "Sóþspell",
+        "shortDescription": "A cinematic walkthrough of this project.",
+        "category": "Productivity"
+      }
+    }
+  }
+}
