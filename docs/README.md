@@ -22,6 +22,8 @@ docs.
   caching, and privacy.
 - [Guide and interludes](./guide.md) — in-tour questions, citations, drilldown,
   and progress.
+- [OpenCode plugin](./opencode-plugin.md) — install, commands, tools, RPC, and
+  the host model adapter.
 - [Self-hosting](./self-hosting.md) — install, serve, environment, storage, and
   upgrades.
 - [Privacy](./privacy.md) — what stays local and what cloud choices send.

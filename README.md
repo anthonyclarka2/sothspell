@@ -13,7 +13,7 @@ resume later.
 
 ## Status
 
-**Phase 6 implemented (2026-10-17); Phase 7 plugin integration in progress.**
+**Phase 8 implemented (2026-10-17): the first local-first release.**
 The repository contains:
 
 - a pnpm workspace on TypeScript 7.0.2, React 19, Vite 8, and Hono 4;
@@ -34,13 +34,17 @@ The repository contains:
   mirrored to a local SQLite table;
 - narration: browser speech and opt-in ElevenLabs cloud narration with aligned
   timings, content-addressed audio, range serving, and fallback;
-- in-tour questions with cited answers, drilldown generation, and a `sothspell
-serve`/`doctor` local runtime;
-- unit, browser, and accessibility tests, including the Bunbun acceptance pass.
+- in-tour questions with cited answers, drilldown generation, and a
+  `sothspell serve`/`doctor` local runtime;
+- the OpenCode V2 plugin with commands, tools, typed RPC, a host model adapter,
+  generated-tour serving, and an embedded-host smoke test;
+- unit, browser, accessibility, and plugin tests, including the Bunbun
+  acceptance pass.
 
-The OpenCode V2 plugin (Phase 7) and final release hardening (Phase 8) are in
-progress. A reviewed real-model Bunbun tour and live cloud narration are
-owner-gated on provider credentials; fixture and browser paths are verified.
+The first local release is complete. A reviewed real-model Bunbun tour and live
+cloud narration are owner-gated on provider credentials; fixture and browser
+paths are verified. Future work is listed in the release notes and the Phase 8
+future track.
 
 ## Quick start
 
@@ -124,6 +128,8 @@ stores only small, attributed excerpts.
   caching, and privacy.
 - [Guide and interludes](docs/guide.md) — in-tour questions, citations,
   drilldown, and progress.
+- [OpenCode plugin](docs/opencode-plugin.md) — install, commands, tools, RPC,
+  and the host model adapter.
 - [Self-hosting](docs/self-hosting.md) — install, serve, storage, and upgrades.
 - [Privacy](docs/privacy.md) — what stays local and what cloud choices send.
 - [Accessibility](docs/accessibility.md) — the axe gate and keyboard map.

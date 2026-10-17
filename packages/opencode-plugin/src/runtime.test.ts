@@ -202,7 +202,7 @@ describe('default runtime', () => {
 
     expect(result).toMatchObject({
       tourId: 'tour_demo',
-      playerUrl: 'http://127.0.0.1:5173',
+      playerUrl: 'http://127.0.0.1:5173/t/tour_demo',
       quality: { chapters: 1 },
     });
     expect(calls).toEqual(['analyze', 'brief', 'pack', 'model', 'author']);

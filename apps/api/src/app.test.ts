@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -169,6 +169,41 @@ describe('API', () => {
     expect(missing.status).toBe(404);
   });
 
+  it('serves a generated tour stored under SOTHSPELL_HOME', async () => {
+    const home = await mkdtemp(path.join(tmpdir(), 'sothspell-api-home-'));
+    roots.push(home);
+    const previous = process.env.SOTHSPELL_HOME;
+    process.env.SOTHSPELL_HOME = home;
+    try {
+      const tourDirectory = path.join(
+        home,
+        'projects',
+        'generated',
+        'tours',
+        'tour_generated_fixture',
+      );
+      await mkdir(tourDirectory, { recursive: true });
+      await writeFile(
+        path.join(tourDirectory, 'tour.json'),
+        await readFile(
+          new URL('../../../examples/bunbun-tour/tour.json', import.meta.url),
+          'utf8',
+        ),
+      );
+
+      const response = await appFor().request('/api/tours/tour_generated_fixture');
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as { chapters: unknown[] };
+      expect(body.chapters.length).toBe(6);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.SOTHSPELL_HOME;
+      } else {
+        process.env.SOTHSPELL_HOME = previous;
+      }
+    }
+  });
+
   it('rejects an invalid run payload', async () => {
     const response = await appFor().request('/api/runs/tour_bunbun_golden', {
       method: 'PUT',
@@ -259,7 +294,7 @@ describe('API', () => {
     const app = createApp({
       databasePath: ':memory:',
       drilldownService: {
-        async generate(anchorId: string) {
+        async generate(_tourId: string, anchorId: string) {
           return {
             document: { id: 'tour_child' } as never,
             anchorId,

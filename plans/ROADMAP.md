@@ -876,8 +876,8 @@ Phase 7. Phase 8 is the release gate.
 | 4     | complete (2026-10-17) | Cinematic player, virtualized code browser, local run persistence ([closure record](PHASE-4.md#shipped-closure-2026-10-17))                         |
 | 5     | complete (2026-10-17) | Browser + cloud narration, synchronization, captions, accessibility gate ([closure record](PHASE-5.md#shipped-closure-2026-10-17))                  |
 | 6     | complete (2026-10-17) | Q&A interludes, drilldown generator, resumable runs ([closure record](PHASE-6.md#shipped-closure-2026-10-17))                                       |
-| 7     | planned               | OpenCode V2 command/tools/RPC, local player launch                                                                                                  |
-| 8     | planned               | Packaging, security, performance, docs, release verification                                                                                        |
+| 7     | complete (2026-10-17) | OpenCode V2 plugin, commands/tools/RPC, host model adapter, generated-tour serving ([closure record](PHASE-7.md#shipped-closure-2026-10-17))        |
+| 8     | complete (2026-10-17) | Local release, CI, docs, generated-tour serving, release verification ([closure record](PHASE-8.md#shipped-closure-2026-10-17))                     |
 
 Phase 1 shipped the workspace, schema, generated JSON Schema, compiler, the
 checked-in golden Bunbun tour (6 chapters, 19 beats, 20 anchors, pinned to
@@ -917,6 +917,17 @@ Phase 6 shipped the ask interlude, citation validation, local/server run merge,
 and the drilldown generator. The API and player preserve the position across a
 question, and cited code opens in a new tab. The full evidence lives in
 [`PHASE-6.md`](PHASE-6.md#shipped-closure-2026-10-17).
+
+Phase 7 shipped the OpenCode V2 plugin: commands, four tools, typed RPC,
+`Plugin.define` lifecycle, an OpenCode host model adapter, a runtime that writes
+tours under `SOTHSPELL_HOME`, generated-tour serving through the local API, and
+an embedded-host smoke. The full evidence lives in
+[`PHASE-7.md`](PHASE-7.md#shipped-closure-2026-10-17).
+
+Phase 8 shipped the local release: `sothspell serve`/`doctor`, generated-tour
+serving, CI, environment template, release notes, architecture/format/self-hosting/
+privacy/accessibility/troubleshooting guides, and the full release gate. The
+full evidence lives in [`PHASE-8.md`](PHASE-8.md#shipped-closure-2026-10-17).
 
 ## 20. Risks and open questions
 

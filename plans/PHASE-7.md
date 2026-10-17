@@ -1,8 +1,9 @@
 # Phase 7 — OpenCode V2 Plugin
 
-**Status: in progress (2026-10-17).** Depends on: Phase 3 (authoring), Phase 4
-(player), Phase 6 (runs and answers). The Phase 8 local-server packaging may start
-during Phase 7 and is part of the plugin's launch path.
+**Status: complete (2026-10-17).** Depends on: Phase 3 (authoring), Phase 4
+(player), Phase 6 (runs and answers). The local-server launch path is covered by
+`sothspell serve`; the plugin's explicit `serverPort` launch remains a packaging
+follow-up.
 
 **Deliverable:** an OpenCode V2 plugin that generates and opens a Sóþspell for the
 current project, answers questions through the same guide, and shares progress
@@ -311,3 +312,56 @@ What they cover and miss:
 - Keep the plugin thin: it is an adapter over the same core, authoring, and
   player packages.
 - Record the exact OpenCode version and plugin API version in the closure note.
+
+## Shipped (closure, 2026-10-17)
+
+- **Package** — `@sothspell/opencode-plugin` targeting `@opencode/plugin`
+  2.0.32 and the V2 SDK, with `.` and `./rpc` exports, README, and tests.
+- **Plugin lifecycle** — `Plugin.define({ id: 'sothspell', setup })`, validated
+  options (`playerUrl`, `autoOpen`, `model`, `maxMinutes`, `serverPort`),
+  command/tool/RPC registration, and cleanup that disposes registrations and
+  cancels an in-flight generation.
+- **Commands and tools** — `/sothspell` (open or generate), `/sothspell status`,
+  `/sothspell generate`, `/sothspell ask`; tools `sothspell_status`,
+  `sothspell_open`, `sothspell_generate`, `sothspell_ask`.
+- **RPC** — `SothspellRpc` with `status`, `open`, `generate`, `progress`, `ask`,
+  `cancel`, and `generation.progress`/`run.updated` events.
+- **Runtime** — analyzer snapshot, project brief, context pack, authoring with
+  the OpenCode model adapter, `SOTHSPELL_HOME` tour/quality writes, run reads
+  through the local API, and browser launch. Generated tours are now served by
+  the API by scanning `$SOTHSPELL_HOME/projects/*/tours/<id>/tour.json`, and
+  `open`/`generate` deep-link to the generated tour.
+- **Model adapter** — `ctx.generate.text` with a session fallback, JSON-only
+  prompts, Zod parsing, and a bounded repair loop.
+- **Docs** — `docs/opencode-plugin.md`.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- `pnpm exec vitest run packages/opencode-plugin` → 5 files / 46 tests.
+- `pnpm test` → 37 files / 209 tests passing after the merge.
+- Embedded OpenCode SDK host smoke: plugin loads, probe sees the `sothspell`
+  command and four tools, `rpc.status` answers, cleanup runs.
+- `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm check:toolchain` clean.
+- Bunbun remains read-only.
+
+### Assumptions to verify against the real V2 TUI
+
+1. `Plugin.define` shape and lazy setup (confirmed by the embedded host).
+2. `Context` type import path (`@opencode/plugin/promise/plugin`).
+3. Command subcommands are prompt arguments; nested `/sothspell status`
+   registration is not assumed.
+4. Tools are registered without a namespace; effective IDs are
+   `sothspell_status|open|generate|ask`.
+5. Command output uses `ctx.session.synthetic`; a real TUI may require
+   `session.prompt` instead.
+6. `ctx.generate.text` is the primary model call; session generation is the
+   fallback.
+7. Transform-registered commands may not appear in the public embedded
+   `opencode.command.list()`; the plugin context sees them.
+
+### Follow-ups
+
+- `serverPort` is accepted but the plugin does not start the packaged server
+  itself; use `sothspell serve` and set `playerUrl` to its base.
+- Shared run progress with the browser client ID is not yet wired.
+- A real V2 TUI manual smoke is recommended before publishing.

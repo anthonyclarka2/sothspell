@@ -438,7 +438,7 @@ export function createDefaultRuntime(
     currentTourId = result.document.id;
     return {
       tourId: result.document.id,
-      playerUrl,
+      playerUrl: `${playerUrl}/t/${encodeURIComponent(result.document.id)}`,
       quality: result.quality,
     };
   };
@@ -482,11 +482,13 @@ export function createDefaultRuntime(
     },
 
     async open() {
-      await launchPlayer(`${playerUrl}/`, {
+      const tourId = await resolveTourId();
+      const url = tourId ? `${playerUrl}/t/${encodeURIComponent(tourId)}` : playerUrl;
+      await launchPlayer(url, {
         ...(options.platform === undefined ? {} : { platform: options.platform }),
         ...(options.openUrl === undefined ? {} : { openUrl: options.openUrl }),
       });
-      return { playerUrl };
+      return { playerUrl: url };
     },
 
     async progress() {

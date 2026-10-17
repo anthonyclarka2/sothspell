@@ -1,7 +1,8 @@
 # Phase 8 — Self-Hosted Release & Hardening
 
-**Status: in progress (2026-10-17).** Depends on: Phases 1–7; packaging work may
-start during Phase 7.
+**Status: complete (2026-10-17).** Depends on: Phases 1–7; packaging work may
+start during Phase 7. This is a local-first, self-hosted release; a published
+package and hosted mode are future work.
 
 **Deliverable:** a reproducible self-hosted release: one command to install and
 serve, a packaged CLI and OpenCode plugin, a secure loopback server, performance
@@ -348,3 +349,47 @@ What they cover and miss:
   `codebase-design` for the release seams.
 - Verify with fresh output; do not claim success from earlier runs.
 - Commit each wave; tag the release only after the full gate passes.
+
+## Shipped (closure, 2026-10-17)
+
+- **Local runtime** — `sothspell serve` hosts the API and the built web app;
+  `sothspell doctor` checks Node, TypeScript 7, `SOTHSPELL_HOME`, SQLite, the
+  Bunbun checkout, model/voice configuration, and the port.
+- **Packaging** — workspace build, generated JSON Schema, golden-tour generator,
+  `.env.example`, and a GitHub Actions verify workflow
+  (`install → typecheck → lint → test → build → toolchain`).
+- **Generated-tour serving** — the API resolves tours under
+  `$SOTHSPELL_HOME/projects/*/tours/<id>/tour.json`, so plugin-authored tours are
+  playable, askable, and drilldown-able without restarting the server.
+- **Docs** — architecture, tour format, analysis, authoring, player, narration,
+  guide, OpenCode plugin, self-hosting, privacy, accessibility, troubleshooting,
+  and release notes.
+- **Security posture** — loopback default, read-only source containment, secret
+  redaction, server-side keys, no model-generated presentation code, and no
+  hidden telemetry.
+- **Performance** — analyzer cold/warm budgets, bundle budget, and browser tests
+  are recorded in the phase records. The full LCP harness is future work.
+
+### Closure verification (fresh output, 2026-10-17)
+
+- `pnpm typecheck` → 0 errors.
+- `pnpm lint` → 0 errors, 0 warnings.
+- `pnpm test` → 37 files / 209 tests passing (after the plugin merge).
+- `pnpm test:browser` → 13 passed.
+- `pnpm test:a11y` → 4 passed at 0 critical/serious.
+- `pnpm build` → web build clean; bundle 178.63 kB gzip.
+- `pnpm check:toolchain` → TypeScript 7.0.2, no classic compiler API packages.
+- `pnpm sothspell doctor` → required checks pass; model/voice warnings only.
+- `pnpm tour:build` and `pnpm schema:json` → idempotent.
+- `git -C /Users/ajc/Projects/codegens/bunbun status --porcelain` → empty.
+
+### Release limitations
+
+- No published npm artifact or Dockerfile yet; the release is a local checkout
+  with `pnpm install && pnpm build && pnpm sothspell serve`.
+- No live provider-key acceptance run (real model, real ElevenLabs, real
+  OpenCode V2 TUI) was possible in this environment.
+- Accounts, cross-device sync, run export/import, drilldown launch UI, and
+  answer persistence are future work.
+- The plugin does not yet start the packaged server itself; set `playerUrl` to a
+  running `sothspell serve` base.

@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { Hono } from 'hono';
@@ -23,10 +23,7 @@ import {
 } from './narration.js';
 import { createRunStore, RunBodySchema, type RunRecord } from './runs.js';
 import { AskUnavailableError, createAskService, type AskService } from './ask-service.js';
-import {
-  createDrilldownService,
-  type DrilldownService,
-} from './drilldown-service.js';
+import { createDrilldownService, type DrilldownService } from './drilldown-service.js';
 
 const AskBodySchema = z.object({
   beatId: z.string().min(1).max(128),
@@ -87,6 +84,27 @@ function defaultDatabasePath(): string {
 /** Generated narration audio lives beside the run database, not in projects. */
 export function defaultNarrationAssetRoot(): string {
   return path.join(sothspellHome(), 'audio');
+}
+
+async function resolveTourJsonPath(
+  tourJsonPath: string,
+  tourId: string,
+): Promise<string | null> {
+  if (GOLDEN_TOUR_ALIASES.has(tourId)) {
+    return tourJsonPath;
+  }
+  const root = path.join(sothspellHome(), 'projects');
+  const projects = await readdir(root, { withFileTypes: true }).catch(() => []);
+  for (const project of projects) {
+    if (!project.isDirectory()) {
+      continue;
+    }
+    const candidate = path.join(root, project.name, 'tours', tourId, 'tour.json');
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
 }
 
 function loadCompiledTour(tourJsonPath: string): Promise<CompiledTour> {
@@ -266,7 +284,7 @@ export function createApp(options: AppOptions = {}): Hono {
   const askService =
     options.askService === undefined
       ? createAskService({
-          tourJsonPath,
+          resolveTourPath: (tourId) => resolveTourJsonPath(tourJsonPath, tourId),
           sourceRoot: projectRoot,
           modelId: process.env.SOTHSPELL_MODEL ?? null,
         })
@@ -274,7 +292,7 @@ export function createApp(options: AppOptions = {}): Hono {
   const drilldownService =
     options.drilldownService === undefined
       ? createDrilldownService({
-          tourJsonPath,
+          resolveTourPath: (tourId) => resolveTourJsonPath(tourJsonPath, tourId),
           sourceRoot: projectRoot ?? process.cwd(),
           modelId: process.env.SOTHSPELL_MODEL ?? null,
         })
@@ -293,11 +311,11 @@ export function createApp(options: AppOptions = {}): Hono {
 
   app.get('/api/tours/:tourId', async (context) => {
     const tourId = context.req.param('tourId');
-    if (!GOLDEN_TOUR_ALIASES.has(tourId)) {
+    const resolvedPath = await resolveTourJsonPath(tourJsonPath, tourId);
+    if (!resolvedPath) {
       return context.json({ error: `unknown tour: ${tourId}` }, 404);
     }
-
-    const tour = await loadCompiledTour(tourJsonPath);
+    const tour = await loadCompiledTour(resolvedPath);
     context.header('cache-control', 'no-store');
     return context.json(tour);
   });
@@ -313,7 +331,12 @@ export function createApp(options: AppOptions = {}): Hono {
       return context.json({ error: 'anchor query parameter is required' }, 400);
     }
 
-    const tour = await loadCompiledTour(tourJsonPath);
+    const requestedTourId = context.req.query('tourId') ?? GOLDEN_TOUR_ID;
+    const resolvedPath = await resolveTourJsonPath(tourJsonPath, requestedTourId);
+    if (!resolvedPath) {
+      return context.json({ error: `unknown tour: ${requestedTourId}` }, 404);
+    }
+    const tour = await loadCompiledTour(resolvedPath);
     const location = findAnchor(tour, anchorId);
     if (!location) {
       return context.json({ error: `unknown anchor: ${anchorId}` }, 404);
@@ -329,8 +352,9 @@ export function createApp(options: AppOptions = {}): Hono {
   });
 
   app.post('/api/tours/:tourId/ask', async (context) => {
-    if (!GOLDEN_TOUR_ALIASES.has(context.req.param('tourId'))) {
-      return context.json({ error: `unknown tour: ${context.req.param('tourId')}` }, 404);
+    const tourId = context.req.param('tourId');
+    if (!(await resolveTourJsonPath(tourJsonPath, tourId))) {
+      return context.json({ error: `unknown tour: ${tourId}` }, 404);
     }
     if (!askService) {
       return context.json(
@@ -349,7 +373,7 @@ export function createApp(options: AppOptions = {}): Hono {
     }
 
     try {
-      return context.json(await askService.answer(parsed.data));
+      return context.json(await askService.answer({ ...parsed.data, tourId }));
     } catch (error) {
       if (error instanceof AskUnavailableError) {
         return context.json({ error: error.message }, 503);
@@ -362,21 +386,23 @@ export function createApp(options: AppOptions = {}): Hono {
   });
 
   app.post('/api/tours/:tourId/drilldown', async (context) => {
-    if (!GOLDEN_TOUR_ALIASES.has(context.req.param('tourId'))) {
-      return context.json({ error: `unknown tour: ${context.req.param('tourId')}` }, 404);
+    const tourId = context.req.param('tourId');
+    if (!(await resolveTourJsonPath(tourJsonPath, tourId))) {
+      return context.json({ error: `unknown tour: ${tourId}` }, 404);
     }
     if (!drilldownService) {
-      return context.json({ error: 'drilldown is unavailable; no model is configured' }, 503);
+      return context.json(
+        { error: 'drilldown is unavailable; no model is configured' },
+        503,
+      );
     }
     const body = await context.req.json().catch(() => null);
-    const parsed = z
-      .object({ anchorId: z.string().min(1).max(256) })
-      .safeParse(body);
+    const parsed = z.object({ anchorId: z.string().min(1).max(256) }).safeParse(body);
     if (!parsed.success) {
       return context.json({ error: 'invalid drilldown payload' }, 400);
     }
     try {
-      return context.json(await drilldownService.generate(parsed.data.anchorId));
+      return context.json(await drilldownService.generate(tourId, parsed.data.anchorId));
     } catch (error) {
       if (error instanceof AskUnavailableError) {
         return context.json({ error: error.message }, 503);

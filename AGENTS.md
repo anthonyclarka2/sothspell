@@ -7,10 +7,11 @@
   codebase with synchronized narration, diagrams, and highlighted code anchors.
   The website is first; an OpenCode V2 plugin follows; other harness adapters
   are a future track.
-- **Repository status: Phase 6 implemented (2026-10-17); Phase 7 plugin in
-  progress.** The workspace, schema, compiler, analyzer, authoring pipeline,
-  cinematic player, narration, ask/interlude UI, local progress, CLI, and local
-  server exist. The OpenCode plugin and final release hardening are in progress.
+- **Repository status: Phase 8 implemented (2026-10-17): first local-first
+  release.** The workspace, schema, compiler, analyzer, authoring pipeline,
+  cinematic player, narration, ask/interlude UI, local progress, CLI, local
+  server, and OpenCode V2 plugin exist. Remaining work is the future track in
+  `plans/PHASE-8.md`.
 - **Example project:** Bunbun at `/Users/ajc/Projects/codegens/bunbun`, pinned to
   commit `9fef24d`. It is **read-only**. No command may create, modify, or delete
   anything inside that tree. All snapshots, tours, audio, logs, and runs live
@@ -94,8 +95,8 @@ Bunbun tree or to another agent's worktree.
 | API audio/narration | `phase-5-b-api-audio` / `.worktrees/phase-5-b-api-audio`             | `apps/api/**` only: narration service, `POST /api/narration`, `GET /api/audio/:hash` with range support, tests          | `ses_eb653ebb7ffdGB5uz1mPyW6YC2` |
 | OpenCode V2 plugin  | `phase-7-a-opencode-plugin` / `.worktrees/phase-7-a-opencode-plugin` | `packages/opencode-plugin/**` only: V2 plugin, commands, tools, RPC, default runtime, OpenCode model adapter, tests     | `ses_eb642b477ffeRkFGjnWK7KpoiW` |
 
-The Phase 5 narration and API tracks are merged; their branches remain until
-the worktrees are cleaned up. The Phase 7 plugin track is active. Main owns
+The Phase 5 narration and API tracks are merged, and the Phase 7 plugin track is
+merged. Their branches remain until the worktrees are cleaned up. Main owns
 `apps/web/**`, `packages/player/**`, `packages/core/**`, plans, docs, and the
 final player integration. The narration contract lives in
 `packages/narration/src/types.ts` and is frozen for both Phase 5 tracks.

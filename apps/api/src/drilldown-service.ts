@@ -10,11 +10,11 @@ import {
 import { AskUnavailableError } from './ask-service.js';
 
 export interface DrilldownService {
-  generate(anchorId: string): Promise<DrilldownResult>;
+  generate(tourId: string, anchorId: string): Promise<DrilldownResult>;
 }
 
 export interface CreateDrilldownServiceOptions {
-  tourJsonPath: string;
+  resolveTourPath: (tourId: string) => Promise<string | null>;
   sourceRoot: string;
   modelId?: string | null;
   model?: GuideModel;
@@ -23,7 +23,7 @@ export interface CreateDrilldownServiceOptions {
 export function createDrilldownService(
   options: CreateDrilldownServiceOptions,
 ): DrilldownService {
-  let documentPromise: Promise<SothspellDocument> | null = null;
+  const documents = new Map<string, Promise<SothspellDocument>>();
   let snapshotPromise: ReturnType<typeof analyzeProject> | null = null;
   let model: GuideModel | null = options.model ?? null;
 
@@ -41,14 +41,28 @@ export function createDrilldownService(
     return model;
   };
 
-  return {
-    async generate(anchorId) {
-      documentPromise ??= readFile(options.tourJsonPath, 'utf8').then((raw) =>
+  const loadDocument = (tourId: string): Promise<SothspellDocument> => {
+    const cached = documents.get(tourId);
+    if (cached) {
+      return cached;
+    }
+    const promise = options.resolveTourPath(tourId).then((tourPath) => {
+      if (!tourPath) {
+        throw new AskUnavailableError(`unknown tour: ${tourId}`);
+      }
+      return readFile(tourPath, 'utf8').then((raw) =>
         parseSothspell(JSON.parse(raw) as unknown),
       );
+    });
+    documents.set(tourId, promise);
+    return promise;
+  };
+
+  return {
+    async generate(tourId, anchorId) {
       snapshotPromise ??= analyzeProject(options.sourceRoot);
       const [document, snapshot] = await Promise.all([
-        documentPromise,
+        loadDocument(tourId),
         snapshotPromise,
       ]);
       return generateDrilldown({

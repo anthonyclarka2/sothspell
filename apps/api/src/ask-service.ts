@@ -3,7 +3,6 @@ import { parseSothspell, type SothspellDocument } from '@sothspell/core';
 import {
   answerQuestion,
   createAiSdkGuideModel,
-  type AskAnswer,
   type AskHistoryEntry,
   type AskQuestionResult,
   type GuideModel,
@@ -17,6 +16,7 @@ export class AskUnavailableError extends Error {
 }
 
 export interface AskRequest {
+  tourId: string;
   beatId: string;
   question: string;
   history?: AskHistoryEntry[];
@@ -31,26 +31,35 @@ export interface AskService {
 }
 
 export interface CreateAskServiceOptions {
-  tourJsonPath: string;
+  resolveTourPath: (tourId: string) => Promise<string | null>;
   sourceRoot: string | null;
   modelId?: string | null;
   model?: GuideModel;
 }
 
 /**
- * Answers questions about the checked-in tour. The tour document is the source
- * of anchors; the model is only created when a question actually arrives, so a
- * player without a provider key still plays normally.
+ * Answers questions about any locally available tour. The tour document is the
+ * source of anchors; the model is created only when a question arrives.
  */
 export function createAskService(options: CreateAskServiceOptions): AskService {
-  let documentPromise: Promise<SothspellDocument> | null = null;
+  const documents = new Map<string, Promise<SothspellDocument>>();
   let model: GuideModel | null = options.model ?? null;
 
-  const loadDocument = (): Promise<SothspellDocument> => {
-    documentPromise ??= readFile(options.tourJsonPath, 'utf8').then((raw) =>
-      parseSothspell(JSON.parse(raw) as unknown),
-    );
-    return documentPromise;
+  const loadDocument = (tourId: string): Promise<SothspellDocument> => {
+    const cached = documents.get(tourId);
+    if (cached) {
+      return cached;
+    }
+    const promise = options.resolveTourPath(tourId).then((tourPath) => {
+      if (!tourPath) {
+        throw new AskUnavailableError(`unknown tour: ${tourId}`);
+      }
+      return readFile(tourPath, 'utf8').then((raw) =>
+        parseSothspell(JSON.parse(raw) as unknown),
+      );
+    });
+    documents.set(tourId, promise);
+    return promise;
   };
 
   const resolveModel = (): GuideModel => {
@@ -69,7 +78,7 @@ export function createAskService(options: CreateAskServiceOptions): AskService {
 
   return {
     async answer(request) {
-      const document = await loadDocument();
+      const document = await loadDocument(request.tourId);
       const guide = resolveModel();
       const result = await answerQuestion({
         question: request.question,
@@ -83,5 +92,3 @@ export function createAskService(options: CreateAskServiceOptions): AskService {
     },
   };
 }
-
-export type { AskAnswer, AskQuestionResult };
