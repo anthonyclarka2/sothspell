@@ -1,0 +1,24 @@
+{
+  "name": "@sothspell/opencode-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./rpc": "./src/rpc.ts"
+  },
+  "types": "./src/index.ts",
+  "peerDependencies": {
+    "@opencode/plugin": "^2.0.32"
+  },
+  "dependencies": {
+    "@sothspell/analyzer": "workspace:*",
+    "@sothspell/authoring": "workspace:*",
+    "@sothspell/core": "workspace:*",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@opencode/plugin": "2.0.32",
+    "@opencode/sdk": "2.0.32"
+  }
+}
