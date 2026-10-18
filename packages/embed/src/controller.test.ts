@@ -164,6 +164,47 @@ describe('embed controller', () => {
     controller.destroy();
   });
 
+  it('rejects a tour from an origin the host did not allow', async () => {
+    const fetchTour = vi.fn(async () => makeTour());
+    const controller = createEmbedController({
+      storage: null,
+      fetchTour,
+      allowedTourOrigins: ['https://cdn.example'],
+    });
+
+    await expect(controller.load('https://evil.example/tour.json')).rejects.toThrow(
+      /origin is not allowed/i,
+    );
+    expect(fetchTour).not.toHaveBeenCalled();
+
+    await controller.load('https://cdn.example/tour.json');
+    expect(fetchTour).toHaveBeenCalledWith('https://cdn.example/tour.json');
+    controller.destroy();
+  });
+
+  it('sanitizes anchor HTML from an untrusted tour', async () => {
+    const controller = createEmbedController({ storage: null });
+    const tour = makeTour();
+    tour.chapters[0]?.beats[0]?.anchors.push({
+      id: 'anchor_x',
+      path: 'src/x.ts',
+      startLine: 1,
+      endLine: 1,
+      language: 'typescript',
+      contentHash: 'sha256:fixture',
+      excerpt: 'const x = 1;',
+      html: '<img src=x onerror="alert(1)"><span style="color:red">ok</span>',
+    });
+
+    await controller.load(tour);
+
+    const html = controller.getTour()?.chapters[0]?.beats[0]?.anchors[0]?.html ?? '';
+    expect(html).not.toContain('<img');
+    expect(html).toContain('&lt;img');
+    expect(html).toContain('<span style="color:red">ok</span>');
+    controller.destroy();
+  });
+
   it('advances while playing and stops on pause', async () => {
     const controller = createEmbedController({ storage: null });
     await controller.load(makeTour());

@@ -115,9 +115,13 @@ export async function highlightCodeLines(
     return { number, html, focus: inFocus };
   });
 
-  const rootStyle = Object.entries(result.rootStyle ?? {})
-    .map(([key, value]) => `${key}:${value}`)
-    .join(';');
+  const rootStyleValue = result.rootStyle as unknown;
+  const rootStyle =
+    typeof rootStyleValue === 'string'
+      ? rootStyleValue
+      : Object.entries((rootStyleValue ?? {}) as Record<string, string>)
+          .map(([key, value]) => `${key}:${value}`)
+          .join(';');
 
   const lineMarkup = lines
     .map(

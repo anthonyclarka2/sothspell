@@ -1,7 +1,8 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { readFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { writeFileAtomic } from '@sothspell/settings';
 import type { CliIO } from './cli.js';
 import { runSyncCommand } from './sync.js';
 
@@ -97,11 +98,10 @@ export async function writeCredentials(
   home: string,
   credentials: StoredCredentials,
 ): Promise<void> {
-  await mkdir(home, { recursive: true });
-  await writeFile(accountsFilePath(home), `${JSON.stringify(credentials, null, 2)}\n`, {
-    encoding: 'utf8',
-    mode: 0o600,
-  });
+  await writeFileAtomic(
+    accountsFilePath(home),
+    `${JSON.stringify(credentials, null, 2)}\n`,
+  );
 }
 
 export async function clearCredentials(home: string): Promise<void> {
@@ -125,11 +125,7 @@ export async function resolveClientId(home: string, override?: string): Promise<
     // No client id yet; create one below.
   }
   const created = randomUUID();
-  await mkdir(home, { recursive: true });
-  await writeFile(clientIdFilePath(home), `${created}\n`, {
-    encoding: 'utf8',
-    mode: 0o600,
-  });
+  await writeFileAtomic(clientIdFilePath(home), `${created}\n`);
   return created;
 }
 

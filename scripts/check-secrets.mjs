@@ -12,6 +12,8 @@ const TOKEN_PATTERNS = [
   { name: 'private key block', pattern: /-----BEGIN [A-Z ]*PRIVATE KEY-----/ },
   { name: 'OpenAI key', pattern: /\bsk-[A-Za-z0-9]{24,}\b/ },
   { name: 'OpenAI project key', pattern: /\bsk-proj-[A-Za-z0-9_-]{20,}\b/ },
+  { name: 'Anthropic key', pattern: /\bsk-ant-[A-Za-z0-9_-]{20,}\b/ },
+  { name: 'ElevenLabs key', pattern: /\bsk_[A-Za-z0-9]{32,}\b/ },
   { name: 'Stripe live key', pattern: /\bsk_live_[A-Za-z0-9]{16,}\b/ },
   { name: 'GitHub token', pattern: /\bgh[pousr]_[A-Za-z0-9]{36,}\b/ },
   { name: 'GitHub fine-grained token', pattern: /\bgithub_pat_[A-Za-z0-9_]{20,}\b/ },
@@ -23,6 +25,10 @@ const TOKEN_PATTERNS = [
 
 const ASSIGNMENT_PATTERN =
   /\b(?:api[_-]?key|secret|password|passwd|access[_-]?token|client[_-]?secret|session[_-]?secret)\b\s*[:=]\s*['"`][^'"`\n]{16,}['"`]/i;
+
+/** Unquoted `.env`-style assignments with a long value. */
+const ENV_ASSIGNMENT_PATTERN =
+  /\b[A-Z][A-Z0-9_]*(?:API_KEY|APIKEY|SECRET|TOKEN|PASSWORD|PASSWD)[A-Z0-9_]*\s*=\s*[^\s#'"]{16,}/;
 
 /** Files that intentionally carry fake values for tests and docs. */
 const FIXTURE_FILE =
@@ -55,6 +61,14 @@ for (const file of files) {
         file,
         line: index + 1,
         name: 'secret-looking assignment',
+        sample: line.trim().slice(0, 120),
+      });
+    }
+    if (!FIXTURE_FILE.test(file) && ENV_ASSIGNMENT_PATTERN.test(line)) {
+      findings.push({
+        file,
+        line: index + 1,
+        name: 'env-style secret assignment',
         sample: line.trim().slice(0, 120),
       });
     }

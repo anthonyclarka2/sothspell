@@ -70,4 +70,10 @@ export interface EmbedControllerOptions {
   intervalMs?: number;
   clock?: EmbedClock;
   onEvent?: EmbedListener;
+  /**
+   * Origins a tour URL may come from. Defaults to the page origin in a browser
+   * and to "any" outside one (tests, server rendering), where no page origin
+   * exists to compare against.
+   */
+  allowedTourOrigins?: readonly string[];
 }

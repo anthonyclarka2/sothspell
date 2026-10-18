@@ -40,6 +40,8 @@ export {
   type HarnessCommandOptions,
 } from './command.js';
 
+export { createChildEnvironment, type ChildEnvironmentOptions } from './env.js';
+
 export {
   defineCapabilities,
   SothspellError,

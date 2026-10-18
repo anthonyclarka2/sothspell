@@ -4,6 +4,8 @@ import { z } from 'zod';
 import type { Hono } from 'hono';
 import {
   LocaleSchema,
+  assertSafeTourId,
+  isSafeLocaleSegment,
   parseSothspell,
   sourceLocaleOf,
   type TourTranslation,
@@ -36,13 +38,20 @@ export interface TranslationStore {
 }
 
 /** Tour ids come from a URL; keep the on-disk directory name boring. */
-function safeSegment(value: string): string {
-  return value.replace(/[^a-zA-Z0-9._-]/g, '_');
+function safeTourSegment(value: string): string {
+  return assertSafeTourId(value);
+}
+
+function safeLocaleSegment(value: string): string {
+  if (!isSafeLocaleSegment(value)) {
+    throw new Error(`unsafe locale segment: ${value}`);
+  }
+  return value;
 }
 
 export function createFileTranslationStore(root: string): TranslationStore {
   const fileFor = (tourId: string, locale: string): string =>
-    path.join(root, safeSegment(tourId), `${safeSegment(locale)}.json`);
+    path.join(root, safeTourSegment(tourId), `${safeLocaleSegment(locale)}.json`);
 
   return {
     async read(tourId, locale) {

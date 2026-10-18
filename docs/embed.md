@@ -66,10 +66,16 @@ fallback) and restored on reload. Add the `progress="off"` attribute (or the
 
 ## Privacy and CSP
 
-- No network requests beyond the static bundle and `tour.json`.
+- No network requests beyond the static bundle, `tour.json`, and any tour URL
+  the host explicitly allows.
 - No cloud narration, accounts, or telemetry.
-- No inline scripts; the docs fixture works with a strict CSP that allows only
-  the bundle origin.
+- No inline scripts. The exported `embed.html` sets a restrictive CSP
+  (`default-src 'none'; script-src 'self'; connect-src 'self'`), and the docs
+  fixture works under it. A host that serves tours from another origin must
+  widen `connect-src` and pass the origin in the `tour-origins` attribute.
+- Tour URLs default to the page origin. `tour-origins="https://cdn.example"`
+  allows a third-party origin; the tour's code HTML is sanitized either way
+  (escaped text plus allowlisted `<span style>` properties).
 - The bundle contains excerpts and narration, never the full repository.
 
 ## Locales

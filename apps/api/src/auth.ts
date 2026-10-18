@@ -137,10 +137,21 @@ export function createAuthRuntime(options: AuthRuntimeOptions): AuthRuntime {
   // GitHub Enterprise self-hosting can point these at its own host.
   const githubBaseUrl = options.githubBaseUrl ?? process.env.GITHUB_BASE_URL;
   const apiBaseUrl = options.apiBaseUrl ?? process.env.GITHUB_API_BASE_URL;
-  const configuredSecret =
+  const rawSecret =
     options.sessionSecret === undefined
       ? process.env.SOTHSPELL_SESSION_SECRET
       : options.sessionSecret;
+  // A short or empty secret is not a secret. Treat it as unset so the process
+  // uses an ephemeral 256-bit key instead of signing with something guessable.
+  const configuredSecret =
+    typeof rawSecret === 'string' && rawSecret.trim().length >= 32
+      ? rawSecret.trim()
+      : null;
+  if (typeof rawSecret === 'string' && rawSecret.trim().length > 0 && !configuredSecret) {
+    console.warn(
+      'SOTHSPELL_SESSION_SECRET is shorter than 32 characters; using an ephemeral secret for this process',
+    );
+  }
   const sessionSecret = configuredSecret ?? randomToken(32);
 
   const oauth = clientId

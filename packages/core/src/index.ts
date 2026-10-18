@@ -53,6 +53,21 @@ export {
 } from './source.js';
 
 export {
+  LOCALE_SEGMENT_PATTERN,
+  TOUR_ID_PATTERN,
+  assertSafeTourId,
+  isSafeLocaleSegment,
+  isSafeTourId,
+} from './ids.js';
+
+export {
+  PRIVATE_DIRECTORY_MODE,
+  PRIVATE_FILE_MODE,
+  ensurePrivateDirectorySync,
+  privatizeFileSync,
+} from './private-fs.js';
+
+export {
   getHighlighter,
   highlightCodeLines,
   type HighlightedCode,

@@ -1,7 +1,12 @@
 import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { hashText, parseSothspell, type SothspellDocument } from '@sothspell/core';
+import {
+  hashText,
+  isSafeTourId,
+  parseSothspell,
+  type SothspellDocument,
+} from '@sothspell/core';
 import { ReviewQualitySchema, type ReviewQuality } from './schemas.js';
 
 /**
@@ -36,6 +41,9 @@ async function resolveTourPath(
   options: FileTourSourceOptions,
   tourId: string,
 ): Promise<string | null> {
+  if (!isSafeTourId(tourId)) {
+    return null;
+  }
   if (
     options.goldenTourPath &&
     (options.goldenTourIds ?? []).includes(tourId) &&

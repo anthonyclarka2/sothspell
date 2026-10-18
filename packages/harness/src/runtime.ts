@@ -17,7 +17,11 @@ import {
   type BuildContextOptions,
   type ContextPack,
 } from '@sothspell/authoring';
-import { SothspellDocumentSchema, type SothspellDocument } from '@sothspell/core';
+import {
+  SothspellDocumentSchema,
+  assertSafeTourId,
+  type SothspellDocument,
+} from '@sothspell/core';
 import { launchPlayer } from './launch.js';
 import {
   SothspellError,
@@ -228,7 +232,7 @@ export function createHarnessRuntime(
     ));
 
   const tourDirectory = async (tourId: string): Promise<string> =>
-    path.join(home, 'projects', await slug(), 'tours', tourId);
+    path.join(home, 'projects', await slug(), 'tours', assertSafeTourId(tourId));
 
   const tourPath = async (tourId: string): Promise<string> =>
     path.join(await tourDirectory(tourId), 'tour.json');

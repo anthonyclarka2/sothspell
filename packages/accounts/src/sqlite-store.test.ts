@@ -133,4 +133,18 @@ describe('sqlite account store', () => {
     expect(user.updatedAt).toBe(999);
     store.close();
   });
+
+  it.runIf(process.platform !== 'win32')(
+    'creates the database and its directory owner-only',
+    async () => {
+      const databasePath = await makeDatabasePath();
+      const store = createSqliteAccountStore(databasePath);
+      store.upsertUserByGithubId(profile, 100);
+      store.close();
+
+      const { stat } = await import('node:fs/promises');
+      expect((await stat(databasePath)).mode & 0o777).toBe(0o600);
+      expect((await stat(path.dirname(databasePath))).mode & 0o777).toBe(0o700);
+    },
+  );
 });

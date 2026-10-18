@@ -16,6 +16,10 @@ export function renderIframePage(title: string): string {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'"
+    />
     <title>${escaped} — Sóþspell</title>
     <link rel="stylesheet" href="./player.css" />
   </head>

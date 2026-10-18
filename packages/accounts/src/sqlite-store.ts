@@ -1,6 +1,6 @@
-import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
+import { ensurePrivateDirectorySync, privatizeFileSync } from '@sothspell/core';
 import { randomToken } from './tokens.js';
 import type {
   AccountSession,
@@ -81,9 +81,12 @@ function readDeviceFlow(row: DeviceFlowRow): DeviceFlow {
  */
 export function createSqliteAccountStore(databasePath: string): AccountStore {
   if (databasePath !== ':memory:') {
-    mkdirSync(path.dirname(databasePath), { recursive: true });
+    ensurePrivateDirectorySync(path.dirname(databasePath));
   }
   const database = new Database(databasePath);
+  if (databasePath !== ':memory:') {
+    privatizeFileSync(databasePath);
+  }
   database.pragma('journal_mode = WAL');
   database.exec(`
     CREATE TABLE IF NOT EXISTS users (

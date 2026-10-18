@@ -11,6 +11,7 @@ import {
   writeEmbedProgress,
   type StorageLike,
 } from './progress.js';
+import { sanitizeTourHtml } from './sanitize.js';
 import type {
   EmbedClock,
   EmbedControllerOptions,
@@ -78,6 +79,34 @@ async function defaultFetchTour(url: string): Promise<unknown> {
     throw new Error(`could not load the tour from ${url}: HTTP ${response.status}`);
   }
   return response.json();
+}
+
+function pageOrigin(): string | null {
+  const location = (globalThis as { location?: { origin?: string } }).location;
+  return typeof location?.origin === 'string' && location.origin.length > 0
+    ? location.origin
+    : null;
+}
+
+function allowedTourOrigins(options: EmbedControllerOptions): string[] {
+  if (options.allowedTourOrigins !== undefined) {
+    return [...options.allowedTourOrigins];
+  }
+  const origin = pageOrigin();
+  return origin === null ? [] : [origin];
+}
+
+/** Rejects a tour URL from an origin the host did not allow. */
+export function assertTourUrlAllowed(url: string, allowed: readonly string[]): string {
+  if (allowed.length === 0) {
+    return url;
+  }
+  const base = (globalThis as { location?: { href?: string } }).location?.href;
+  const resolved = new URL(url, base ?? 'http://localhost/');
+  if (!allowed.includes(resolved.origin)) {
+    throw new Error(`tour origin is not allowed: ${resolved.origin}`);
+  }
+  return resolved.toString();
 }
 
 function toPlaybackTour(tour: EmbedTour): PlaybackTour {
@@ -174,6 +203,7 @@ export function createEmbedController(
   const clock = options.clock ?? defaultClock;
   const intervalMs = options.intervalMs ?? DEFAULT_INTERVAL_MS;
   const fetchTour = options.fetchTour ?? defaultFetchTour;
+  const tourOrigins = allowedTourOrigins(options);
   const listeners = new Set<EmbedListener>();
 
   let storage: StorageLike | null =
@@ -301,14 +331,17 @@ export function createEmbedController(
         throw new Error('this embed player was destroyed');
       }
       try {
-        const raw = typeof source === 'string' ? await fetchTour(source) : source;
+        const raw =
+          typeof source === 'string'
+            ? await fetchTour(assertTourUrlAllowed(source, tourOrigins))
+            : source;
         assertSupportedTour(raw);
         stopPlayback();
         completedBeatIds = [];
         lastWrittenBeatId = null;
         lastWrittenOffset = -1;
 
-        baseTour = raw;
+        baseTour = sanitizeTourHtml(raw);
         tour = localizeTour(baseTour, requestedLocale);
         // The playback engine is built from source titles; the snapshot
         // resolves titles from the localized tour so a locale switch does not

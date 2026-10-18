@@ -20,6 +20,7 @@ import {
   LocaleSchema,
   compileSothspell,
   highlightCodeLines,
+  isSafeTourId,
   languageForPath,
   parseSothspell,
   readSourceFile,
@@ -66,6 +67,7 @@ import {
 } from './translations.js';
 import { createAuthoringService, type AuthoringService } from './authoring-service.js';
 import { registerAuthoringRoutes } from './authoring.js';
+import { createApiSecurityMiddleware } from './security.js';
 
 const AskBodySchema = z.object({
   beatId: z.string().min(1).max(128),
@@ -166,6 +168,9 @@ async function resolveTourJsonPath(
 ): Promise<string | null> {
   if (GOLDEN_TOUR_ALIASES.has(tourId)) {
     return tourJsonPath;
+  }
+  if (!isSafeTourId(tourId)) {
+    return null;
   }
   const root = path.join(sothspellHome(), 'projects');
   const projects = await readdir(root, { withFileTypes: true }).catch(() => []);
@@ -469,6 +474,16 @@ export function createApp(options: AppOptions = {}): Hono {
         })
       : options.translationService;
   const app = new Hono();
+
+  // Host/Origin/Content-Type checks run before any route: the local API has no
+  // authentication, so a page the user visits must not be able to reach it.
+  app.use(
+    '*',
+    createApiSecurityMiddleware({
+      publicUrl: options.publicUrl ?? process.env.SOTHSPELL_PUBLIC_URL ?? null,
+      allowedOrigins: options.allowedOrigins,
+    }),
+  );
 
   registerAudioRoutes(app, { assetStore });
   registerSettingsRoutes(app, { service: settingsService, tester: profileTester });

@@ -128,7 +128,7 @@ function makeApp(overrides: Partial<AuthRuntimeOptions> = {}) {
   const accountStore = createMemoryAccountStore();
   const runtime = createAuthRuntime({
     accountStore,
-    sessionSecret: 'test-session-secret',
+    sessionSecret: 'test-session-secret-0123456789abcdef',
     clientId: 'client-1',
     clientSecret: 'secret-1',
     publicUrl: 'http://127.0.0.1:4319',
@@ -359,6 +359,20 @@ describe('GET /api/auth/session', () => {
     await expect(response.json()).resolves.toMatchObject({
       sessionSecretConfigured: false,
     });
+  });
+
+  it('treats a short session secret as unset instead of signing with it', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const { app } = makeApp({ sessionSecret: 'short' });
+      const response = await app.request('/api/auth/session');
+      await expect(response.json()).resolves.toMatchObject({
+        sessionSecretConfigured: false,
+      });
+      expect(warn).toHaveBeenCalledWith(expect.stringMatching(/shorter than 32/i));
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it('treats an expired session as signed out', async () => {

@@ -2,10 +2,11 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { hashText } from '@sothspell/core';
+import { hashText, type TourTranslation } from '@sothspell/core';
 import { FakeGuideModel, createFixtureTranslationModel } from '@sothspell/authoring';
 import { createApp } from './app.js';
 import {
+  createFileTranslationStore,
   createMemoryTranslationStore,
   createTranslationService,
   type TranslationService,
@@ -300,5 +301,27 @@ describe('translation routes', () => {
 
     expect(response.status).toBe(201);
     expect(prompts.join('\n')).toContain('pulso');
+  });
+});
+
+describe('file translation store', () => {
+  it('refuses traversal-shaped tour ids and locales', async () => {
+    const root = await mkdtemp(path.join(tmpdir(), 'sothspell-translations-'));
+    roots.push(root);
+    const store = createFileTranslationStore(root);
+    const translation = {
+      locale: 'en',
+      sourceLocale: 'en',
+      title: 'T',
+      subtitle: 'S',
+      chapters: [],
+    } as unknown as TourTranslation;
+
+    await expect(store.write('../evil', 'en', translation)).rejects.toThrow(
+      /unsafe tour id/i,
+    );
+    await expect(store.write('tour_ok', '../en', translation)).rejects.toThrow(
+      /unsafe locale/i,
+    );
   });
 });

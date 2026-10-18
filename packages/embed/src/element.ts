@@ -28,6 +28,17 @@ function parseProgressAttribute(value: string | null): boolean {
   return normalized !== 'off' && normalized !== 'false' && normalized !== '0';
 }
 
+function parseTourOrigins(value: string | null): string[] | undefined {
+  if (value === null) {
+    return undefined;
+  }
+  const origins = value
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+  return origins.length > 0 ? origins : undefined;
+}
+
 function toDomEvent(event: EmbedEvent): CustomEvent {
   const detail =
     event.snapshot ?? (event.message === undefined ? null : { message: event.message });
@@ -46,7 +57,7 @@ function toDomEvent(event: EmbedEvent): CustomEvent {
  */
 export class SothspellTourElement extends HTMLElementBase {
   static get observedAttributes(): string[] {
-    return ['tour', 'locale', 'progress'];
+    return ['tour', 'locale', 'progress', 'tour-origins'];
   }
 
   private root: Root | null = null;
@@ -82,6 +93,7 @@ export class SothspellTourElement extends HTMLElementBase {
       // explicit opt-out.
       storage: this.progressEnabled ? undefined : null,
       locale: this.getAttribute('locale'),
+      allowedTourOrigins: parseTourOrigins(this.getAttribute('tour-origins')),
     });
     this.controller = controller;
     this.unsubscribe = controller.subscribe((event) => {

@@ -55,6 +55,23 @@ describe('API', () => {
     expect(body.chapters[0]?.beats[0]?.anchors[0]?.id).toBe('anchor_readme_overview');
   });
 
+  it('rejects a traversal-shaped tour id instead of reading outside projects', async () => {
+    for (const id of [
+      '..%2F..%2F..%2Foutside',
+      '..%2Foutside',
+      '%2E%2E%2Foutside',
+      'tour..bad',
+    ]) {
+      const response = await appFor().request(`/api/tours/${id}`);
+      expect(response.status, id).toBe(404);
+    }
+  });
+
+  it('returns 404 for an unknown but well-formed tour id', async () => {
+    const response = await appFor().request('/api/tours/tour_does_not_exist');
+    expect(response.status).toBe(404);
+  });
+
   it('returns the embedded anchor when no project root is configured', async () => {
     const response = await appFor().request(
       '/api/projects/bunbun/source/apps/api/src/main.ts?anchor=anchor_main_bootstrap',
@@ -506,7 +523,7 @@ function accountApp() {
     databasePath: ':memory:',
     githubClientId: 'client-1',
     githubClientSecret: 'secret-1',
-    sessionSecret: 'test-session-secret',
+    sessionSecret: 'test-session-secret-0123456789abcdef',
     publicUrl: 'http://127.0.0.1:4319',
     oauthFetchImpl: fakeGithub().fetchImpl,
     now: () => 5_000,

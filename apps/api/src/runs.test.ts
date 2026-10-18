@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import Database from 'better-sqlite3';
@@ -215,4 +215,19 @@ describe('user-scoped runs', () => {
     expect(store.listAnonymousRuns('client-abcdefgh')).toHaveLength(1);
     store.close();
   });
+
+  it.runIf(process.platform !== 'win32')(
+    'creates the database and its directory owner-only',
+    async () => {
+      const databasePath = await makeDatabasePath();
+      const store = createRunStore(databasePath);
+      store.put('tour_one', anonymousRun({ tourId: 'tour_one' }));
+      store.close();
+
+      const fileMode = (await stat(databasePath)).mode & 0o777;
+      const directoryMode = (await stat(path.dirname(databasePath))).mode & 0o777;
+      expect(fileMode).toBe(0o600);
+      expect(directoryMode).toBe(0o700);
+    },
+  );
 });

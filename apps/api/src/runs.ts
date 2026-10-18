@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
-import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
+import { ensurePrivateDirectorySync, privatizeFileSync } from '@sothspell/core';
 import type { RunSyncStore, RunTombstone, SyncRun } from '@sothspell/accounts';
 
 export const RunBodySchema = z.object({
@@ -95,9 +95,12 @@ export interface RunStore extends RunSyncStore {
  */
 export function createRunStore(databasePath: string): RunStore {
   if (databasePath !== ':memory:') {
-    mkdirSync(path.dirname(databasePath), { recursive: true });
+    ensurePrivateDirectorySync(path.dirname(databasePath));
   }
   const database = new Database(databasePath);
+  if (databasePath !== ':memory:') {
+    privatizeFileSync(databasePath);
+  }
   database.pragma('journal_mode = WAL');
   database.exec(`
     CREATE TABLE IF NOT EXISTS runs (

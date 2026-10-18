@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { createChildEnvironment } from '@sothspell/harness';
 
 /**
  * The one process seam for the Claude Code adapter. The model adapter talks to
@@ -41,7 +42,12 @@ export function createClaudeCodeProcessHost(
       return new Promise((resolve, reject) => {
         const child = spawn(command, input.args, {
           cwd: input.cwd,
-          env: { ...process.env, ...options.env },
+          env: {
+            ...createChildEnvironment({
+              prefixes: ['SOTHSPELL_', 'ANTHROPIC_', 'CLAUDE_'],
+            }),
+            ...options.env,
+          },
           stdio: ['pipe', 'pipe', 'pipe'],
           ...(input.signal === undefined ? {} : { signal: input.signal }),
         });

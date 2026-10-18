@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { createChildEnvironment } from '@sothspell/harness';
 
 /**
  * The one process seam for the Codex adapter. The model adapter talks to this
@@ -37,7 +38,12 @@ export function createCodexProcessHost(options: CodexProcessHostOptions = {}): C
       return new Promise((resolve, reject) => {
         const child = spawn(command, input.args, {
           cwd: input.cwd,
-          env: { ...process.env, ...options.env },
+          env: {
+            ...createChildEnvironment({
+              prefixes: ['SOTHSPELL_', 'OPENAI_', 'CODEX_'],
+            }),
+            ...options.env,
+          },
           stdio: ['pipe', 'pipe', 'pipe'],
           ...(input.signal === undefined ? {} : { signal: input.signal }),
         });

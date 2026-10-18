@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
-import { mkdirSync } from 'node:fs';
 import path from 'node:path';
+import { ensurePrivateDirectorySync, privatizeFileSync } from '@sothspell/core';
 import {
   type AnchorVerification,
   type BeatEdit,
@@ -152,9 +152,12 @@ function readDecision(row: DecisionRow): ReviewDecision {
 
 export function createReviewStore(databasePath: string): ReviewStore {
   if (databasePath !== ':memory:') {
-    mkdirSync(path.dirname(databasePath), { recursive: true });
+    ensurePrivateDirectorySync(path.dirname(databasePath));
   }
   const database = new Database(databasePath);
+  if (databasePath !== ':memory:') {
+    privatizeFileSync(databasePath);
+  }
   database.pragma('journal_mode = WAL');
   database.pragma('foreign_keys = ON');
   database.exec(`
