@@ -6,19 +6,25 @@ player, and answers questions at the current beat.
 
 ## Install
 
-Add the plugin to the project configuration:
+The package is not published to npm yet. OpenCode V2 can load a local plugin
+directory, so point `plugins` at this checkout instead:
 
 ```jsonc
 {
   "$schema": "https://opencode.ai/config.json",
   "plugins": [
     {
-      "package": "@sothspell/opencode-plugin",
-      "options": {},
+      "package": "/absolute/path/to/sothspell/packages/opencode-plugin",
+      "options": { "playerUrl": "http://127.0.0.1:4319" },
     },
   ],
 }
 ```
+
+Run `pnpm install` in the checkout first so the plugin's `@sothspell/*` and
+`@opencode/plugin` dependencies resolve; the README quick start has the full
+local setup. When the package is published, the equivalent entry is
+`"package": "@sothspell/opencode-plugin"`.
 
 The host must provide `@opencode/plugin` 2.0.32. The plugin has no second model
 key: generation uses `ctx.generate.text`, with a session fallback.

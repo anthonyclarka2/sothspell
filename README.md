@@ -1,6 +1,6 @@
 # Sóþspell
 
-**Sóþspell** (Old English for "truth story") is an AI-guided walkthrough of a
+**Sóþspell** (Old English for "truth story") is an AW/LLM-guided walkthrough of a
 software project. It explains a codebase from the top down like a film: a
 narrator describes the system, diagrams build and change with the story, and the
 relevant code is highlighted and linked as each module, class, function, object,
@@ -11,57 +11,42 @@ can pause at any moment, open the code, click a diagram node, or ask a question;
 answering does not lose their place. Progress is recorded so the walkthrough can
 resume later.
 
-## Status
-
-**v1 release complete (2026-10-17); next stage complete (2026-10-17).**
-The repository contains:
-
-- a pnpm workspace on TypeScript 7.0.2, React 19, Vite 8, and Hono 4;
-- the versioned Sóþspell schema, a generated JSON Schema, and a compiler that
-  resolves anchors, hashes excerpts, highlights code with Shiki, and lays out
-  diagrams with ELK;
-- a checked-in golden Bunbun tour pinned to commit `9fef24d`;
-- a read-only repository analyzer with `oxc-parser`: deterministic snapshots,
-  symbol extraction, import/reference graphs, NestJS/Prisma signals, a project
-  brief, a per-file cache, and the `sothspell analyze` CLI;
-- an LLM authoring pipeline: `GuideModel` port, AI SDK adapters, a deterministic
-  fixture model, context packs, curriculum planning, chapter/diagram generation,
-  validation, bounded repair, caching, quality reports, and the
-  `sothspell author` CLI;
-- the cinematic player: auto-advance, pause/resume, scrubber, speed, theater
-  mode, completed-beat tracking, keyboard control, a virtualized full-file code
-  browser with stale badges and anchor outlines, and local-first run progress
-  mirrored to a local SQLite table;
-- narration: browser speech and opt-in ElevenLabs cloud narration with aligned
-  timings, content-addressed audio, range serving, and fallback;
-- in-tour questions with cited answers, drilldown generation, and a
-  `sothspell serve`/`doctor` local runtime;
-- the OpenCode V2 plugin with commands, tools, typed RPC, a host model adapter,
-  generated-tour serving, and an embedded-host smoke test;
-- unit, browser, accessibility, and plugin tests, including the Bunbun
-  acceptance pass.
-
-The v1 plans are archived in [`plans/archive/`](plans/archive/README.md). The
-next stage is complete in [`plans/ROADMAP.md`](plans/ROADMAP.md): preferences
-UI, Claude Code and Codex harness plugins, GitHub import, accounts and sync,
-Python/Go/Rust/Java analyzers, multi-language narration and translation, the
-human review UI, and the embeddable player. A reviewed real-model Bunbun tour
-and live cloud narration remain owner-gated on provider credentials; fixture and
-browser paths are verified.
-
 ## Quick start
 
+### Web
+
 ```bash
+<in a suitable parent directory>
+git clone https://github.com/anthonyclarka2/sothspell.git
+cd sothspell
 pnpm install
-pnpm dev            # API on 127.0.0.1:4319, web on 127.0.0.1:5173
+pnpm build
+pnpm sothspell help
+pnpm sothspell serve
 ```
 
-Open <http://127.0.0.1:5173> and play the golden tour. Use **New tour** in the
-topbar to open a local git repository or a public GitHub URL and author a tour
-with the fixture model or the active authoring profile. Set
-`SOTHSPELL_PROJECT_ROOT` to a local checkout (for example the Bunbun reference
-project) to serve full files for the code browser; without it, code pages use
-the excerpts embedded in the tour.
+http://127.0.0.1:4319/ is opened automatically. From here you can run through the demo narration.
+
+#### To Analyse and Narrate a Different Repo
+
+1. Run the web interface as above. (`pnpm sothspell serve`)
+2. Open settings near the top right corner of the browser window.
+3. Click "New authoring profile" and add an LLM API key. Test the connection and save it.
+4. If you have an ElevenLabs API key, you can do the same for "New narration profile".
+5. Then click "New Tour".
+6. You can choose either a local git repo, or a remote GitHub repo (other Git hosts coming soon!).
+7. Check that the repository is accessible via "Check repository".
+8. Choose "Active authoring profile".
+9. Choose the level of narration: New contributor, Technical evaluator, or Maintainer.
+10. Choose a target runtime (TODO: suggest runtime length based on repo size + level of narration)
+11. Click "Author the tour" and wait a few minutes.
+12. Follow the tour in your web browser!
+
+When in the tour of the repository, you can listen to a narrator or read along at your own pace. To listen to a narrator, choose one of "Browser voice" or "Cloud voice". Browser voice uses the built in web speech API, while Cloud voice uses the credentials and voice you chose earlier in the Narration Profile setup.
+
+Enjoy the tour!
+
+### Terminal
 
 Analyze a local repository read-only and author a tour (use your own checkout
 path; Bunbun is this project's reference project):
@@ -73,31 +58,111 @@ pnpm sothspell author /path/to/your/repo --model fixture --out /tmp/your-tour
 SOTHSPELL_MODEL=openai/gpt-5.2 pnpm sothspell author /path/to/your/repo --out /tmp/your-tour
 ```
 
+### OpenCode Plugin
+
+Not published yet; OpenCode V2 can load a local plugin directory, so the plugin
+runs straight from this checkout.
+
+Prerequisites (once per checkout):
+
 ```bash
-pnpm typecheck
-pnpm lint
-pnpm test
-pnpm test:browser
-pnpm test:a11y
-pnpm build
-pnpm check:toolchain
-pnpm check:secrets
-pnpm schema:json
-pnpm tour:build      # regenerate the golden tour from the pinned Bunbun checkout
+cd /path/to/sothspell
+pnpm install
+pnpm build            # gives `sothspell serve` a web player to host
+pnpm sothspell serve  # terminal 1; player and API on http://127.0.0.1:4319
 ```
 
-## The shape of the product
+Point OpenCode at the plugin directory in the project you want to tour, in
+`opencode.jsonc`:
 
-- **Website first.** A local-first, self-hosted web player analyzes a local
-  repository read-only and plays a generated tour.
-- **OpenCode plugin shipped.** The same tour artifact runs inside the OpenCode V2
-  plugin, using the user's configured model and project context.
-- **More harnesses next.** Phase 10 adds Claude Code and Codex behind the
-  `HarnessAdapter` seam, then the remaining agent CLIs.
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": [
+    {
+      "package": "/absolute/path/to/sothspell/packages/opencode-plugin",
+      "options": { "playerUrl": "http://127.0.0.1:4319" },
+    },
+  ],
+}
+```
 
-Every tour is a **truth story**: code claims are anchored to a pinned project
-snapshot, resolved to real symbols, and hashed. The model produces structured
-instructions, not HTML or arbitrary diagrams.
+Relative paths resolve from the config file that contains the entry, so an
+absolute path is the least surprising when the plugin lives in another
+checkout. Restart OpenCode if it was already running
+(`opencode service restart`).
+
+Then, in a session:
+
+- `/sothspell` — open the existing tour, or generate one first.
+- `/sothspell status`, `/sothspell generate`, `/sothspell ask <question>`.
+- Tools: `sothspell_status`, `sothspell_open`, `sothspell_generate`,
+  `sothspell_ask`.
+- Options: `playerUrl` (4319 for `sothspell serve`, 5173 for `pnpm dev`),
+  `autoOpen`, `model`, `maxMinutes`.
+
+The plugin resolves `@opencode/plugin` and the `@sothspell/*` workspace
+packages from this checkout's `node_modules`, which is why `pnpm install` runs
+here first. The terminal only launches the browser; diagrams, code, and
+narration play in the player. See
+[docs/opencode-plugin.md](docs/opencode-plugin.md) for the full surface.
+
+### Claude Code Plugin
+
+Not published yet; Claude Code loads a plugin directory directly, so no
+marketplace or registry is needed.
+
+With the same prerequisites (checkout installed, `pnpm sothspell serve`
+running):
+
+```bash
+claude --plugin-dir /absolute/path/to/sothspell/packages/harness-claude-code/plugin
+```
+
+The plugin ships a `sothspell` skill with four verbs — `/sothspell`,
+`/sothspell status`, `/sothspell generate`, `/sothspell ask <question>` — and a
+SessionStart hook that announces an existing tour. Its `userConfig` exposes
+`player_url` (default `http://127.0.0.1:4319`) and an optional `model`.
+
+The bundled wrapper runs `pnpm --dir <repo> exec tsx` against this checkout. If
+you copy the plugin elsewhere, set `SOTHSPELL_REPO=/path/to/sothspell` (or
+`SOTHSPELL_TSX` to a tsx-compatible launcher). See
+[docs/harnesses.md](docs/harnesses.md).
+
+### Codex Plugin
+
+Not published yet; Codex installs plugins from a local marketplace entry, so no
+registry is needed.
+
+With the same prerequisites, add the plugin to a marketplace file — personal
+(`~/.agents/plugins/marketplace.json`) or repo
+(`.agents/plugins/marketplace.json`):
+
+```jsonc
+{
+  "name": "local-sothspell",
+  "plugins": [
+    {
+      "name": "sothspell",
+      "source": {
+        "source": "local",
+        "path": "/absolute/path/to/sothspell/packages/harness-codex/plugin",
+      },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "category": "Productivity",
+    },
+  ],
+}
+```
+
+Restart Codex, install the plugin, and review and trust its bundled hook in
+`/hooks`. Then invoke the skill — `$sothspell` (or `/skills`) — with `status`,
+`generate`, `open`, and `ask <question>`.
+
+The bundled wrapper runs `pnpm --dir <repo> exec tsx` against this checkout. If
+you copy the plugin elsewhere, set `SOTHSPELL_REPO=/path/to/sothspell` (or
+`SOTHSPELL_TSX`). `SOTHSPELL_PLAYER_URL` overrides the default player URL
+`http://127.0.0.1:4319`. See [docs/harnesses.md](docs/harnesses.md).
 
 ## Example project
 
@@ -170,7 +235,31 @@ stores only small, attributed excerpts.
 - [Domain context](CONTEXT.md) — the project glossary.
 - [Agent instructions](AGENTS.md) — how agents work in this repository.
 
-## Stack
+## Development
+
+### Running the dev instance
+
+```bash
+pnpm install
+pnpm dev            # API on 127.0.0.1:4319, web on 127.0.0.1:5173
+```
+
+Open <http://127.0.0.1:5173> and play the demo tour.
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm test:browser
+pnpm test:a11y
+pnpm build
+pnpm check:toolchain
+pnpm check:secrets
+pnpm schema:json
+pnpm tour:build      # regenerate the golden tour from the pinned Bunbun checkout
+```
+
+### Stack
 
 pnpm 12.14.0 · Node.js 26 · TypeScript 7.0.2 · React 19.3.1 · Vite 8.3.4 ·
 TanStack Router 1.170.45 · Hono 4.13.13 · Zod 4.6.7 · Shiki 4.5.0 ·
@@ -192,4 +281,42 @@ and sources.
 
 ## License
 
-To be decided before the first public release.
+MIT
+
+## Status
+
+**v1 release complete (2026-10-17); next stage complete (2026-10-17).**
+The repository contains:
+
+- a pnpm workspace on TypeScript 7.0.2, React 19, Vite 8, and Hono 4;
+- the versioned Sóþspell schema, a generated JSON Schema, and a compiler that
+  resolves anchors, hashes excerpts, highlights code with Shiki, and lays out
+  diagrams with ELK;
+- a checked-in golden Bunbun tour pinned to commit `9fef24d`;
+- a read-only repository analyzer with `oxc-parser`: deterministic snapshots,
+  symbol extraction, import/reference graphs, NestJS/Prisma signals, a project
+  brief, a per-file cache, and the `sothspell analyze` CLI;
+- an LLM authoring pipeline: `GuideModel` port, AI SDK adapters, a deterministic
+  fixture model, context packs, curriculum planning, chapter/diagram generation,
+  validation, bounded repair, caching, quality reports, and the
+  `sothspell author` CLI;
+- the cinematic player: auto-advance, pause/resume, scrubber, speed, theater
+  mode, completed-beat tracking, keyboard control, a virtualized full-file code
+  browser with stale badges and anchor outlines, and local-first run progress
+  mirrored to a local SQLite table;
+- narration: browser speech and opt-in ElevenLabs cloud narration with aligned
+  timings, content-addressed audio, range serving, and fallback;
+- in-tour questions with cited answers, drilldown generation, and a
+  `sothspell serve`/`doctor` local runtime;
+- the OpenCode V2 plugin with commands, tools, typed RPC, a host model adapter,
+  generated-tour serving, and an embedded-host smoke test;
+- unit, browser, accessibility, and plugin tests, including the Bunbun
+  acceptance pass.
+
+The v1 plans are archived in [`plans/archive/`](plans/archive/README.md). The
+next stage is complete in [`plans/ROADMAP.md`](plans/ROADMAP.md): preferences
+UI, Claude Code and Codex harness plugins, GitHub import, accounts and sync,
+Python/Go/Rust/Java analyzers, multi-language narration and translation, the
+human review UI, and the embeddable player. A reviewed real-model Bunbun tour
+and live cloud narration remain owner-gated on provider credentials; fixture and
+browser paths are verified.

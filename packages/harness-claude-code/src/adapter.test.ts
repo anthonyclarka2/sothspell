@@ -10,7 +10,7 @@ import {
   harnessConformanceCases,
   type HarnessConformanceEnvironment,
 } from '@sothspell/harness/conformance';
-import { createClaudeCodeAdapter } from './adapter.js';
+import { createClaudeCodeAdapter, createClaudeCodeRuntime } from './adapter.js';
 import type { ClaudeCodeHost } from './host.js';
 
 /**
@@ -211,6 +211,31 @@ describe('Claude Code adapter', () => {
       } else {
         process.env.SOTHSPELL_CLAUDE_MODEL = previous;
       }
+    }
+  });
+
+  it('honours SOTHSPELL_PLAYER_URL when no player URL is configured', async () => {
+    const projectRoot = await mkdtemp(path.join(os.tmpdir(), 'sothspell-cc-project-'));
+    const home = await mkdtemp(path.join(os.tmpdir(), 'sothspell-cc-home-'));
+    const previous = process.env.SOTHSPELL_PLAYER_URL;
+    process.env.SOTHSPELL_PLAYER_URL = 'http://127.0.0.1:9999';
+    try {
+      const runtime = createClaudeCodeRuntime({
+        cwd: projectRoot,
+        home,
+        openUrl: async () => undefined,
+      });
+      await expect(runtime.open()).resolves.toEqual({
+        playerUrl: 'http://127.0.0.1:9999',
+      });
+    } finally {
+      if (previous === undefined) {
+        delete process.env.SOTHSPELL_PLAYER_URL;
+      } else {
+        process.env.SOTHSPELL_PLAYER_URL = previous;
+      }
+      await rm(projectRoot, { recursive: true, force: true });
+      await rm(home, { recursive: true, force: true });
     }
   });
 });

@@ -2,7 +2,6 @@ import {
   createHarnessRuntime,
   defineCapabilities,
   launchPlayer,
-  DEFAULT_SERVE_URL,
   type HarnessAdapter,
   type HarnessEvent,
   type HarnessRuntime,
@@ -115,7 +114,7 @@ export function createClaudeCodeRuntime(
 ): HarnessRuntime {
   const adapter = createClaudeCodeAdapter(options);
   return createHarnessRuntime(adapter, {
-    playerUrl: options.playerUrl ?? DEFAULT_SERVE_URL,
+    ...(options.playerUrl === undefined ? {} : { playerUrl: options.playerUrl }),
     ...(options.home === undefined ? {} : { home: options.home }),
     ...(options.clientId === undefined ? {} : { clientId: options.clientId }),
     ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
