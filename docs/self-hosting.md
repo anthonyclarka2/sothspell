@@ -16,8 +16,8 @@ pnpm build
 pnpm sothspell doctor
 ```
 
-`doctor` checks Node, TypeScript 7, `SOTHSPELL_HOME`, SQLite, the Bunbun
-checkout, model/voice configuration, and the port.
+`doctor` checks Node, TypeScript 7, `SOTHSPELL_HOME`, SQLite, the configured
+`SOTHSPELL_PROJECT_ROOT`, model/voice configuration, and the port.
 
 ## Run
 
@@ -70,8 +70,16 @@ Phase 8 if containerized deployment is required.
 
 ## Security posture
 
-- local-first, loopback by default;
+- local-first, loopback by default; binding another host prints a warning
+  because the API has no authentication;
 - read-only source access with containment and symlink checks;
-- server-side keys;
+- server-side keys in `$SOTHSPELL_HOME/config/secrets.json` (0600) or the
+  environment; never returned to the browser;
+- OAuth sessions are server-side with httpOnly, SameSite=Lax cookies;
+- imported repositories are shallow, read-only clones that never execute;
 - no remote project upload;
-- no hidden telemetry.
+- no hidden telemetry;
+- `pnpm check:secrets` and `pnpm audit --prod` run in CI.
+
+See [`SECURITY.md`](../SECURITY.md) for the full policy, accepted risks, and the
+operator checklist.

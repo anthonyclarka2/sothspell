@@ -101,5 +101,7 @@ an empty result.
 
 - pnpm only; never npm or yarn.
 - Test at public seams; each phase plan lists its proposed seams.
+- Run `pnpm check:secrets` before committing; it scans tracked files for
+  credential shapes and runs in CI.
 - Update the relevant phase plan when a decision changes.
 - Commit each completed wave with a descriptive message.

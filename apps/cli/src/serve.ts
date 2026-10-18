@@ -29,6 +29,13 @@ export function openUrl(url: string): void {
  */
 export function runServe(args: ServeArgs, io: CliIO): Promise<number> {
   const app = createApp();
+  const loopback = new Set(['127.0.0.1', '::1', 'localhost']);
+  if (!loopback.has(args.host)) {
+    io.stderr(
+      `warning: binding to ${args.host} exposes the API beyond this machine; ` +
+        'the API has no authentication, so only do this behind a trusted proxy',
+    );
+  }
   const webRoot = path.resolve(import.meta.dirname, '../../web/dist');
   if (existsSync(webRoot)) {
     const relativeRoot = path.relative(process.cwd(), webRoot);

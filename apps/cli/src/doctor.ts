@@ -39,10 +39,7 @@ export async function collectDoctorReport(
 ): Promise<DoctorCheck[]> {
   const home =
     options.home ?? process.env.SOTHSPELL_HOME ?? path.join(os.homedir(), '.sothspell');
-  const bunbunRoot =
-    options.bunbunRoot ??
-    process.env.SOTHSPELL_PROJECT_ROOT ??
-    '/Users/ajc/Projects/codegens/bunbun';
+  const projectRoot = options.bunbunRoot ?? process.env.SOTHSPELL_PROJECT_ROOT ?? null;
   const checks: DoctorCheck[] = [];
 
   checks.push({
@@ -108,10 +105,12 @@ export async function collectDoctorReport(
   }
 
   checks.push({
-    name: 'bunbun-checkout',
-    ok: existsSync(bunbunRoot),
+    name: 'project-root',
+    ok: projectRoot !== null && existsSync(projectRoot),
     required: false,
-    detail: bunbunRoot,
+    detail:
+      projectRoot ??
+      'SOTHSPELL_PROJECT_ROOT is unset; code pages use the embedded excerpts',
   });
   checks.push({
     name: 'model',

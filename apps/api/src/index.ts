@@ -7,6 +7,14 @@ import { createApp } from './app.js';
 const port = Number.parseInt(process.env.PORT ?? '4319', 10);
 const hostname = process.env.HOST ?? '127.0.0.1';
 
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);
+if (!LOOPBACK_HOSTS.has(hostname)) {
+  console.warn(
+    `warning: binding to ${hostname} exposes the API beyond this machine; ` +
+      'the API has no authentication, so only do this behind a trusted proxy',
+  );
+}
+
 const app = createApp();
 
 // The dev loop serves the web app through Vite; a production build drops the

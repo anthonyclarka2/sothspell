@@ -20,6 +20,7 @@
     "test:browser:embed": "playwright test --config packages/embed/playwright.config.ts",
     "test:a11y": "playwright test --project=a11y",
     "check:toolchain": "node scripts/check-toolchain.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs",
     "schema:json": "pnpm --filter @sothspell/core schema:json",
     "sothspell": "tsx apps/cli/src/index.ts",
     "tour:build": "node scripts/build-golden-tour.mjs",

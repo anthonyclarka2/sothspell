@@ -11,5 +11,11 @@ test-results/
 .env
 .env.*
 !.env.example
+*.log
+*.pem
+*.p12
+*.pfx
+*.key
+secrets.json
 logs/
 *.tsbuildinfo

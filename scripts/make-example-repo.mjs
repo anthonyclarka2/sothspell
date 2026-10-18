@@ -19,6 +19,15 @@ const home = path.resolve(
 );
 const target = path.join(home, 'example-repos', 'tiny-notes');
 
+// The script replaces the target directory, so it must never be able to point
+// at a filesystem root or escape the configured home.
+if (home === path.parse(home).root) {
+  throw new Error('refusing to use the filesystem root as SOTHSPELL_HOME');
+}
+if (!target.startsWith(`${home}${path.sep}`)) {
+  throw new Error('refusing to write outside SOTHSPELL_HOME');
+}
+
 // A fixed identity and date keep the demo repository reproducible across
 // machines; the commit is a fixture, not authorship.
 const commitEnvironment = {

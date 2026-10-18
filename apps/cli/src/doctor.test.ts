@@ -28,7 +28,7 @@ describe('sothspell doctor', () => {
         expect.objectContaining({ name: 'typescript', ok: true, required: true }),
         expect.objectContaining({ name: 'sothspell-home', ok: true }),
         expect.objectContaining({ name: 'sqlite', ok: true }),
-        expect.objectContaining({ name: 'bunbun-checkout', ok: false, required: false }),
+        expect.objectContaining({ name: 'project-root', ok: false, required: false }),
       ]),
     );
   });
@@ -44,6 +44,6 @@ describe('sothspell doctor', () => {
 
     expect(code).toBe(0);
     expect(lines.join('\n')).toMatch(/ok\s+node/);
-    expect(lines.join('\n')).toMatch(/warn\s+bunbun-checkout/);
+    expect(lines.join('\n')).toMatch(/warn\s+project-root/);
   });
 });

@@ -58,17 +58,19 @@ pnpm dev            # API on 127.0.0.1:4319, web on 127.0.0.1:5173
 
 Open <http://127.0.0.1:5173> and play the golden tour. Use **New tour** in the
 topbar to open a local git repository or a public GitHub URL and author a tour
-with the fixture model or the active authoring profile. The API reads full files
-from `SOTHSPELL_PROJECT_ROOT` (default: the pinned Bunbun checkout) for the code
-browser.
+with the fixture model or the active authoring profile. Set
+`SOTHSPELL_PROJECT_ROOT` to a local checkout (for example the Bunbun reference
+project) to serve full files for the code browser; without it, code pages use
+the excerpts embedded in the tour.
 
-Analyze a local repository read-only and author a tour:
+Analyze a local repository read-only and author a tour (use your own checkout
+path; Bunbun is this project's reference project):
 
 ```bash
-pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --brief
-pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --save
-pnpm sothspell author /Users/ajc/Projects/codegens/bunbun --model fixture --out /tmp/bunbun-tour
-SOTHSPELL_MODEL=openai/gpt-5.2 pnpm sothspell author /Users/ajc/Projects/codegens/bunbun --out /tmp/bunbun-tour
+pnpm sothspell analyze /path/to/your/repo --brief
+pnpm sothspell analyze /path/to/your/repo --save
+pnpm sothspell author /path/to/your/repo --model fixture --out /tmp/your-tour
+SOTHSPELL_MODEL=openai/gpt-5.2 pnpm sothspell author /path/to/your/repo --out /tmp/your-tour
 ```
 
 ```bash
@@ -79,6 +81,7 @@ pnpm test:browser
 pnpm test:a11y
 pnpm build
 pnpm check:toolchain
+pnpm check:secrets
 pnpm schema:json
 pnpm tour:build      # regenerate the golden tour from the pinned Bunbun checkout
 ```
@@ -160,6 +163,8 @@ stores only small, attributed excerpts.
 - [Accessibility](docs/accessibility.md) — the axe gate and keyboard map.
 - [Troubleshooting](docs/troubleshooting.md) — common local failures.
 - [Release notes](docs/release-notes.md) — the first release and limitations.
+- [Security policy](SECURITY.md) — reporting, posture, accepted risks, and the
+  operator checklist.
 - [Authoring skill](skills/sothspell-author/SKILL.md) — the checklist an agent
   uses to author or review a tour.
 - [Domain context](CONTEXT.md) — the project glossary.

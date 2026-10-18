@@ -1,26 +1,12 @@
 import { createHash } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-import fg from 'fast-glob';
 import ignore, { type Ignore } from 'ignore';
 import { languageForPath, resolveContainedPath } from '@sothspell/core';
 import type { FileEntry, FileLanguage, AnalysisWarning } from './types.js';
+import { walkProjectFiles } from './walk.js';
 
 export const MAX_FILE_BYTES = 2 * 1024 * 1024;
-
-const DEFAULT_IGNORES = [
-  '**/node_modules/**',
-  '**/.git/**',
-  '**/dist/**',
-  '**/build/**',
-  '**/coverage/**',
-  '**/.next/**',
-  '**/.turbo/**',
-  '**/.worktrees/**',
-  '**/playwright-report/**',
-  '**/test-results/**',
-  '**/.cache/**',
-];
 
 const BINARY_EXTENSIONS = new Set([
   '.png',
@@ -74,14 +60,11 @@ export function languageOf(filePath: string): FileLanguage {
   );
 }
 
-async function loadIgnoreRules(root: string): Promise<IgnoreRule[]> {
-  const ignoreFiles = await fg('**/.gitignore', {
-    cwd: root,
-    dot: true,
-    onlyFiles: true,
-    followSymbolicLinks: false,
-    ignore: DEFAULT_IGNORES,
-  });
+async function loadIgnoreRules(
+  root: string,
+  files: readonly string[],
+): Promise<IgnoreRule[]> {
+  const ignoreFiles = files.filter((file) => path.posix.basename(file) === '.gitignore');
 
   const rules: IgnoreRule[] = [];
   for (const ignoreFile of ignoreFiles) {
@@ -118,15 +101,8 @@ function isIgnored(relativePath: string, rules: IgnoreRule[]): boolean {
  * back into the snapshot.
  */
 export async function listProjectFiles(root: string): Promise<string[]> {
-  const rules = await loadIgnoreRules(root);
-  const files = await fg('**/*', {
-    cwd: root,
-    dot: true,
-    onlyFiles: true,
-    followSymbolicLinks: false,
-    ignore: DEFAULT_IGNORES,
-  });
-
+  const files = await walkProjectFiles(root);
+  const rules = await loadIgnoreRules(root, files);
   return files.filter((file) => !isIgnored(file, rules)).toSorted();
 }
 

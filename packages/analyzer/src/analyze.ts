@@ -2,7 +2,6 @@ import { execFile } from 'node:child_process';
 import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import fg from 'fast-glob';
 import { hashText } from '@sothspell/core';
 import {
   LANGUAGE_ANALYZERS,
@@ -14,6 +13,7 @@ import {
 import type { LanguageAnalyzer } from './port.js';
 import { parsePrismaModels } from './prisma.js';
 import { listProjectFiles, readProjectFile } from './source.js';
+import { walkProjectFiles } from './walk.js';
 import type {
   AnalysisStats,
   AnalysisWarning,
@@ -86,12 +86,10 @@ function readStringMap(value: unknown): Record<string, string> {
 }
 
 async function readPackages(root: string): Promise<PackageManifest[]> {
-  const manifests = await fg(['package.json', '*/package.json', '*/*/package.json'], {
-    cwd: root,
-    dot: false,
-    onlyFiles: true,
-    ignore: ['**/node_modules/**', '**/dist/**'],
-  });
+  const candidates = await walkProjectFiles(root, { dot: false, maxDepth: 2 });
+  const manifests = candidates.filter(
+    (file) => path.posix.basename(file) === 'package.json',
+  );
 
   const packages: PackageManifest[] = [];
   for (const manifestPath of manifests.toSorted()) {

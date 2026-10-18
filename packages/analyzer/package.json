@@ -9,7 +9,6 @@
   "types": "./src/index.ts",
   "dependencies": {
     "@sothspell/core": "workspace:*",
-    "fast-glob": "3.3.3",
     "ignore": "7.0.12",
     "oxc-parser": "0.154.0",
     "oxc-walker": "1.1.1",
