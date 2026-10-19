@@ -1,6 +1,6 @@
 # Sóþspell
 
-**Sóþspell** (Old English for "truth story") is an AW/LLM-guided walkthrough of a
+**Sóþspell** (Old English for "truth story") is an AI/LLM-guided walkthrough of a
 software project. It explains a codebase from the top down like a film: a
 narrator describes the system, diagrams build and change with the story, and the
 relevant code is highlighted and linked as each module, class, function, object,
