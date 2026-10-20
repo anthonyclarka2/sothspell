@@ -13,6 +13,10 @@ resume later.
 
 ## Quick start
 
+Prerequisites: If you want to use voice support other than browser-based speech,
+you will need an ElevenLabs API key. If you want to create your own narrations, 
+or ask questions during an existing tour, you will need an LLM API key.
+
 ### Web
 
 ```bash
