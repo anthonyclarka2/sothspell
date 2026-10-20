@@ -11,6 +11,15 @@ can pause at any moment, open the code, click a diagram node, or ask a question;
 answering does not lose their place. Progress is recorded so the walkthrough can
 resume later.
 
+## Contributors
+
+I welcome PRs and issues! I request that a human reads the whole bug report
+or pull request before it is submitted. I also would much prefer smaller PRs
+rather than huge ones. Please create PRs that merge into the `dev` branch, not main.
+
+If you are able to tip me for this work, I'd be eternally grateful. I'm currently
+looking for work.
+
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/A0A21MC3JK)
 
 ## Quick start
