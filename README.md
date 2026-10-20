@@ -11,6 +11,8 @@ can pause at any moment, open the code, click a diagram node, or ask a question;
 answering does not lose their place. Progress is recorded so the walkthrough can
 resume later.
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/A0A21MC3JK)
+
 ## Quick start
 
 Prerequisites: If you want to use voice support other than browser-based speech,
