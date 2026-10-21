@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, readdir, realpath, stat, writeFile } from 'node:fs/promises';
+import { readFile, readdir, realpath, stat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {
@@ -12,6 +12,7 @@ import {
 import {
   authorTour,
   buildContextPack,
+  saveTourArtifacts,
   type AuthorTourOptions,
   type AuthoringResult,
   type BuildContextOptions,
@@ -338,17 +339,15 @@ export function createHarnessRuntime(
     signal.throwIfAborted();
     const destination = await tourDirectory(result.document.id);
     await assertOutsideProject(root, destination);
-    await mkdir(destination, { recursive: true });
-    await writeFile(
-      path.join(destination, 'tour.json'),
-      `${JSON.stringify(result.document, null, 2)}\n`,
-      'utf8',
-    );
-    await writeFile(
-      path.join(destination, 'quality.json'),
-      `${JSON.stringify(result.quality, null, 2)}\n`,
-      'utf8',
-    );
+    await saveTourArtifacts({
+      home,
+      document: result.document,
+      quality: result.quality,
+      snapshot,
+      sourceRoot: root,
+      sourceKind: 'local',
+      destination,
+    });
 
     currentTourId = result.document.id;
     return {

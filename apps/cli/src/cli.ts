@@ -5,8 +5,6 @@ import {
   analyzeProject,
   buildProjectBrief,
   renderProjectBriefMarkdown,
-  saveSnapshot,
-  snapshotPathFor,
   type ProjectSnapshot,
 } from '@sothspell/analyzer';
 import {
@@ -14,6 +12,8 @@ import {
   buildContextPack,
   createAiSdkGuideModel,
   createFixtureGuideModel,
+  saveAnalysisArtifacts,
+  saveTourArtifacts,
   type GuideModel,
   type TourPlan,
 } from '@sothspell/authoring';
@@ -318,22 +318,17 @@ async function runAuthor(
 
     const requestedOut = args.out
       ? await ensureOutsideProject(args.root, args.out)
-      : path.join(
-          sothspellHome(),
-          'projects',
-          snapshot.project.slug,
-          'tours',
-          result.document.id,
-        );
-    const isFile = requestedOut.endsWith('.json');
-    const tourPath = isFile ? requestedOut : path.join(requestedOut, 'tour.json');
-    const qualityPath = isFile
-      ? requestedOut.replace(/\.json$/u, '-quality.json')
-      : path.join(requestedOut, 'quality.json');
-
-    await mkdir(path.dirname(tourPath), { recursive: true });
-    await writeFile(tourPath, `${JSON.stringify(result.document, null, 2)}\n`, 'utf8');
-    await writeFile(qualityPath, `${JSON.stringify(result.quality, null, 2)}\n`, 'utf8');
+      : null;
+    const canonicalRoot = await realpath(args.root);
+    const saved = await saveTourArtifacts({
+      home: sothspellHome(),
+      document: result.document,
+      quality: result.quality,
+      snapshot,
+      sourceRoot: canonicalRoot,
+      sourceKind: 'local',
+      ...(requestedOut === null ? {} : { destination: requestedOut }),
+    });
 
     io.stdout(`Tour: ${result.document.title}`);
     io.stdout(
@@ -348,8 +343,8 @@ async function runAuthor(
     for (const issue of result.quality.issues) {
       io.stderr(`Issue: ${issue}`);
     }
-    io.stdout(`Wrote ${tourPath}`);
-    io.stdout(`Wrote ${qualityPath}`);
+    io.stdout(`Wrote ${saved.tourPath}`);
+    io.stdout(`Wrote ${saved.qualityPath}`);
     return 0;
   } catch (error) {
     io.stderr(`Error: ${error instanceof Error ? error.message : String(error)}`);
@@ -495,11 +490,13 @@ export async function runCli(
     }
 
     if (args.save) {
-      const savedPath = await saveSnapshot(
+      const saved = await saveAnalysisArtifacts({
+        home: sothspellHome(),
         snapshot,
-        snapshotPathFor(sothspellHome(), snapshot.project.slug),
-      );
-      const message = `Saved ${savedPath}`;
+        sourceRoot: await realpath(args.root),
+        sourceKind: 'local',
+      });
+      const message = `Saved ${saved.snapshotPath}`;
       if (args.json || args.brief) {
         io.stderr(message);
       } else {

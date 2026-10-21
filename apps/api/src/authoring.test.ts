@@ -202,6 +202,20 @@ describe('authoring service', () => {
       chapters: unknown[];
     };
     expect(tour.chapters.length).toBeGreaterThanOrEqual(1);
+
+    const projectDirectory = path.dirname(
+      path.dirname(path.dirname(finished.result?.tourPath ?? '')),
+    );
+    const record = JSON.parse(
+      await readFile(path.join(projectDirectory, 'project.json'), 'utf8'),
+    ) as { sourceRoot: string; sourceKind: string };
+    expect(record.sourceRoot).toBe(project);
+    expect(record.sourceKind).toBe('local');
+    const snapshot = JSON.parse(
+      await readFile(path.join(projectDirectory, 'snapshot.json'), 'utf8'),
+    ) as { project: { slug: string }; symbols: unknown[] };
+    expect(snapshot.project.slug.length).toBeGreaterThan(1);
+    expect(snapshot.symbols.length).toBeGreaterThan(0);
   });
 
   it('rejects a path that is not a git repository', async () => {

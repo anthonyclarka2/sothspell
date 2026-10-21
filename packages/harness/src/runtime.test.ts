@@ -102,6 +102,19 @@ describe('harness runtime', () => {
         'utf8',
       ),
     ).toContain('"chapters": 1');
+    const record = JSON.parse(
+      await readFile(path.join(home, 'projects', 'conformance', 'project.json'), 'utf8'),
+    ) as { sourceRoot: string; sourceKind: string };
+    expect(record.sourceRoot).toBe(project);
+    expect(record.sourceKind).toBe('local');
+    expect(
+      JSON.parse(
+        await readFile(
+          path.join(home, 'projects', 'conformance', 'snapshot.json'),
+          'utf8',
+        ),
+      ),
+    ).toMatchObject({ project: { slug: 'conformance' } });
     expect(await readdir(project)).toEqual(['package.json']);
   });
 
