@@ -52,8 +52,8 @@ export const CanvasFlowEdge = memo(function CanvasFlowEdge({
         markerEnd={markerEnd}
         interactionWidth={18}
         style={{
-          strokeWidth: 4,
-          stroke: 'var(--canvas-flow-edge)',
+          strokeWidth: 'var(--canvas-flow-width, 4px)',
+          stroke: 'var(--canvas-relation-color, var(--canvas-flow-edge))',
           ...(DASH[relation] === undefined ? {} : { strokeDasharray: DASH[relation] }),
         }}
       />

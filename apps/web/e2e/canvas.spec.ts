@@ -63,15 +63,28 @@ test('adds a second chapter diagram from the tray', async ({ page }) => {
   await expect(page.getByTestId('canvas-evidence-edge')).not.toHaveCount(0);
 });
 
-test('keeps the Stage and explains the compact canvas below 768 px', async ({ page }) => {
+test('renders the compact canvas below 768 px with the same actions', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 375, height: 900 });
   await page.goto('/t/tour_bunbun_golden/beat_purpose_01?view=canvas');
 
-  await expect(page.getByTestId('canvas-view')).toBeHidden();
-  await expect(page.locator('.stage')).toBeVisible();
-  await expect(page.getByText(/compact canvas arrives in Phase 19/i)).toBeVisible();
-  await page.getByRole('button', { name: 'Dismiss' }).click();
-  await expect(page.getByText(/compact canvas arrives in Phase 19/i)).toBeHidden();
+  const compact = page.getByTestId('canvas-compact');
+  await expect(compact).toBeVisible();
+  await expect(page.getByTestId('canvas-view')).toBeVisible();
+  await expect(page.locator('.stage')).toHaveCount(0);
+  await expect(page.getByText(/compact canvas arrives in Phase 19/i)).toHaveCount(0);
+
+  await compact.getByTestId('canvas-object').filter({ hasText: 'ATProto PDS' }).click();
+  const container = compact.getByTestId('canvas-code-container');
+  await expect(container).toHaveCount(1);
+  await expect(container.getByRole('link', { name: 'Open code page' })).toBeVisible();
+  await expect(
+    container.getByRole('button', { name: 'Incoming', exact: true }),
+  ).toBeVisible();
+  await expect(
+    container.getByRole('button', { name: 'Outgoing', exact: true }),
+  ).toBeVisible();
 });
 
 test('opens the anchored code page from a canvas container', async ({ page }) => {
@@ -156,6 +169,12 @@ test('opens the shortcut sheet with ? and returns focus on Escape', async ({ pag
   const dialog = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText('Shift+A')).toBeVisible();
+  await expect(
+    dialog.getByRole('button', { name: 'Undo last canvas action' }),
+  ).toBeVisible();
+  await expect(
+    dialog.getByRole('button', { name: 'Disable this for me · Auto-arrange' }),
+  ).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Close' })).toBeFocused();
 
   await page.keyboard.press('Escape');

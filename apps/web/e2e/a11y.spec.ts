@@ -324,6 +324,67 @@ test('canvas unavailable relation state has no blocking axe violations', async (
   await expectNoBlockingViolations(page);
 });
 
+test('canvas display menu has no blocking axe violations', async ({ page }) => {
+  await page.goto('/t/tour_bunbun_golden/beat_purpose_01?view=canvas');
+  await page.getByRole('button', { name: 'Canvas appearance' }).click();
+  await expect(page.getByTestId('canvas-display-panel')).toBeVisible();
+  await page.waitForLoadState('networkidle');
+
+  await expectNoBlockingViolations(page);
+});
+
+test('compact canvas has no blocking axe violations at 375 px', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 900 });
+  await page.goto('/t/tour_bunbun_golden/beat_purpose_01?view=canvas');
+  await expect(page.getByTestId('canvas-compact')).toBeVisible();
+  await page.waitForLoadState('networkidle');
+
+  await expectNoBlockingViolations(page);
+});
+
+test('canvas preferences modes have no blocking axe violations', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'sothspell:canvas-preferences:v1',
+      JSON.stringify({
+        autoZoom: true,
+        autoArrange: true,
+        followBeat: true,
+        motion: 'reduce',
+        contrast: 'more',
+        palette: 'colorblind',
+        textScale: 200,
+        seenAutoZoom: true,
+        seenAutoArrange: true,
+      }),
+    );
+  });
+  await page.goto('/t/tour_bunbun_golden/beat_purpose_01?view=canvas');
+  await expect(page.getByTestId('canvas-view')).toHaveAttribute('data-text-scale', '200');
+  await page.getByTestId('canvas-object').filter({ hasText: 'ATProto PDS' }).click();
+  await page.waitForLoadState('networkidle');
+
+  await expectNoBlockingViolations(page);
+});
+
+test('canvas auto-arrange notice has no blocking axe violations', async ({ page }) => {
+  installCanvasSymbolTargets(page, {
+    anchors: { anchor_comments_create: CANVAS_SYMBOLS.service },
+  });
+  installFakeCanvasRelations(page);
+
+  await page.goto('/t/tour_bunbun_golden/beat_write_02?view=canvas');
+  await page.getByTestId('canvas-object').filter({ hasText: 'CommentsService' }).click();
+  await page
+    .locator('[data-container-id="anchor_comments_create"]')
+    .getByRole('button', { name: 'Incoming', exact: true })
+    .click();
+  await expect(page.getByTestId('canvas-notice')).toBeVisible();
+  await page.waitForLoadState('networkidle');
+
+  await expectNoBlockingViolations(page);
+});
+
 /* Phase 15 review (merged) */
 
 test('review page has no blocking axe violations: reading state', async ({ page }) => {

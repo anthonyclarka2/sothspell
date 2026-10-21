@@ -2755,22 +2755,6 @@ pre,
   box-shadow: var(--shadow);
 }
 
-.canvas-compact-note {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex: 1;
-  margin: 0;
-  padding: 7px 12px;
-  font-size: 12.5px;
-}
-
-.canvas-compact-note .secondary-action {
-  padding: 5px 10px;
-  font-size: 12.5px;
-}
-
 .canvas-root {
   --canvas-edge: #4a5568;
   --canvas-flow-edge: #62718a;
@@ -3738,12 +3722,10 @@ pre,
 @keyframes canvas-settle {
   from {
     transform: translateY(2px);
-    opacity: 0.85;
   }
 
   to {
     transform: none;
-    opacity: 1;
   }
 }
 
@@ -3780,4 +3762,738 @@ pre,
   .canvas-root .react-flow__edge-path {
     stroke: CanvasText;
   }
+}
+
+/* ------------------------------------------------------------------------- */
+/* Phase 19: preferences, display modes, notices, compact canvas, focus      */
+/* ------------------------------------------------------------------------- */
+
+.canvas-root,
+.canvas-compact {
+  --canvas-text: var(--ink);
+  --canvas-muted: var(--muted);
+  --canvas-card-bg: var(--panel);
+  --canvas-card-border: var(--line-strong);
+  --canvas-focus: var(--focus-ring);
+  --canvas-selected-bg: var(--accent-soft);
+  --canvas-evidence: var(--canvas-edge);
+  --canvas-flow: var(--canvas-flow-edge);
+  --canvas-flow-calls: var(--canvas-flow-edge);
+  --canvas-flow-references: var(--canvas-flow-edge);
+  --canvas-flow-imports: var(--canvas-flow-edge);
+  --canvas-evidence-width: 1.5px;
+  --canvas-flow-width: 4px;
+  --canvas-text-scale: 1;
+}
+
+.canvas-root[data-text-scale='125'],
+.canvas-compact[data-text-scale='125'] {
+  --canvas-text-scale: 1.25;
+}
+
+.canvas-root[data-text-scale='150'],
+.canvas-compact[data-text-scale='150'] {
+  --canvas-text-scale: 1.5;
+}
+
+.canvas-root[data-text-scale='200'],
+.canvas-compact[data-text-scale='200'] {
+  --canvas-text-scale: 2;
+}
+
+/* Text scale and card scale move together: the layout is regenerated at the
+   same factor, so larger type never has to fit a fixed-width card. */
+.canvas-root .canvas-card,
+.canvas-compact {
+  color: var(--canvas-text);
+}
+
+.canvas-root .canvas-card-kicker,
+.canvas-compact .canvas-card-kicker {
+  color: var(--canvas-muted);
+  font-size: calc(9.5px * var(--canvas-text-scale));
+}
+
+.canvas-root .canvas-diagram-header h3,
+.canvas-root .canvas-code-identity h3 {
+  color: var(--canvas-text);
+  font-size: calc(13px * var(--canvas-text-scale));
+}
+
+.canvas-root .canvas-code-identity p,
+.canvas-root .canvas-object-kind,
+.canvas-root .canvas-relation-badge,
+.canvas-root .canvas-wire-label {
+  color: var(--canvas-muted);
+  font-size: calc(10px * var(--canvas-text-scale));
+}
+
+.canvas-root .canvas-object {
+  color: var(--canvas-text);
+  font-size: calc(12px * var(--canvas-text-scale));
+}
+
+.canvas-root .canvas-relation-toggle,
+.canvas-root .canvas-text-action,
+.canvas-root .canvas-symbol-link {
+  color: var(--canvas-text);
+  font-size: calc(11px * var(--canvas-text-scale));
+}
+
+.canvas-root .canvas-relation-toggle {
+  color: var(--canvas-text);
+}
+
+.canvas-root .canvas-code-excerpt,
+.canvas-root .canvas-code-excerpt .shiki {
+  font-size: calc(12px * var(--canvas-text-scale));
+  line-height: calc(18px * var(--canvas-text-scale));
+}
+
+.canvas-root .canvas-code-excerpt .shiki .line {
+  height: calc(18px * var(--canvas-text-scale));
+  line-height: calc(18px * var(--canvas-text-scale));
+}
+
+.canvas-root .canvas-code-excerpt .shiki .line::before {
+  font-size: calc(10.5px * var(--canvas-text-scale));
+  line-height: calc(18px * var(--canvas-text-scale));
+}
+
+/* Let headers grow with wrapped type instead of clipping a fixed 64 px band. */
+.canvas-root .canvas-code-header {
+  flex: 0 0 auto;
+  height: auto;
+  min-height: 64px;
+}
+
+.canvas-root .canvas-code-identity h3,
+.canvas-root .canvas-code-identity p,
+.canvas-root .canvas-diagram-header h3 {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.canvas-root .canvas-diagram-header {
+  flex: 0 0 auto;
+  height: auto;
+  min-height: 40px;
+}
+
+/* The board is one tab stop; card actions are roving stops with a visible ring. */
+.canvas-root .canvas-card:focus-visible,
+.canvas-root .canvas-object:focus-visible,
+.canvas-root .canvas-symbol-link:focus-visible,
+.canvas-root .canvas-relation-toggle:focus-visible,
+.canvas-root .canvas-text-action:focus-visible {
+  outline: 2px solid var(--canvas-focus);
+  outline-offset: 2px;
+}
+
+.canvas-root .canvas-card:focus-visible {
+  outline-offset: -2px;
+}
+
+.canvas-root .canvas-object:focus-visible {
+  border-color: var(--canvas-focus);
+  outline-offset: 2px;
+}
+
+.canvas-root .canvas-card {
+  border-color: var(--canvas-card-border);
+  background: var(--canvas-card-bg);
+}
+
+.canvas-root .canvas-wire {
+  stroke: var(--canvas-muted);
+}
+
+.canvas-root [data-testid='canvas-flow-edge'] {
+  --canvas-relation-color: var(--canvas-flow);
+}
+
+.canvas-root [data-testid='canvas-flow-edge'][data-relation-kind='calls'] {
+  --canvas-relation-color: var(--canvas-flow-calls);
+}
+
+.canvas-root [data-testid='canvas-flow-edge'][data-relation-kind='references'] {
+  --canvas-relation-color: var(--canvas-flow-references);
+}
+
+.canvas-root [data-testid='canvas-flow-edge'][data-relation-kind='imports'] {
+  --canvas-relation-color: var(--canvas-flow-imports);
+}
+
+/* Display menu ------------------------------------------------------------ */
+
+.canvas-display {
+  position: relative;
+  z-index: 8;
+  margin-inline-start: auto;
+}
+
+.canvas-display-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 99px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 11.5px;
+  font-weight: 540;
+  cursor: pointer;
+}
+
+.canvas-display-button:hover,
+.canvas-display-button[aria-expanded='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.canvas-display-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 10;
+  width: min(268px, calc(100vw - 32px));
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.canvas-display-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.canvas-display-row select {
+  max-width: 150px;
+  padding: 3px 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.canvas-display-checks {
+  display: grid;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.canvas-display-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.canvas-display-check input {
+  inline-size: 16px;
+  block-size: 16px;
+  accent-color: var(--accent);
+}
+
+.canvas-display-resets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+/* First-run notice -------------------------------------------------------- */
+
+.canvas-notice {
+  position: absolute;
+  top: 64px;
+  left: 50%;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: calc(100% - 24px);
+  padding: 6px 8px 6px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  font-size: 12.5px;
+  transform: translateX(-50%);
+}
+
+.canvas-notice-message {
+  margin: 0;
+}
+
+.canvas-notice-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.canvas-notice-dismiss {
+  border: 0;
+  border-radius: 999px;
+  background: var(--panel-strong);
+  color: var(--ink);
+  padding: 3px 9px;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.canvas-notice-dismiss:hover {
+  background: var(--accent-soft);
+}
+
+/* Compact canvas ---------------------------------------------------------- */
+
+.canvas-root--compact {
+  overflow: visible;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.canvas-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  padding: 16px 14px 28px;
+  background: var(--bg);
+}
+
+.canvas-compact-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.canvas-compact-header h2 {
+  margin: 2px 0 0;
+  font-size: calc(22px * var(--canvas-text-scale));
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.canvas-compact-header p {
+  margin: 2px 0 0;
+  color: var(--canvas-muted);
+  font-size: calc(13px * var(--canvas-text-scale));
+}
+
+.canvas-compact-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.canvas-compact-toolbar > button {
+  border: 1px solid var(--line-strong);
+  border-radius: 99px;
+  background: var(--panel);
+  color: var(--ink);
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.canvas-compact-toolbar > button:hover,
+.canvas-compact-toolbar > button[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.canvas-compact-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.canvas-compact-section > h3 {
+  margin: 0;
+  color: var(--canvas-muted);
+  font-size: calc(11px * var(--canvas-text-scale));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.canvas-compact-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--canvas-card-border);
+  border-radius: 10px;
+  background: var(--canvas-card-bg);
+  color: var(--canvas-text);
+}
+
+.canvas-compact-card header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.canvas-compact-card h4,
+.canvas-compact-card h5 {
+  margin: 0;
+  font-size: calc(14px * var(--canvas-text-scale));
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.canvas-compact-card h5 {
+  font-size: calc(12px * var(--canvas-text-scale));
+}
+
+.canvas-compact-card p {
+  margin: 0;
+  color: var(--canvas-muted);
+  font-size: calc(11.5px * var(--canvas-text-scale));
+  overflow-wrap: anywhere;
+}
+
+.canvas-compact-objects {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.canvas-compact-object {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 7px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  text-align: start;
+  font-size: calc(12px * var(--canvas-text-scale));
+  cursor: pointer;
+}
+
+.canvas-compact-object:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.canvas-compact-object:disabled {
+  color: var(--canvas-muted);
+  border-style: dashed;
+  cursor: not-allowed;
+}
+
+.canvas-compact-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.canvas-compact-code {
+  max-height: 320px;
+  overflow: auto;
+  border-top: 1px solid var(--line);
+  background: var(--code-bg);
+}
+
+.canvas-compact-code .canvas-code-excerpt {
+  padding-bottom: 6px;
+}
+
+.canvas-compact-relations {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.canvas-compact-relation-list,
+.canvas-compact-status-list {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--canvas-text);
+  font-size: calc(11.5px * var(--canvas-text-scale));
+}
+
+.canvas-compact-relation-list li,
+.canvas-compact-status-list li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+
+.canvas-compact-status-list li[data-state='error'] {
+  color: var(--danger);
+}
+
+.canvas-compact-tray {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.canvas-compact-tray h4 {
+  width: 100%;
+  margin: 0;
+  color: var(--canvas-muted);
+  font-size: calc(11px * var(--canvas-text-scale));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.canvas-root--compact .canvas-notice {
+  position: static;
+  max-width: none;
+  margin: 12px 14px 0;
+  border-radius: 10px;
+  transform: none;
+}
+
+/* High contrast ----------------------------------------------------------- */
+
+.canvas-root[data-contrast='more'],
+.canvas-compact[data-contrast='more'] {
+  --canvas-text: #000000;
+  --canvas-muted: #333333;
+  --canvas-card-bg: #ffffff;
+  --canvas-card-border: #000000;
+  --canvas-focus: #000000;
+  --canvas-edge: #000000;
+  --canvas-flow-edge: #000000;
+  --canvas-flow-calls: #000000;
+  --canvas-flow-references: #000000;
+  --canvas-flow-imports: #000000;
+  --canvas-evidence-width: 2.5px;
+  --canvas-flow-width: 5px;
+  --line-strong: #000000;
+  --line: #000000;
+}
+
+.canvas-root[data-contrast='more'] .canvas-card,
+.canvas-root[data-contrast='more'] .canvas-object,
+.canvas-root[data-contrast='more'] .canvas-relation-toggle,
+.canvas-root[data-contrast='more'] .canvas-tray,
+.canvas-root[data-contrast='more'] .canvas-controls,
+.canvas-root[data-contrast='more'] .canvas-outline,
+.canvas-compact[data-contrast='more'] .canvas-compact-card,
+.canvas-compact[data-contrast='more'] .canvas-compact-object {
+  border-color: #000000;
+  border-width: 2px;
+}
+
+@media (prefers-contrast: more) {
+  .canvas-root[data-contrast='system'],
+  .canvas-compact[data-contrast='system'] {
+    --canvas-text: #000000;
+    --canvas-muted: #333333;
+    --canvas-card-bg: #ffffff;
+    --canvas-card-border: #000000;
+    --canvas-focus: #000000;
+    --canvas-edge: #000000;
+    --canvas-flow-edge: #000000;
+    --canvas-flow-calls: #000000;
+    --canvas-flow-references: #000000;
+    --canvas-flow-imports: #000000;
+    --canvas-evidence-width: 2.5px;
+    --canvas-flow-width: 5px;
+    --line-strong: #000000;
+    --line: #000000;
+  }
+
+  .canvas-root[data-contrast='system'] .canvas-card,
+  .canvas-root[data-contrast='system'] .canvas-object,
+  .canvas-root[data-contrast='system'] .canvas-relation-toggle,
+  .canvas-compact[data-contrast='system'] .canvas-compact-card {
+    border-color: #000000;
+    border-width: 2px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .canvas-root[data-contrast='more'],
+  .canvas-compact[data-contrast='more'] {
+    --canvas-text: #ffffff;
+    --canvas-muted: #e6e6e6;
+    --canvas-card-bg: #000000;
+    --canvas-card-border: #ffffff;
+    --canvas-focus: #ffffff;
+    --canvas-edge: #ffffff;
+    --canvas-flow-edge: #ffffff;
+    --canvas-flow-calls: #ffffff;
+    --canvas-flow-references: #ffffff;
+    --canvas-flow-imports: #ffffff;
+    --line-strong: #ffffff;
+    --line: #ffffff;
+  }
+
+  .canvas-root[data-contrast='more'] .canvas-card,
+  .canvas-root[data-contrast='more'] .canvas-object,
+  .canvas-root[data-contrast='more'] .canvas-relation-toggle,
+  .canvas-compact[data-contrast='more'] .canvas-compact-card {
+    border-color: #ffffff;
+  }
+}
+
+@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
+  .canvas-root[data-contrast='system'],
+  .canvas-compact[data-contrast='system'] {
+    --canvas-text: #ffffff;
+    --canvas-muted: #e6e6e6;
+    --canvas-card-bg: #000000;
+    --canvas-card-border: #ffffff;
+    --canvas-focus: #ffffff;
+    --canvas-edge: #ffffff;
+    --canvas-flow-edge: #ffffff;
+    --canvas-flow-calls: #ffffff;
+    --canvas-flow-references: #ffffff;
+    --canvas-flow-imports: #ffffff;
+    --line-strong: #ffffff;
+    --line: #ffffff;
+  }
+
+  .canvas-root[data-contrast='system'] .canvas-card,
+  .canvas-root[data-contrast='system'] .canvas-object,
+  .canvas-root[data-contrast='system'] .canvas-relation-toggle,
+  .canvas-compact[data-contrast='system'] .canvas-compact-card {
+    border-color: #ffffff;
+  }
+}
+
+/* Colour-blind-safe palette (Okabe–Ito subset). Line style and labels remain
+   the primary relation signal; colour is a second cue. */
+.canvas-root[data-palette='colorblind'],
+.canvas-compact[data-palette='colorblind'] {
+  --canvas-focus: #0072b2;
+  --canvas-edge: #0072b2;
+  --canvas-flow-edge: #0072b2;
+  --canvas-flow-calls: #0072b2;
+  --canvas-flow-references: #009e73;
+  --canvas-flow-imports: #cc79a7;
+}
+
+.canvas-root[data-palette='colorblind'] .canvas-object:focus-visible,
+.canvas-root[data-palette='colorblind'] .canvas-card:focus-visible {
+  outline-color: #0072b2;
+}
+
+.canvas-root[data-palette='colorblind']
+  .canvas-flow-edge-label[data-relation-kind='calls'] {
+  border-color: #0072b2;
+}
+
+.canvas-root[data-palette='colorblind']
+  .canvas-flow-edge-label[data-relation-kind='references'] {
+  border-color: #009e73;
+}
+
+.canvas-root[data-palette='colorblind']
+  .canvas-flow-edge-label[data-relation-kind='imports'] {
+  border-color: #cc79a7;
+}
+
+/* Forced colours replace authored colours; preserve borders, line styles,
+   focus rings, and labels rather than relying on the palette. */
+@media (forced-colors: active) {
+  .canvas-root,
+  .canvas-compact {
+    --canvas-text: CanvasText;
+    --canvas-muted: CanvasText;
+    --canvas-card-bg: Canvas;
+    --canvas-card-border: CanvasText;
+    --canvas-focus: Highlight;
+    --canvas-edge: CanvasText;
+    --canvas-flow-edge: CanvasText;
+    --canvas-flow-calls: CanvasText;
+    --canvas-flow-references: CanvasText;
+    --canvas-flow-imports: CanvasText;
+  }
+
+  .canvas-root .canvas-card,
+  .canvas-root .canvas-object,
+  .canvas-root .canvas-controls,
+  .canvas-root .canvas-tray,
+  .canvas-root .canvas-display-panel,
+  .canvas-root .canvas-notice,
+  .canvas-compact .canvas-compact-card,
+  .canvas-compact .canvas-compact-object {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .canvas-root :focus-visible,
+  .canvas-compact :focus-visible {
+    outline: 2px solid Highlight;
+  }
+
+  .canvas-root .canvas-object[aria-current='true'],
+  .canvas-root .canvas-relation-toggle[aria-pressed='true'] {
+    border-color: Highlight;
+    color: Highlight;
+  }
+
+  .canvas-root .canvas-flow-edge-label {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .canvas-root .canvas-wire,
+  .canvas-root .react-flow__edge-path {
+    stroke: CanvasText;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas-root .canvas-card,
+  .canvas-root .canvas-object,
+  .canvas-root .canvas-display-button,
+  .canvas-root--arranged .canvas-card {
+    transition: none;
+    animation: none;
+  }
+}
+
+.canvas-root[data-motion='reduce'] .canvas-card,
+.canvas-root[data-motion='reduce'] .canvas-object,
+.canvas-root[data-motion='reduce'] .canvas-display-button,
+.canvas-root[data-motion='reduce'] .canvas-control--pulse,
+.canvas-root[data-motion='reduce'] .canvas-relation-skeleton span,
+.canvas-root--arranged[data-motion='reduce'] .canvas-card {
+  transition: none;
+  animation: none;
 }

@@ -22,7 +22,6 @@ import { CanvasView } from '../components/canvas/index.js';
 import { Transport } from '../components/Transport.js';
 import { AskPanel } from '../components/AskPanel.js';
 import { useNarration, type NarrationProviderChoice } from '../lib/use-narration.js';
-import { useMediaQuery } from '../lib/use-media-query.js';
 
 interface PlayerParams {
   tourId: string;
@@ -65,9 +64,8 @@ export function PlayerPage() {
   const navigate = useNavigate();
   const { locale, t } = useLocale();
   const clientId = useMemo(() => getOrCreateClientId(), []);
-  const compact = useMediaQuery('(max-width: 767px)');
   const canvasRequested = search.view === 'canvas';
-  const showCanvas = canvasRequested && !compact;
+  const showCanvas = canvasRequested;
   const tourState = useAsync(
     () => fetchTour(params.tourId, locale),
     [params.tourId, locale],
@@ -100,7 +98,6 @@ export function PlayerPage() {
   const [narrationProvider, setNarrationProvider] =
     useState<NarrationProviderChoice>('browser');
   const [askOpen, setAskOpen] = useState(false);
-  const [compactNoteDismissed, setCompactNoteDismissed] = useState(false);
   const resumeAfterAskRef = useRef(false);
 
   const currentChapter =
@@ -461,18 +458,6 @@ export function PlayerPage() {
                 {t('canvas.canvasView')}
               </button>
             </div>
-            {canvasRequested && compact && !compactNoteDismissed ? (
-              <div className="notice canvas-compact-note">
-                <span>{t('canvas.compactNote')}</span>
-                <button
-                  type="button"
-                  className="secondary-action"
-                  onClick={() => setCompactNoteDismissed(true)}
-                >
-                  {t('canvas.dismiss')}
-                </button>
-              </div>
-            ) : null}
           </div>
 
           {showCanvas ? (
