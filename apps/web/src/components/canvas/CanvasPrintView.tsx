@@ -1,5 +1,6 @@
 import type { CanvasDiagramCard, CanvasPrintModel } from '@sothspell/canvas';
 import { useLocale } from '../../i18n/locale.js';
+import { shikiHtmlForCanvas } from './code-html.js';
 
 export interface CanvasPrintViewProps {
   model: CanvasPrintModel;
@@ -124,7 +125,9 @@ export function CanvasPrintView({ model }: CanvasPrintViewProps) {
                       // The compiler's trusted Shiki HTML. This is the full
                       // anchor for tour evidence and the API's bounded excerpt
                       // for a relation container; never the collapsed DOM.
-                      dangerouslySetInnerHTML={{ __html: section.container.html }}
+                      dangerouslySetInnerHTML={{
+                        __html: shikiHtmlForCanvas(section.container.html, undefined),
+                      }}
                     />
                   </article>
                 </li>
