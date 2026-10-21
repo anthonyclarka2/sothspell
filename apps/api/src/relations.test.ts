@@ -101,6 +101,22 @@ async function makeFixture(): Promise<Fixture> {
     path.join(root, 'src', 'secret.ts'),
     "export const API_KEY = 'abcdefghijklmnop1234';\n",
   );
+  // One symbol with three lines that individually exceed the container budget
+  // proves the excerpt window shrinks around a focus line without dropping it.
+  await writeFile(
+    path.join(root, 'src', 'wide.ts'),
+    [
+      `export function wide(/* ${'x'.repeat(12 * 1024)} */): string {`,
+      `  return "${'w'.repeat(12 * 1024)}";`,
+      '}',
+      '',
+    ].join('\n'),
+  );
+  // A single line larger than MAX_CONTAINER_BYTES cannot produce a container.
+  await writeFile(
+    path.join(root, 'src', 'huge.ts'),
+    `export function huge(): string { return "${'h'.repeat(20 * 1024)}"; }\n`,
+  );
   const manyNames = Array.from({ length: 60 }, (_value, index) => `name${index}`);
   await writeFile(
     path.join(root, 'src', 'many.ts'),
@@ -232,6 +248,31 @@ async function relation(
     }
   }
   return app.request(`/api/tours/${tourId}/canvas/symbol?${search.toString()}`);
+}
+
+async function readSavedSnapshot(fixture: Fixture): Promise<ProjectSnapshot> {
+  return JSON.parse(
+    await readFile(snapshotPathFor(fixture.home, fixture.slug), 'utf8'),
+  ) as ProjectSnapshot;
+}
+
+async function writeSavedSnapshot(
+  fixture: Fixture,
+  snapshot: ProjectSnapshot,
+): Promise<void> {
+  await writeFile(
+    snapshotPathFor(fixture.home, fixture.slug),
+    `${JSON.stringify(snapshot, null, 2)}\n`,
+    'utf8',
+  );
+}
+
+function symbolById(snapshot: ProjectSnapshot, id: string) {
+  const symbol = snapshot.symbols.find((candidate) => candidate.id === id);
+  if (!symbol) {
+    throw new Error(`fixture symbol ${id} is missing`);
+  }
+  return symbol;
 }
 
 afterEach(async () => {
@@ -615,5 +656,222 @@ describe('canvas relation API', () => {
   it('keeps a stale analyzer version out of the response contract', async () => {
     const fixture = await makeFixture();
     expect(fixture.snapshot.analyzerVersion).toBe(ANALYZER_VERSION);
+  });
+
+  it('rejects incomplete selectors before reading a project', async () => {
+    const service = createRelationService({
+      home: path.join(tmpdir(), 'sothspell-relations-unused'),
+    });
+
+    await expect(
+      service.load({
+        slug: 'fixture',
+        root: null,
+        direction: 'definition',
+        limit: 8,
+        offset: 0,
+      }),
+    ).rejects.toThrow(/symbolId, or both path and symbol/u);
+    await expect(
+      service.load({
+        slug: 'fixture',
+        root: null,
+        direction: 'definition',
+        symbolId: 'symbol:src/math.ts#double',
+        symbol: 'double',
+        limit: 8,
+        offset: 0,
+      }),
+    ).rejects.toThrow(/path is required when symbol is given/u);
+    await expect(
+      service.load({
+        slug: 'fixture',
+        root: null,
+        direction: 'definition',
+        symbolId: 'symbol:src/math.ts#double',
+        path: 'src/math.ts',
+        limit: 8,
+        offset: 0,
+      }),
+    ).rejects.toThrow(/symbol is required when path is given/u);
+  });
+
+  it('resolves a legacy symbol id and rejects a malformed one', async () => {
+    await makeFixture();
+    const app = appFor();
+
+    const legacy = await relation(app, {
+      symbolId: 'legacy:src/math.ts#double',
+      direction: 'definition',
+    });
+    expect(legacy.status).toBe(200);
+    const body = (await legacy.json()) as CanvasRelationResponse;
+    expect(body.symbol.id).toBe('symbol:src/math.ts#double');
+
+    for (const symbolId of ['legacy:nohash', 'legacy:#double']) {
+      const malformed = await relation(app, { symbolId, direction: 'definition' });
+      expect(malformed.status, symbolId).toBe(404);
+    }
+  });
+
+  it('returns unavailable when a saved symbol has no readable source file', async () => {
+    const fixture = await makeFixture();
+    const snapshot = await readSavedSnapshot(fixture);
+    snapshot.symbols.push({
+      id: 'symbol:src/missing.ts#gone',
+      kind: 'function',
+      name: 'gone',
+      qualifiedName: 'gone',
+      path: 'src/missing.ts',
+      startLine: 1,
+      endLine: 2,
+      exported: true,
+      parentId: null,
+      decorators: [],
+      signature: '',
+      documentation: null,
+      language: 'typescript',
+    });
+    await writeSavedSnapshot(fixture, snapshot);
+
+    const response = await relation(appFor(), {
+      symbolId: 'symbol:src/missing.ts#gone',
+      direction: 'definition',
+    });
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      error: expect.stringMatching(/cannot be read/u),
+    });
+  });
+
+  it('rechecks redaction on source text even when the file entry is not flagged', async () => {
+    const fixture = await makeFixture();
+    const snapshot = await readSavedSnapshot(fixture);
+    const secret = snapshot.files.find((file) => file.path === 'src/secret.ts');
+    expect(secret?.redacted).toBe(true);
+    if (secret) {
+      secret.redacted = false;
+    }
+    await writeSavedSnapshot(fixture, snapshot);
+
+    const response = await relation(appFor(), {
+      symbolId: 'symbol:src/secret.ts#API_KEY',
+      direction: 'definition',
+    });
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      error: expect.stringMatching(/redacted/u),
+    });
+  });
+
+  it('centres a long relation excerpt on the call line', async () => {
+    const fixture = await makeFixture();
+    const snapshot = await readSavedSnapshot(fixture);
+    const big = symbolById(snapshot, 'symbol:src/big.ts#big');
+    snapshot.graph.edges.push({
+      from: big.id,
+      to: 'symbol:src/math.ts#double',
+      kind: 'calls',
+      confidence: 'syntax',
+      atLine: 100,
+    });
+    await writeSavedSnapshot(fixture, snapshot);
+
+    const response = await relation(appFor(), {
+      symbolId: 'symbol:src/math.ts#double',
+      direction: 'incoming',
+    });
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as CanvasRelationResponse;
+    const caller = body.relations.find((item) => item.symbol.id === big.id);
+    expect(caller).toBeDefined();
+    expect(caller!.container.startLine).toBeGreaterThan(1);
+    expect(caller!.container.startLine).toBeLessThanOrEqual(100);
+    expect(
+      caller!.container.endLine - caller!.container.startLine + 1,
+    ).toBeLessThanOrEqual(MAX_EXCERPT_LINES);
+  });
+
+  it('shrinks a wide excerpt around a focus line and drops a container that cannot fit', async () => {
+    const fixture = await makeFixture();
+    const snapshot = await readSavedSnapshot(fixture);
+    const wide = snapshot.symbols.find(
+      (symbol) => symbol.path === 'src/wide.ts' && symbol.name === 'wide',
+    );
+    const huge = snapshot.symbols.find(
+      (symbol) => symbol.path === 'src/huge.ts' && symbol.name === 'huge',
+    );
+    expect(wide).toBeDefined();
+    expect(huge).toBeDefined();
+
+    snapshot.graph.edges.push({
+      from: wide!.id,
+      to: 'symbol:src/math.ts#double',
+      kind: 'calls',
+      confidence: 'syntax',
+      atLine: 2,
+    });
+    await writeSavedSnapshot(fixture, snapshot);
+    const app = appFor();
+
+    const focused = await relation(app, {
+      symbolId: 'symbol:src/math.ts#double',
+      direction: 'incoming',
+      limit: 8,
+    });
+    expect(focused.status).toBe(200);
+    const focusedBody = (await focused.json()) as CanvasRelationResponse;
+    const wideRelation = focusedBody.relations.find(
+      (item) => item.symbol.id === wide!.id,
+    );
+    expect(wideRelation).toBeDefined();
+    expect(wideRelation!.container.excerpt.length).toBeLessThanOrEqual(16 * 1024);
+    expect(wideRelation!.container.startLine).toBe(2);
+
+    const definition = await relation(app, {
+      symbolId: wide!.id,
+      direction: 'definition',
+    });
+    expect(definition.status).toBe(200);
+    const definitionBody = (await definition.json()) as CanvasRelationResponse;
+    expect(definitionBody.container.startLine).toBe(1);
+    expect(definitionBody.container.endLine).toBe(1);
+
+    const tooLarge = await relation(app, {
+      symbolId: huge!.id,
+      direction: 'definition',
+    });
+    expect(tooLarge.status).toBe(409);
+    await expect(tooLarge.json()).resolves.toMatchObject({
+      error: expect.stringMatching(/too large/u),
+    });
+  });
+
+  it('does not cache a failed analysis and reports it as unavailable', async () => {
+    const fixture = await makeFixture();
+    await rm(snapshotPathFor(fixture.home, fixture.slug), { force: true });
+    let analyses = 0;
+    const service = createRelationService({
+      home: fixture.home,
+      analyze: async () => {
+        analyses += 1;
+        throw new Error('analysis exploded');
+      },
+    });
+    const app = createApp({ databasePath: ':memory:', relationService: service });
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const response = await relation(app, {
+        symbolId: 'symbol:src/math.ts#double',
+        direction: 'definition',
+      });
+      expect(response.status).toBe(409);
+      await expect(response.json()).resolves.toMatchObject({
+        error: expect.stringMatching(/could not be analyzed/u),
+      });
+    }
+    // A rejected analysis is evicted so the next request retries instead of
+    // replaying the failure forever.
+    expect(analyses).toBe(2);
   });
 });
