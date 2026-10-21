@@ -18,6 +18,7 @@ export interface CanvasOutlineActions {
   focusObject: (diagramId: string, objectId: string) => void;
   focusContainer: (containerId: string) => void;
   toggleContainer: (containerId: string) => void;
+  closeContainer: (containerId: string) => void;
   toggleRelation: (containerId: string, direction: CanvasRelationToggleDirection) => void;
   openDefinition: (symbolId: string, sourceContainerId?: string) => void;
   showAllAnchors: () => void;
@@ -259,6 +260,13 @@ export function CanvasOutline({
                       )}
                     </div>
                     <div className="canvas-outline-row">
+                      <button
+                        type="button"
+                        className="canvas-outline-action"
+                        onClick={() => actions.closeContainer(container.id)}
+                      >
+                        {t('canvas.closeContainer', { label: container.label })}
+                      </button>
                       {totalLines > COLLAPSED_LINES ? (
                         <button
                           type="button"

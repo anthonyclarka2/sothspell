@@ -45,6 +45,7 @@ export interface CanvasDiagramCardData extends Record<string, unknown> {
   title: string;
   kind: DiagramKind;
   home: boolean;
+  selected: boolean;
   width: number;
   height: number;
   diagramWidth: number;
@@ -76,6 +77,8 @@ export interface CanvasCodeContainerData extends Record<string, unknown> {
   container: CanvasCodeContainer;
   collapsed: boolean;
   focused: boolean;
+  selected: boolean;
+  resizable: boolean;
   linkedLines: number[];
   projectSlug: string;
   tourId: string;
@@ -88,6 +91,8 @@ export interface CanvasCodeContainerData extends Record<string, unknown> {
   textScale: number;
   onFocus: (containerId: string) => void;
   onToggleCollapse: (containerId: string) => void;
+  onClose: (containerId: string) => void;
+  onResize: (containerId: string, size: { width: number; height: number }) => void;
   onToggleRelation: (
     containerId: string,
     direction: CanvasRelationToggleDirection,
@@ -104,6 +109,7 @@ export interface CanvasEvidenceData extends Record<string, unknown> {
   objectLabel: string;
   path: string;
   line: number;
+  selected?: boolean;
 }
 
 export interface CanvasFlowData extends Record<string, unknown> {
@@ -111,6 +117,7 @@ export interface CanvasFlowData extends Record<string, unknown> {
   confidence: CanvasRelationConfidence;
   fromLabel: string;
   toLabel: string;
+  selected?: boolean;
 }
 
 export type CanvasDiagramNode = Node<CanvasDiagramCardData, typeof CANVAS_DIAGRAM_NODE>;
@@ -132,6 +139,7 @@ export type CanvasFlowEdge = CanvasEvidenceFlowEdge | CanvasRelationFlowEdge;
 export interface CanvasFlowState {
   selectedObjectId: string | null;
   focusedContainerId: string | null;
+  selectedNodeId: string | null;
   /** Per-container override; the scene's own collapse flag is the default. */
   collapsed: Record<string, boolean>;
   projectSlug: string;
@@ -147,6 +155,8 @@ export interface CanvasFlowActions {
   activateObject: (diagramId: string, objectId: string) => void;
   focusContainer: (containerId: string) => void;
   toggleContainer: (containerId: string) => void;
+  closeContainer: (containerId: string) => void;
+  resizeContainer: (containerId: string, size: { width: number; height: number }) => void;
   toggleRelation: (containerId: string, direction: CanvasRelationToggleDirection) => void;
   openDefinition: (symbolId: string, sourceContainerId?: string) => void;
   retryRelation: (status: CanvasRelationStatusCard) => void;
@@ -201,7 +211,8 @@ export function buildCanvasNodes(
       width: item.width,
       height: item.height,
       style: { width: item.width, height: item.height },
-      draggable: false,
+      draggable: true,
+      dragHandle: '.canvas-drag-handle',
       selectable: false,
       connectable: false,
       deletable: false,
@@ -213,6 +224,7 @@ export function buildCanvasNodes(
         title: diagram.title,
         kind: diagram.kind,
         home: diagram.home,
+        selected: state.selectedNodeId === item.id,
         width: item.width,
         height: item.height,
         diagramWidth,
@@ -291,7 +303,8 @@ export function buildCanvasNodes(
       width: item.width,
       height: item.height,
       style: { width: item.width, height: item.height },
-      draggable: false,
+      draggable: true,
+      dragHandle: '.canvas-drag-handle',
       selectable: false,
       connectable: false,
       deletable: false,
@@ -302,6 +315,8 @@ export function buildCanvasNodes(
         container,
         collapsed,
         focused: state.focusedContainerId === container.id,
+        selected: state.selectedNodeId === item.id,
+        resizable: state.selectedNodeId === item.id,
         linkedLines: scene.links
           .filter(
             (link): link is CanvasEvidenceLink =>
@@ -324,6 +339,8 @@ export function buildCanvasNodes(
         textScale: state.textScale,
         onFocus: actions.focusContainer,
         onToggleCollapse: actions.toggleContainer,
+        onClose: actions.closeContainer,
+        onResize: actions.resizeContainer,
         onToggleRelation: actions.toggleRelation,
         onOpenDefinition: actions.openDefinition,
       },
@@ -369,7 +386,10 @@ export function buildCanvasRelationStatusNodes(
 }
 
 /** One edge per citation or relation the scene proved, and no edge without one. */
-export function buildCanvasEdges(scene: CanvasScene): CanvasFlowEdge[] {
+export function buildCanvasEdges(
+  scene: CanvasScene,
+  selection?: { nodeId?: string | null; objectKey?: string | null },
+): CanvasFlowEdge[] {
   const containersById = new Map(
     scene.containers.map((container) => [container.id, container] as const),
   );
@@ -403,6 +423,10 @@ export function buildCanvasEdges(scene: CanvasScene): CanvasFlowEdge[] {
           objectLabel: object.label,
           path: container.path,
           line: link.toLine,
+          selected:
+            selection?.objectKey ===
+              canvasObjectKey(link.fromDiagramId, link.fromObjectId) ||
+            selection?.nodeId === codeContainerKey(link.toContainerId),
         },
         markerEnd: {
           type: MarkerType.ArrowClosed,
@@ -436,6 +460,9 @@ export function buildCanvasEdges(scene: CanvasScene): CanvasFlowEdge[] {
         confidence: link.confidence,
         fromLabel: from.label,
         toLabel: to.label,
+        selected:
+          selection?.nodeId === codeContainerKey(from.id) ||
+          selection?.nodeId === codeContainerKey(to.id),
       },
       markerEnd: {
         type: MarkerType.ArrowClosed,

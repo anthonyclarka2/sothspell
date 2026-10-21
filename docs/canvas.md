@@ -20,6 +20,10 @@ default and the embed player is unchanged.
 - The beat's diagram is the **home card**.
 - Beat anchors open as **code containers** to the right.
 - The **diagram tray** adds or removes other diagrams from the same chapter.
+- Code and diagram cards can be **moved** by dragging their headers, and code
+  containers can be **resized** from the selected card's handles.
+- A **close** button removes a code container. Its diagram object or relation
+  toggle can reopen it.
 - A **shared-symbol object** in two open diagrams is marked with a bridge badge;
   either object opens one shared definition container.
 - An **evidence link** is a thin solid line from a diagram object to the anchor's
@@ -44,6 +48,19 @@ excerpt. Actions:
 Incoming and outgoing are toggles. A container opened manually stays open; an
 automatically opened container is hidden only when no active toggle still owns
 it. Relation expansion never cascades.
+
+Selecting a card highlights its border and its connected evidence/flow links.
+Diagram objects are selectable even when they have no code target; selecting one
+without evidence announces that no code is open and leaves the existing
+containers alone.
+
+### Headers, resize, and move
+
+The code header is the drag handle and holds the close button, symbol
+definition, collapse, and code-page actions. Select a code card to show its
+resize handles. The minimum size is 280×180 px; resized cards keep their code
+line handles aligned. `Shift+A` or the auto-arrange control restores the
+deterministic layout and clears manual positions.
 
 ### Relations
 
@@ -96,6 +113,13 @@ auto-arrange, follow beat, outline, fullscreen, shortcuts, export.
 Keys handled by the canvas stop before the player's global handlers. Space on a
 button activates it; Space on the board background and `T` remain the player's
 playback and theater keys.
+
+Entering fullscreen re-fits the board to the new viewport and centres the
+cards. The fullscreen button pulses for two seconds and the return hint stays
+visible until dismissed.
+
+Code lines are rendered as adjacent blocks with no blank-line gap: the whitespace
+Shiki emits between line spans is removed before the excerpt enters the DOM.
 
 ## Preferences
 
@@ -199,8 +223,8 @@ reports the total and the unmeasured budgets instead of claiming a pass.
 
 - In-text identifier links are not rendered; use the diagram object or the
   container header to open a definition.
-- Container dragging and manual saved layouts are not enabled. Saved viewports
-  restore the camera, but the cards use the deterministic layout.
+- Saved viewports restore the camera; manual card positions and sizes are not
+  persisted across reloads, and auto-arrange resets them.
 - No real PDF is generated in CI; the print-media structure is tested and the
   PDF flow is a manual check.
 - Whole-board export respects the board's minimum zoom of 0.25.

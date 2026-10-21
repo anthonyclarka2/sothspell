@@ -61,9 +61,10 @@ export const CanvasDiagramCard = memo(function CanvasDiagramCard({
       data-diagram-id={data.id}
       data-canvas-diagram="true"
       data-home={data.home}
+      data-selected={data.selected}
       tabIndex={-1}
     >
-      <header className="canvas-diagram-header">
+      <header className="canvas-diagram-header canvas-drag-handle">
         <span className="canvas-card-kicker">
           {data.home ? t('canvas.homeDiagram') : t('canvas.satelliteDiagram')}
         </span>
@@ -140,7 +141,6 @@ export const CanvasObjectCard = memo(function CanvasObjectCard({
         data-diagram-id={data.diagramId}
         data-canvas-item="object"
         tabIndex={-1}
-        disabled={!data.resolved}
         aria-current={data.focused ? 'true' : undefined}
         aria-describedby={describedBy}
         title={

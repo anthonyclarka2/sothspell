@@ -2757,6 +2757,7 @@ pre,
 
 .canvas-root {
   --canvas-edge: #4a5568;
+  --canvas-edge-selected: var(--accent);
   --canvas-flow-edge: #62718a;
   position: relative;
   min-width: 0;
@@ -2802,6 +2803,52 @@ pre,
   overflow: hidden;
 }
 
+.canvas-card[data-selected='true'] {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 2px var(--accent-soft),
+    var(--shadow);
+}
+
+.canvas-drag-handle {
+  cursor: grab;
+}
+
+.canvas-drag-handle:active {
+  cursor: grabbing;
+}
+
+.canvas-resize-line {
+  border-color: var(--accent);
+}
+
+.canvas-resize-handle {
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--panel);
+  background: var(--accent);
+}
+
+.canvas-close {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.canvas-close:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* Diagram cards hold child object nodes, so they never take the pointer. */
 .canvas-diagram-card {
   display: flex;
@@ -2810,6 +2857,7 @@ pre,
 }
 
 .canvas-diagram-header {
+  pointer-events: auto;
   flex: 0 0 40px;
   height: 40px;
   display: flex;
@@ -2894,17 +2942,22 @@ pre,
     background 140ms ease;
 }
 
-.canvas-object:hover:not(:disabled) {
+.canvas-object:hover {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
 
-.canvas-object:disabled {
-  cursor: not-allowed;
+.canvas-object-node[data-resolved='false'] .canvas-object {
+  cursor: default;
   color: var(--muted);
   border-style: dashed;
   background: var(--panel-strong);
   opacity: 0.72;
+}
+
+.canvas-object-node[data-resolved='false'] .canvas-object:focus-visible {
+  outline-color: var(--accent);
+  opacity: 1;
 }
 
 .canvas-object-node[data-focused='true'] .canvas-object {
@@ -2944,10 +2997,12 @@ pre,
 .canvas-code-container {
   display: flex;
   flex-direction: column;
+  overflow: visible;
   pointer-events: auto;
 }
 
 .canvas-code-header {
+  border-radius: 12px 12px 0 0;
   flex: 0 0 64px;
   height: 64px;
   display: flex;
@@ -3124,7 +3179,13 @@ pre,
   line-height: 18px;
 }
 
+.canvas-code-excerpt .shiki code {
+  display: block;
+}
+
 .canvas-code-excerpt .shiki .line {
+  display: block;
+  margin: 0;
   height: 18px;
   line-height: 18px;
   padding-inline: 0 10px;
@@ -4399,6 +4460,7 @@ pre,
 .canvas-compact[data-palette='colorblind'] {
   --canvas-focus: #0072b2;
   --canvas-edge: #0072b2;
+  --canvas-edge-selected: #0072b2;
   --canvas-flow-edge: #0072b2;
   --canvas-flow-calls: #0072b2;
   --canvas-flow-references: #009e73;
@@ -4626,12 +4688,16 @@ pre,
 
 .canvas-root[data-canvas-export='image'] .canvas-card,
 .canvas-root[data-canvas-export='image'] .canvas-object,
-.canvas-root[data-canvas-export='image'] .canvas-object-node[data-focused='true'] .canvas-object {
+.canvas-root[data-canvas-export='image']
+  .canvas-object-node[data-focused='true']
+  .canvas-object {
   outline: none !important;
   animation: none !important;
 }
 
-.canvas-root[data-canvas-export='image'] .canvas-object-node[data-focused='true'] .canvas-object {
+.canvas-root[data-canvas-export='image']
+  .canvas-object-node[data-focused='true']
+  .canvas-object {
   border-color: var(--line-strong);
   background: var(--panel);
   box-shadow: none;

@@ -14,13 +14,13 @@ export function shikiHtmlForCanvas(html: string, maxLines: number | undefined): 
     '$1 tabindex="-1"',
   );
   if (maxLines === undefined) {
-    return withoutTabStop;
+    return tightenLineMarkup(withoutTabStop);
   }
 
   const codeStart = withoutTabStop.indexOf('<code>');
   const codeEnd = withoutTabStop.lastIndexOf('</code>');
   if (codeStart === -1 || codeEnd <= codeStart) {
-    return withoutTabStop;
+    return tightenLineMarkup(withoutTabStop);
   }
 
   const openTag = withoutTabStop.slice(0, codeStart + '<code>'.length);
@@ -28,9 +28,21 @@ export function shikiHtmlForCanvas(html: string, maxLines: number | undefined): 
   const lines = withoutTabStop.slice(codeStart + '<code>'.length, codeEnd).split('\n');
   const visible = Math.max(1, Math.floor(maxLines));
   if (lines.length <= visible) {
-    return withoutTabStop;
+    return tightenLineMarkup(withoutTabStop);
   }
-  return `${openTag}${lines.slice(0, visible).join('\n')}${closeTag}`;
+  return tightenLineMarkup(`${openTag}${lines.slice(0, visible).join('\n')}${closeTag}`);
+}
+
+/**
+ * Shiki puts a preserved newline between line spans. In a `<pre>` that newline
+ * is a text node and creates a visual gap between blocks. The line spans are
+ * already block elements, so the whitespace is redundant.
+ */
+function tightenLineMarkup(html: string): string {
+  return html
+    .replace(/(<code>)\s*\n\s*(?=<span class="line(?:\s|"))/u, '$1')
+    .replace(/<\/span>\s*\n\s*(?=<span class="line(?:\s|"))/gu, '</span>')
+    .replace(/\s*\n\s*(<\/code>)/u, '$1');
 }
 
 /** Matches the excerpt line count the package uses to size a card. */
