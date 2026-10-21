@@ -92,4 +92,55 @@ describe.skipIf(!bunbunAvailable)('Bunbun acceptance', () => {
     expect(before).toBe('');
     expect(after).toBe('');
   });
+
+  it('resolves the comments controller and service call edges', async () => {
+    const snapshot = await analyzeProject(bunbunRoot);
+    const calls = snapshot.graph.edges.filter((edge) => edge.kind === 'calls');
+
+    expect(calls.length).toBeGreaterThan(0);
+    expect(snapshot.analysis.unresolvedCalls).toBeGreaterThan(0);
+
+    // The controller talks to the service through a constructor parameter
+    // property, so this edge requires following an imported class type. The
+    // call line is checked against the pinned source rather than a magic
+    // number, so the claim stays truthful if the checkout is re-pinned.
+    const controllerPath = 'apps/api/src/comments/comments.controller.ts';
+    const controllerLines = readFileSync(
+      path.join(bunbunRoot, controllerPath),
+      'utf8',
+    ).split('\n');
+    const controllerCallLine =
+      controllerLines.findIndex((line) => line.includes('this.commentsService.create(')) +
+      1;
+    expect(controllerCallLine).toBeGreaterThan(0);
+
+    const controllerToService = calls.find(
+      (edge) =>
+        edge.from ===
+          'symbol:apps/api/src/comments/comments.controller.ts#CommentsController.create' &&
+        edge.to ===
+          'symbol:apps/api/src/comments/comments.service.ts#CommentsService.create',
+    );
+    expect(controllerToService).toMatchObject({
+      kind: 'calls',
+      confidence: 'import',
+      atLine: controllerCallLine,
+    });
+
+    const servicePath = 'apps/api/src/comments/comments.service.ts';
+    const serviceLines = readFileSync(path.join(bunbunRoot, servicePath), 'utf8').split(
+      '\n',
+    );
+    const serviceCallLine =
+      serviceLines.findIndex((line) => line.includes('this.parseText(')) + 1;
+    expect(serviceCallLine).toBeGreaterThan(0);
+
+    expect(calls).toContainEqual({
+      from: 'symbol:apps/api/src/comments/comments.service.ts#CommentsService.create',
+      to: 'symbol:apps/api/src/comments/comments.service.ts#CommentsService.parseText',
+      kind: 'calls',
+      confidence: 'syntax',
+      atLine: serviceCallLine,
+    });
+  });
 });

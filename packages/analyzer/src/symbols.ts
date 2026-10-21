@@ -1,6 +1,8 @@
 import { parseSync, type Node } from 'oxc-parser';
 import { walk } from 'oxc-walker';
 import type {
+  CallSite,
+  ClassMemberType,
   FileAnalysis,
   FileImport,
   FileLanguage,
@@ -11,10 +13,13 @@ import type {
   SymbolNode,
 } from './types.js';
 
-function lineStartsOf(buffer: Buffer): number[] {
+function lineStartsOf(text: string): number[] {
   const starts = [0];
-  for (let index = 0; index < buffer.length; index += 1) {
-    if (buffer[index] === 10) {
+  // oxc-parser spans are JavaScript string offsets, not UTF-8 byte offsets.
+  // Measuring against a Buffer drifts after any non-ASCII character, which
+  // silently shifts symbol and call lines in files with typographic prose.
+  for (let index = 0; index < text.length; index += 1) {
+    if (text.charCodeAt(index) === 10) {
       starts.push(index + 1);
     }
   }
@@ -82,9 +87,9 @@ function decoratorsOf(node: {
   return decorators;
 }
 
-function signatureOf(buffer: Buffer, node: Node): string {
+function signatureOf(text: string, node: Node): string {
   const end = Math.min(node.end, node.start + 240);
-  const raw = buffer.subarray(node.start, end).toString('utf8');
+  const raw = text.slice(node.start, end);
   const firstLine = raw.split('\n')[0] ?? '';
   return firstLine.replace(/\s+/g, ' ').trim().slice(0, 180);
 }
@@ -93,6 +98,99 @@ function symbolId(path: string, qualifiedName: string): string {
   return qualifiedName.length === 0
     ? `symbol:${path}`
     : `symbol:${path}#${qualifiedName}`;
+}
+
+/**
+ * The receiver text of a call. Resolution needs the stable name (`this.store`)
+ * rather than source whitespace, so anonymous or computed expressions return
+ * null and are counted as unresolved after all files are parsed.
+ */
+function expressionText(node: Node | null | undefined): string | null {
+  if (!node) {
+    return null;
+  }
+  switch (node.type) {
+    case 'Identifier':
+      return node.name;
+    case 'ThisExpression':
+      return 'this';
+    case 'MemberExpression':
+      if (node.computed) {
+        return null;
+      }
+      {
+        const object = expressionText(node.object);
+        return object === null ? null : `${object}.${node.property.name}`;
+      }
+    case 'CallExpression':
+      return expressionText(node.callee);
+    case 'ChainExpression':
+      return expressionText(node.expression);
+    case 'ParenthesizedExpression':
+      return expressionText(node.expression);
+    case 'TSNonNullExpression':
+      return expressionText(node.expression);
+    case 'TSAsExpression':
+    case 'TSSatisfiesExpression':
+    case 'TSTypeAssertion':
+      return expressionText(node.expression);
+    default:
+      return null;
+  }
+}
+
+/** Splits `this.store.save` into receiver `this.store` and member `save`. */
+function calleeOf(callee: Node): { callee: string; member?: string } | null {
+  if (callee.type === 'Identifier') {
+    return { callee: callee.name };
+  }
+  if (callee.type !== 'MemberExpression' || callee.computed) {
+    return null;
+  }
+  const object = expressionText(callee.object);
+  if (object === null) {
+    return null;
+  }
+  return { callee: object, member: callee.property.name };
+}
+
+/** The written name of a simple type annotation (`Store`, not `Map<string, Store>`). */
+function declaredTypeName(annotation: Node | null | undefined): string | null {
+  if (!annotation || annotation.type !== 'TSTypeAnnotation') {
+    return null;
+  }
+  const type = annotation.typeAnnotation;
+  if (type.type !== 'TSTypeReference') {
+    return null;
+  }
+  if (type.typeName.type === 'Identifier') {
+    return type.typeName.name;
+  }
+  if (type.typeName.type === 'TSQualifiedName') {
+    return type.typeName.right.name;
+  }
+  return null;
+}
+
+/** Constructor parameter properties may be destructured or carry a default. */
+function bindingNameAndType(
+  node: Node,
+): { name: string; annotation: Node | null | undefined } | null {
+  if (node.type === 'Identifier') {
+    return { name: node.name, annotation: node.typeAnnotation };
+  }
+  if (node.type === 'AssignmentPattern') {
+    return bindingNameAndType(node.left);
+  }
+  return null;
+}
+
+/** One lexical container: the innermost symbol a call is attributed to. */
+interface Container {
+  node: Node;
+  id: string;
+  kind: SymbolKind;
+  qualifiedName: string;
 }
 
 export function buildSymbol(input: {
@@ -144,8 +242,7 @@ export function analyzeSourceFile(
   language: FileLanguage,
   symbolLanguage: LanguageId,
 ): FileAnalysis {
-  const buffer = Buffer.from(text, 'utf8');
-  const lineStarts = lineStartsOf(buffer);
+  const lineStarts = lineStartsOf(text);
   const moduleSymbol = buildSymbol({
     path,
     language: symbolLanguage,
@@ -182,7 +279,11 @@ export function analyzeSourceFile(
       imported: entry.importName.name ?? 'default',
       local: entry.localName.value,
     }));
-    imports.push({ specifier, bindings });
+    imports.push({
+      specifier,
+      bindings,
+      line: lineAt(lineStarts, staticImport.start),
+    });
   }
 
   for (const staticExport of result.module.staticExports) {
@@ -198,16 +299,52 @@ export function analyzeSourceFile(
     }
   }
 
-  const containers: Array<{ node: Node; id: string; qualifiedName: string }> = [];
+  const callSites: CallSite[] = [];
+  const memberTypes: ClassMemberType[] = [];
+  const containers: Container[] = [];
+  // A function-valued variable's container belongs to the function node, not
+  // the declaration: the body must resolve through `helper`, while the
+  // declarator's own children must not start a second container.
+  const pendingFunctionContainers = new Map<number, Container>();
+  const enclosingClass = (): Container | null => {
+    for (let index = containers.length - 1; index >= 0; index -= 1) {
+      const container = containers[index];
+      if (container?.kind === 'class') {
+        return container;
+      }
+    }
+    return null;
+  };
+  const addMemberType = (member: string, annotation: Node | null | undefined): void => {
+    const className = enclosingClass()?.qualifiedName;
+    const typeName = declaredTypeName(annotation);
+    if (!className || !typeName) {
+      return;
+    }
+    memberTypes.push({ className, member, typeName });
+  };
+  const addFunctionContainer = (node: Node, symbol: SymbolNode): void => {
+    pendingFunctionContainers.set(node.start, {
+      node,
+      id: symbol.id,
+      kind: symbol.kind,
+      qualifiedName: symbol.qualifiedName,
+    });
+  };
 
   walk(result.program, {
     enter(node) {
+      const pending = pendingFunctionContainers.get(node.start);
+      if (pending) {
+        pendingFunctionContainers.delete(node.start);
+        containers.push(pending);
+      }
       const parent = containers[containers.length - 1] ?? null;
       const parentId = parent?.id ?? null;
       const parentPrefix = parent ? `${parent.qualifiedName}.` : '';
       const startLine = lineAt(lineStarts, node.start);
       const endLine = lineAt(lineStarts, node.end);
-      const signature = signatureOf(buffer, node);
+      const signature = signatureOf(text, node);
 
       switch (node.type) {
         case 'ClassDeclaration': {
@@ -232,6 +369,7 @@ export function analyzeSourceFile(
           containers.push({
             node,
             id: symbol.id,
+            kind: 'class',
             qualifiedName: symbol.qualifiedName,
           });
           break;
@@ -241,21 +379,26 @@ export function analyzeSourceFile(
           if (!name) {
             return;
           }
-          symbols.push(
-            buildSymbol({
-              path,
-              language: symbolLanguage,
-              kind: 'function',
-              name,
-              qualifiedName: `${parentPrefix}${name}`,
-              startLine,
-              endLine,
-              exported: exportedNames.has(name),
-              parentId,
-              decorators: [],
-              signature,
-            }),
-          );
+          const symbol = buildSymbol({
+            path,
+            language: symbolLanguage,
+            kind: 'function',
+            name,
+            qualifiedName: `${parentPrefix}${name}`,
+            startLine,
+            endLine,
+            exported: exportedNames.has(name),
+            parentId,
+            decorators: [],
+            signature,
+          });
+          symbols.push(symbol);
+          containers.push({
+            node,
+            id: symbol.id,
+            kind: 'function',
+            qualifiedName: symbol.qualifiedName,
+          });
           break;
         }
         case 'VariableDeclaration': {
@@ -272,21 +415,26 @@ export function analyzeSourceFile(
                 : initializer?.type === 'ObjectExpression'
                   ? 'object'
                   : 'variable';
-            symbols.push(
-              buildSymbol({
-                path,
-                language: symbolLanguage,
-                kind,
-                name,
-                qualifiedName: `${parentPrefix}${name}`,
-                startLine,
-                endLine,
-                exported: exportedNames.has(name),
-                parentId,
-                decorators: [],
-                signature,
-              }),
-            );
+            const symbol = buildSymbol({
+              path,
+              language: symbolLanguage,
+              kind,
+              name,
+              qualifiedName: `${parentPrefix}${name}`,
+              startLine,
+              endLine,
+              exported: exportedNames.has(name),
+              parentId,
+              decorators: [],
+              signature,
+            });
+            symbols.push(symbol);
+            if (
+              initializer?.type === 'ArrowFunctionExpression' ||
+              initializer?.type === 'FunctionExpression'
+            ) {
+              addFunctionContainer(initializer, symbol);
+            }
           }
           break;
         }
@@ -378,6 +526,7 @@ export function analyzeSourceFile(
           containers.push({
             node,
             id: symbol.id,
+            kind: 'namespace',
             qualifiedName: symbol.qualifiedName,
           });
           break;
@@ -387,21 +536,36 @@ export function analyzeSourceFile(
           if (!name) {
             return;
           }
-          symbols.push(
-            buildSymbol({
-              path,
-              language: symbolLanguage,
-              kind: 'method',
-              name,
-              qualifiedName: `${parentPrefix}${name}`,
-              startLine,
-              endLine,
-              exported: false,
-              parentId,
-              decorators: decoratorsOf(node),
-              signature,
-            }),
-          );
+          for (const parameter of node.value.params) {
+            if (parameter.type !== 'TSParameterProperty') {
+              continue;
+            }
+            const binding = bindingNameAndType(parameter.parameter);
+            if (binding) {
+              addMemberType(binding.name, binding.annotation);
+            }
+          }
+          addMemberType(name, node.value.returnType);
+          const symbol = buildSymbol({
+            path,
+            language: symbolLanguage,
+            kind: 'method',
+            name,
+            qualifiedName: `${parentPrefix}${name}`,
+            startLine,
+            endLine,
+            exported: false,
+            parentId,
+            decorators: decoratorsOf(node),
+            signature,
+          });
+          symbols.push(symbol);
+          containers.push({
+            node,
+            id: symbol.id,
+            kind: 'method',
+            qualifiedName: symbol.qualifiedName,
+          });
           break;
         }
         case 'PropertyDefinition': {
@@ -409,21 +573,40 @@ export function analyzeSourceFile(
           if (!name) {
             return;
           }
-          symbols.push(
-            buildSymbol({
-              path,
-              language: symbolLanguage,
-              kind: 'property',
-              name,
-              qualifiedName: `${parentPrefix}${name}`,
-              startLine,
-              endLine,
-              exported: false,
-              parentId,
-              decorators: decoratorsOf(node),
-              signature,
-            }),
-          );
+          addMemberType(name, node.typeAnnotation);
+          const symbol = buildSymbol({
+            path,
+            language: symbolLanguage,
+            kind: 'property',
+            name,
+            qualifiedName: `${parentPrefix}${name}`,
+            startLine,
+            endLine,
+            exported: false,
+            parentId,
+            decorators: decoratorsOf(node),
+            signature,
+          });
+          symbols.push(symbol);
+          if (
+            node.value?.type === 'ArrowFunctionExpression' ||
+            node.value?.type === 'FunctionExpression'
+          ) {
+            addFunctionContainer(node.value, symbol);
+          }
+          break;
+        }
+        case 'CallExpression': {
+          const callee = calleeOf(node.callee);
+          if (!callee) {
+            return;
+          }
+          callSites.push({
+            fromQualifiedName: containers[containers.length - 1]?.qualifiedName ?? '',
+            callee: callee.callee,
+            ...(callee.member === undefined ? {} : { member: callee.member }),
+            line: startLine,
+          });
           break;
         }
         default:
@@ -431,8 +614,7 @@ export function analyzeSourceFile(
       }
     },
     leave(node) {
-      const top = containers[containers.length - 1];
-      if (top && top.node === node) {
+      while (containers[containers.length - 1]?.node === node) {
         containers.pop();
       }
     },
@@ -444,5 +626,7 @@ export function analyzeSourceFile(
     exportedNames: [...exportedNames],
     parseErrors,
     entryPoint: false,
+    callSites,
+    memberTypes,
   };
 }
