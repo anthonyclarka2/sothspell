@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { buildCanvasScene } from './scene.js';
 import {
   createCanvasSelection,
+  enterCanvasItem,
   escapeCanvasSelection,
   homeCanvasSelection,
+  moveCanvasItem,
   reduceCanvasSelection,
 } from './selection.js';
 import {
@@ -30,6 +32,17 @@ function select(
   scene = fixtureScene(),
 ): CanvasSelectionState {
   return reduceCanvasSelection(scene, state, action);
+}
+
+function containerState(
+  scene = fixtureScene(),
+  containerId = 'anchor_server',
+): CanvasSelectionState {
+  return select(
+    createCanvasSelection(scene),
+    { type: 'selectContainer', containerId },
+    scene,
+  );
 }
 
 describe('canvas selection transitions', () => {
@@ -339,5 +352,161 @@ describe('canvas selection movement', () => {
     const state = createCanvasSelection(empty);
 
     expect(select(state, { type: 'move', direction: 'right' }, empty)).toBe(state);
+  });
+});
+
+describe('canvas item navigation', () => {
+  const ITEMS = [
+    'item_symbol',
+    'item_range',
+    'item_incoming',
+    'item_outgoing',
+    'item_code',
+    'item_collapse',
+  ] as const;
+
+  function itemState(
+    scene: CanvasScene,
+    containerId = 'anchor_server',
+  ): CanvasSelectionState {
+    const container = containerState(scene, containerId);
+    return enterCanvasItem(scene, container, ITEMS);
+  }
+
+  it('enters the first item when the caller supplies the item order', () => {
+    const scene = fixtureScene();
+    const container = containerState(scene);
+    const entered = reduceCanvasSelection(scene, container, { type: 'enter' }, ITEMS);
+
+    expect(entered.selection).toEqual({
+      level: 'item',
+      diagramId: 'diagram_request',
+      containerId: 'anchor_server',
+      itemId: 'item_symbol',
+    });
+    expect(enterCanvasItem(scene, container, ITEMS)).toEqual(entered);
+  });
+
+  it('does not guess item order when the caller supplies none', () => {
+    const scene = fixtureScene();
+    const container = containerState(scene);
+    const canvas = createCanvasSelection(scene);
+
+    expect(select(container, { type: 'enter' }, scene)).toBe(container);
+    expect(enterCanvasItem(scene, container, [])).toBe(container);
+    expect(enterCanvasItem(scene, canvas, ITEMS)).toBe(canvas);
+  });
+
+  it('still opens a cited container from a diagram object when items are supplied', () => {
+    const scene = fixtureScene();
+    const object = select(createCanvasSelection(scene), {
+      type: 'selectObject',
+      diagramId: 'diagram_request',
+      objectId: 'node_app',
+    });
+
+    expect(
+      reduceCanvasSelection(scene, object, { type: 'enter' }, ITEMS).selection,
+    ).toEqual({
+      level: 'container',
+      diagramId: 'diagram_request',
+      containerId: 'anchor_app',
+    });
+  });
+
+  it('steps next and previous through the order and wraps at both ends', () => {
+    const scene = fixtureScene();
+    const first = itemState(scene);
+
+    expect(
+      reduceCanvasSelection(scene, first, { type: 'moveItem', direction: 'next' }, ITEMS)
+        .selection,
+    ).toMatchObject({ level: 'item', itemId: 'item_range' });
+    expect(moveCanvasItem(scene, first, ITEMS, 'previous').selection).toMatchObject({
+      level: 'item',
+      itemId: 'item_collapse',
+    });
+
+    const last = enterCanvasItem(scene, containerState(scene), ITEMS);
+    let cursor = last;
+    for (let step = 1; step < ITEMS.length; step += 1) {
+      cursor = moveCanvasItem(scene, cursor, ITEMS, 'next');
+    }
+    expect(cursor.selection.itemId).toBe('item_collapse');
+    expect(
+      reduceCanvasSelection(scene, cursor, { type: 'moveItem', direction: 'next' }, ITEMS)
+        .selection,
+    ).toEqual(first.selection);
+  });
+
+  it('falls back to the first item when the selected item is gone', () => {
+    const scene = fixtureScene();
+    const stale: CanvasSelectionState = {
+      selection: {
+        level: 'item',
+        diagramId: 'diagram_request',
+        containerId: 'anchor_server',
+        itemId: 'item_missing',
+      },
+    };
+
+    expect(moveCanvasItem(scene, stale, ITEMS, 'next').selection).toEqual({
+      level: 'item',
+      diagramId: 'diagram_request',
+      containerId: 'anchor_server',
+      itemId: 'item_symbol',
+    });
+  });
+
+  it('steps out to its container and then home to the diagram', () => {
+    const scene = fixtureScene();
+    const item = itemState(scene, 'anchor_extra');
+    const steppedOut = escapeCanvasSelection(scene, item);
+
+    expect(steppedOut.selection).toEqual({
+      level: 'container',
+      diagramId: 'diagram_request',
+      containerId: 'anchor_extra',
+    });
+    expect(escapeCanvasSelection(scene, steppedOut).selection).toEqual(
+      homeCanvasSelection(scene),
+    );
+  });
+
+  it('does nothing when there are no items or the container is unknown', () => {
+    const scene = fixtureScene();
+    const item = itemState(scene);
+    const container = containerState(scene);
+    const itemInMissingContainer: CanvasSelectionState = {
+      selection: {
+        level: 'item',
+        diagramId: 'diagram_request',
+        containerId: 'anchor_missing',
+        itemId: 'item_symbol',
+      },
+    };
+
+    expect(moveCanvasItem(scene, item, [], 'next')).toBe(item);
+    expect(
+      reduceCanvasSelection(scene, item, { type: 'moveItem', direction: 'next' }, []),
+    ).toBe(item);
+    expect(moveCanvasItem(scene, container, ITEMS, 'next')).toBe(container);
+    expect(moveCanvasItem(scene, itemInMissingContainer, ITEMS, 'next')).toBe(
+      itemInMissingContainer,
+    );
+    expect(
+      enterCanvasItem(scene, containerState(scene, 'anchor_missing'), ITEMS),
+    ).toEqual(containerState(scene, 'anchor_missing'));
+  });
+
+  it('uses the container geometry when a spatial move starts from an item', () => {
+    const scene = fixtureScene();
+    const item = itemState(scene, 'anchor_server');
+
+    expect(select(item, { type: 'move', direction: 'down' }, scene).selection).toEqual({
+      level: 'container',
+      diagramId: 'diagram_request',
+      containerId: 'anchor_app',
+    });
   });
 });

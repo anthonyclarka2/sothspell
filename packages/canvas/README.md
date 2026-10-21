@@ -18,10 +18,23 @@ Pure scene model for the canvas playback view.
 - `createCanvasSelection`, `reduceCanvasSelection`, `escapeCanvasSelection`,
   `homeCanvasSelection` — selection transitions without React. Movement uses
   nearest-neighbour geometry across open diagrams and containers, with no wrap.
+- `enterCanvasItem`, `moveCanvasItem` — item-level navigation inside one
+  container. The caller passes the visible item order (symbol, lines, relation
+  toggles, actions), so the canvas never guesses an action. `enter` on a
+  container selects the first item when the reducer receives that order as its
+  optional fourth argument; `moveItem` steps previous/next with wrap-around.
+  `Escape` steps item → container → home diagram.
+- `DEFAULT_CANVAS_PREFERENCES`, `parseCanvasPreferences`,
+  `patchCanvasPreferences` — the local view-preference schema: auto-zoom,
+  auto-arrange, follow beat, motion, contrast, palette, text scale, and the two
+  first-run seen flags. Missing, invalid, or unknown stored values fall back per
+  field without throwing, and a patch keeps the current value when its
+  replacement is invalid.
 
 ## Boundaries
 
 - No React, DOM, filesystem, or API imports.
+- Preferences are a pure schema. Browser storage lives in `apps/web`.
 - No relation analysis. Phase 18 adds a selector in `packages/analyzer`; the
   canvas receives bounded payloads.
 - Positions are deterministic for the same scene and viewport size.
