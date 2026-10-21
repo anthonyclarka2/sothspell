@@ -285,6 +285,89 @@ documentation site can serve without the Sóþspell server. An embed bundle
 contains excerpts and narration, never the full repository, and never provider
 secrets.
 
+## Canvas terms (v3)
+
+These terms describe the planned canvas era (Phases 17–20) and are binding once
+the phase lands.
+
+### Canvas view
+
+An opt-in playback layout that places the home diagram, code containers, and
+their links on one pannable, zoomable board. A canvas view presents one beat; it
+does not change the sóþspell or the run.
+
+### Canvas scene
+
+The data model of one canvas view: diagram cards, code containers, links,
+selection, viewport, and preferences. A canvas scene contains no rendered
+markup.
+
+### Diagram card
+
+A movable card that presents one diagram. The beat's diagram is the home card;
+other diagrams from the chapter may be added as satellite cards.
+
+### Code container
+
+A movable card that presents one code anchor or one symbol definition: its
+symbol, path, line range, excerpt, and actions. A code container is a view of
+evidence, not an editor.
+
+### Evidence link
+
+A link that connects one diagram object to the anchor's start line or cited range.
+An evidence link carries one citation and no inferred relationship.
+
+### Flow link
+
+A link between two code containers. A flow link carries one relation kind
+(`calls`, `references`, or `imports`) and one confidence (`syntax` or `import`).
+
+### Relation index
+
+A symbol-level graph derived from one project snapshot. The relation index
+records calls, references, and imports; it never executes project code.
+
+### Project record
+
+A local record of one project's source root, source kind, and revision. A project
+record is not part of a snapshot, a sóþspell, or an export; it lets the viewer
+resolve source for relations and code pages while keeping absolute paths out of
+shareable artifacts.
+
+### Symbol target
+
+A stable symbol ID attached to a diagram object or code anchor. A symbol target
+lets the canvas open a definition even when the current beat does not cite that
+symbol.
+
+### Canvas outline
+
+The semantic text equivalent of a canvas scene: diagrams, objects, code
+containers, relationships, and actions in reading order. The canvas outline is
+the screen-reader path and the compact-layout path.
+
+### View preference
+
+A local browser preference for canvas behaviour: auto-zoom, auto-arrange, follow
+beat, reduced motion, contrast, palette, or text scale. A view preference is not
+a connection profile and does not sync through an account.
+
+### Compact canvas
+
+The vertical list presentation below 768 px. A compact canvas uses the same
+scene and actions as the spatial canvas, with links rendered as text.
+
+### Auto-zoom
+
+The optional viewport change that frames a newly opened code container with its
+source. Auto-zoom is undoable and can be disabled from its first-run message.
+
+### Auto-arrange
+
+The optional deterministic placement of containers after one is opened.
+Auto-arrange is undoable and can be disabled from its first-run message.
+
 ## Relationships
 
 - A project has many snapshots; a snapshot belongs to one project and one
@@ -295,7 +378,7 @@ secrets.
 - A project brief summarizes one snapshot.
 - A sóþspell belongs to one project snapshot and contains many chapters.
 - A chapter contains many beats and one or more diagrams.
-- A beat belongs to one chapter and has zero or more code anchors.
+- A beat belongs to one chapter and has one or more code anchors.
 - A code anchor belongs to one beat or diagram node and resolves against one
   snapshot.
 - A diagram belongs to one chapter; a beat focuses a subset of its nodes and
@@ -317,6 +400,21 @@ secrets.
 - A translation belongs to one sóþspell and one target locale; it shares anchors
   with its source.
 - An embed bundle contains one sóþspell and one player build.
+- A canvas view presents one beat and zero or more diagram cards and code
+  containers.
+- A diagram card presents one diagram; a diagram object may cite one symbol
+  target.
+- A code container presents one code anchor or one symbol definition.
+- An evidence link connects one diagram object to the anchor's start line or
+  cited range.
+- A flow link connects two code containers and records one relation kind and
+  confidence.
+- A relation index belongs to one project snapshot and resolves symbol targets
+  for that snapshot.
+- A project record belongs to one project and points at its local source root; it
+  is not part of a snapshot, tour, or export.
+- A view preference belongs to one browser, not to an account.
+- A canvas outline is the text equivalent of one canvas scene.
 
 ## Invariants
 
@@ -340,3 +438,18 @@ secrets.
 13. A translation never changes anchor ids, paths, line ranges, or identifiers.
 14. An embed bundle contains excerpts and narration, never the full repository
     and never provider secrets.
+15. A canvas view never changes the sóþspell or the run it presents.
+16. An evidence link exists only when an anchor cites the target; the canvas
+    never invents a citation.
+17. A flow link records the relation kind and confidence the relation index
+    proved; the canvas never presents an import or reference as a call.
+18. Every spatial canvas action has a keyboard path and a canvas-outline
+    equivalent.
+19. The canvas never reads project files directly; relation evidence comes
+    through the bounded API.
+20. A canvas export contains only the visible tour excerpts and narration, never
+    the full repository or a secret.
+21. Canvas is opt-in until the performance and accessibility gates pass; the
+    embed stays on the Stage.
+22. A project record's source root never enters a snapshot, a sóþspell, or an
+    export.

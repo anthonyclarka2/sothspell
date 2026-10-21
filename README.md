@@ -192,6 +192,18 @@ stores only small, attributed excerpts.
 
 ## Documentation
 
+- [Canvas roadmap](plans/ROADMAP.md) — the planned canvas era: scene, code
+  relationships, accessibility, export, performance, and risks.
+- [Phase 17](plans/PHASE-17.md) — canvas foundation, evidence links, multiple
+  diagrams, controls, and fullscreen.
+- [Phase 18](plans/PHASE-18.md) — symbol targets, call/reference index,
+  incoming/outgoing containers, definition links, and the shared-symbol bridge.
+- [Phase 19](plans/PHASE-19.md) — keyboard model, screen-reader outline,
+  preferences, contrast, large text, and compact layout.
+- [Phase 20](plans/PHASE-20.md) — PNG/JPG/PDF export, performance budget,
+  coverage, docs, and the final gate.
+- [Canvas feature brief](plans/CANVAS-FEATURES.md) — the original deliverables
+  and constraints.
 - [Archived plans](plans/archive/README.md) — the completed v1 and v2 eras, with
   their shipped baselines and binding constraints.
 - [Archived v1 plans](plans/archive/v1/README.md) — the first-release roadmap
@@ -348,3 +360,7 @@ Python/Go/Rust/Java analyzers, multi-language narration and translation, the
 human review UI, and the embeddable player. A reviewed real-model Bunbun tour
 and live cloud narration remain owner-gated on provider credentials; fixture and
 browser paths are verified.
+
+The canvas era is planned in [`plans/ROADMAP.md`](plans/ROADMAP.md) as Phases
+17–20. No canvas code exists yet; the plans cover the scene, code relationships,
+keyboard and screen-reader access, export, and the 60 fps budget.
