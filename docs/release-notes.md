@@ -1,5 +1,28 @@
 # Release Notes
 
+## 0.3.1 — 2026-10-21 (canvas interaction patch)
+
+The canvas board is now directly manipulable.
+
+### Included
+
+- Resizable code containers with a 280×180 minimum.
+- Movable code and diagram cards, dragged by their headers.
+- Closable code containers, reopenable from their diagram object or relation
+  toggle.
+- Selectable diagram objects, including objects with no code target.
+- Selected containers highlight their connected evidence and flow edges.
+- Fullscreen re-fits and centres the board after the viewport resize.
+- Shiki inter-line whitespace removed, eliminating blank-line gaps in code
+  containers.
+- Close actions in the compact and outline views.
+
+### Verification
+
+- `pnpm test` → 127 files / 1064 tests.
+- `pnpm test:browser` → 121 passed, including 7 new interaction journeys.
+- Typecheck, lint, and build clean; Bunbun remains read-only.
+
 ## 0.3.0 — 2026-10-21 (canvas era)
 
 The third stage adds an opt-in canvas playback view, symbol-level code

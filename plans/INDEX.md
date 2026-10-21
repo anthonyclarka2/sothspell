@@ -42,5 +42,5 @@ manual accessibility and PDF sign-off owner-gated).** Completed 2026-10-21.
 
 All worktrees were removed after their branches merged sequentially. The merge
 commits are the history: `1f37b98`/`3bccf88`/`be02945` (Phase 17), `04b53f5`/
-`068e569`/`e378e86`/`2c08b75` (Phase 18), `e7081b7`/`b5166e8` (Phase 19), and
-`59801b5`/`0355980` (Phase 20).
+`068e569`/`e378e86`/`2c08b75` (Phase 18), `e7081b7`/`b5166e8` (Phase 19),
+`59801b5`/`0355980` (Phase 20), and `21fff20` (canvas interaction patch).
