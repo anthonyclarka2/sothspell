@@ -3,6 +3,7 @@ import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { hashText } from '@sothspell/core';
+import { resolveCallEdges } from './calls.js';
 import {
   LANGUAGE_ANALYZERS,
   detectedAnalyzers,
@@ -34,7 +35,7 @@ import type {
 
 const execFileAsync = promisify(execFile);
 
-export const ANALYZER_VERSION = '0.3.0';
+export const ANALYZER_VERSION = '0.4.0';
 export const IGNORE_VERSION = '1';
 
 export interface AnalyzeOptions {
@@ -269,6 +270,7 @@ interface SourceAnalysis {
   warnings: AnalysisWarning[];
   cacheHits: number;
   cacheMisses: number;
+  unresolvedCalls: number;
   languageRuntimes: LanguageRuntimeStat[];
   /** Analyzers that either parsed a source file or contributed a manifest. */
   analyzers: LanguageAnalyzer[];
@@ -437,7 +439,11 @@ async function buildSourceAnalysis(
 
   const edgeKeys = new Set<string>();
   const addEdge = (edge: GraphEdge): void => {
-    const key = `${edge.from}\u0000${edge.to}\u0000${edge.kind}`;
+    // A call line is part of the identity: two different call sites may prove
+    // the same caller/callee pair and each one is a separate relation. Import
+    // and reference edges dedupe on their endpoints even when two statements
+    // import the same module, so their optional line is not part of the key.
+    const key = `${edge.from}\u0000${edge.to}\u0000${edge.kind}\u0000${edge.atLine ?? ''}`;
     if (edgeKeys.has(key)) {
       return;
     }
@@ -462,12 +468,14 @@ async function buildSourceAnalysis(
           from: file.path,
           to: resolved,
           specifier: imported.specifier,
+          ...(imported.line === undefined ? {} : { line: imported.line }),
         });
         addEdge({
           from: moduleSymbolId(file.path),
           to: moduleSymbolId(resolved),
           kind: 'imports',
           confidence: 'syntax',
+          ...(imported.line === undefined ? {} : { line: imported.line }),
         });
 
         const exports = exportedByFile.get(resolved);
@@ -479,6 +487,7 @@ async function buildSourceAnalysis(
               to: target,
               kind: 'references',
               confidence: 'import',
+              ...(imported.line === undefined ? {} : { line: imported.line }),
             });
           }
         }
@@ -493,6 +502,27 @@ async function buildSourceAnalysis(
         });
       }
     }
+  }
+
+  // Calls are resolved only after every file has been parsed: a callee may be
+  // an imported class whose method lives in another module. The TypeScript
+  // adapter is the only one that records call sites today.
+  const detectionByPath = new Map(
+    sourceFiles.flatMap((file) => {
+      const detection = detectionFor(file.language);
+      return detection ? [[file.path, detection] as const] : [];
+    }),
+  );
+  const resolvedCalls = resolveCallEdges({
+    symbols,
+    analyses: analysesByFile,
+    resolveSpecifier: (fromPath, specifier) =>
+      detectionByPath
+        .get(fromPath)
+        ?.analyzer.resolveImport(fromPath, specifier, fileSet) ?? null,
+  });
+  for (const edge of resolvedCalls.edges) {
+    addEdge(edge);
   }
 
   const entryPointSet = new Set<string>();
@@ -534,16 +564,29 @@ async function buildSourceAnalysis(
           `${right.from}:${right.packageName}:${right.specifier}`,
         ),
       ),
-      edges: edges.toSorted((left, right) =>
-        `${left.from}:${left.to}:${left.kind}`.localeCompare(
-          `${right.from}:${right.to}:${right.kind}`,
-        ),
-      ),
+      edges: edges.toSorted((left, right) => {
+        const fromOrder = left.from.localeCompare(right.from);
+        if (fromOrder !== 0) {
+          return fromOrder;
+        }
+        const toOrder = left.to.localeCompare(right.to);
+        if (toOrder !== 0) {
+          return toOrder;
+        }
+        const kindOrder = left.kind.localeCompare(right.kind);
+        if (kindOrder !== 0) {
+          return kindOrder;
+        }
+        return (
+          (left.atLine ?? 0) - (right.atLine ?? 0) || (left.line ?? 0) - (right.line ?? 0)
+        );
+      }),
       entryPoints,
     },
     warnings,
     cacheHits,
     cacheMisses,
+    unresolvedCalls: resolvedCalls.unresolvedCalls,
     languageRuntimes,
     analyzers: contributingAnalyzers,
   };
@@ -692,6 +735,7 @@ export async function analyzeProject(
     durationMs: Date.now() - startedAt,
     cacheHits: sourceAnalysis.cacheHits,
     cacheMisses: sourceAnalysis.cacheMisses,
+    unresolvedCalls: sourceAnalysis.unresolvedCalls,
     languageRuntimes: sourceAnalysis.languageRuntimes,
   };
 

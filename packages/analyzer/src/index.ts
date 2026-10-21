@@ -42,6 +42,8 @@ export type {
   AnalysisStats,
   AnalysisWarning,
   BriefApplication,
+  CallSite,
+  ClassMemberType,
   DocEntry,
   FeatureModule,
   FileAnalysis,

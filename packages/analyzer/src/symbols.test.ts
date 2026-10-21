@@ -107,6 +107,7 @@ describe('symbol extraction', () => {
       from: 'src/service.ts',
       to: 'src/store.ts',
       specifier: './store',
+      line: 2,
     });
     expect(snapshot.graph.packageImports).toContainEqual({
       from: 'src/service.ts',
@@ -118,6 +119,14 @@ describe('symbol extraction', () => {
       to: 'symbol:src/store.ts',
       kind: 'imports',
       confidence: 'syntax',
+      line: 2,
+    });
+    expect(snapshot.graph.edges).toContainEqual({
+      from: 'symbol:src/service.ts',
+      to: 'symbol:src/store.ts#CommentStore',
+      kind: 'references',
+      confidence: 'import',
+      line: 2,
     });
   });
 
