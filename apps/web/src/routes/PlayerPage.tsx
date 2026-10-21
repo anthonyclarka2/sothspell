@@ -16,9 +16,8 @@ import {
   type StoredRun,
 } from '../lib/run-store.js';
 import { ChapterRail } from '../components/ChapterRail.js';
-import { CodePane } from '../components/CodePane.js';
-import { DiagramStage } from '../components/DiagramStage.js';
 import { NarrationRail } from '../components/NarrationRail.js';
+import { StageView } from '../components/StageView.js';
 import { Transport } from '../components/Transport.js';
 import { AskPanel } from '../components/AskPanel.js';
 import { useNarration, type NarrationProviderChoice } from '../lib/use-narration.js';
@@ -409,23 +408,12 @@ export function PlayerPage() {
         />
 
         <div className="stage-column">
-          <div className="stage">
-            <section className="diagram-panel" aria-label={t('player.diagram')}>
-              <div className="panel-header">
-                <strong>{chapter.diagrams[0]?.title ?? t('player.diagram')}</strong>
-                <span>{chapter.title}</span>
-              </div>
-              <DiagramStage chapter={chapter} beat={beat} onOpenAnchor={openAnchor} />
-            </section>
-
-            <section className="code-panel" aria-label={t('player.codeEvidence')}>
-              <div className="panel-header">
-                <strong>{beat.anchors[0]?.label ?? t('player.codeEvidence')}</strong>
-                <span className="mono">{beat.anchors[0]?.language ?? 'text'}</span>
-              </div>
-              <CodePane projectSlug={tour.project.slug} beat={beat} />
-            </section>
-          </div>
+          <StageView
+            chapter={chapter}
+            beat={beat}
+            projectSlug={tour.project.slug}
+            onOpenAnchor={openAnchor}
+          />
 
           <NarrationRail
             chapter={chapter}
