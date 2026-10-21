@@ -13,11 +13,15 @@ import {
   buildCanvasScene,
   codeContainerKey,
   diagramCardKey,
-  layoutCanvas,
   viewportFor,
 } from '@sothspell/canvas';
 import type { CompiledBeat, CompiledChapter, CompiledTour } from '@sothspell/core';
 import { X } from '@phosphor-icons/react';
+import {
+  CanvasRelationRequestError,
+  CanvasRelationUnavailableError,
+  fetchCanvasSymbol,
+} from '../../lib/canvas-api.js';
 import { useLocale } from '../../i18n/locale.js';
 import { useFullscreen } from '../../lib/use-fullscreen.js';
 import { useMediaQuery } from '../../lib/use-media-query.js';
@@ -25,29 +29,51 @@ import { CanvasCodeContainer } from './CanvasCodeContainer.js';
 import { CanvasDiagramCard, CanvasObjectCard } from './CanvasDiagramCard.js';
 import { CanvasControls } from './CanvasControls.js';
 import { CanvasEvidenceEdge } from './CanvasEvidenceEdge.js';
+import { CanvasFlowEdge as CanvasFlowEdgeView } from './CanvasFlowEdge.js';
 import { CanvasFullscreenHint } from './CanvasFullscreenHint.js';
 import { CanvasOutline, type CanvasOutlineActions } from './CanvasOutline.js';
+import { CanvasRelationLegend } from './CanvasRelationLegend.js';
+import { CanvasRelationStatusCard } from './CanvasRelationStatusCard.js';
 import { CanvasShortcuts } from './CanvasShortcuts.js';
 import {
   buildCanvasEdges,
   buildCanvasNodes,
+  buildCanvasRelationStatusNodes,
   CANVAS_CODE_NODE,
   CANVAS_DIAGRAM_NODE,
   CANVAS_EVIDENCE_EDGE,
+  CANVAS_FLOW_EDGE,
   CANVAS_OBJECT_NODE,
-  type CanvasEvidenceFlowEdge,
+  CANVAS_RELATION_STATUS_NODE,
   type CanvasFlowActions,
+  type CanvasFlowEdge,
   type CanvasFlowNode,
 } from './canvas-flow.js';
+import {
+  definitionOwnerKey,
+  definitionSymbolId,
+  layoutRelationCanvas,
+  mergeRelationScene,
+  parseRelationOwnerKey,
+  relationContainerId,
+  relationOwnerKey,
+  relationStatusKey,
+  type CanvasRelationLoad,
+  type CanvasRelationStatusCard as RelationStatusCard,
+  type CanvasRelationToggleDirection,
+  type CanvasRelationUiState,
+} from './relation-scene.js';
 
 const nodeTypes = {
   [CANVAS_DIAGRAM_NODE]: CanvasDiagramCard,
   [CANVAS_OBJECT_NODE]: CanvasObjectCard,
   [CANVAS_CODE_NODE]: CanvasCodeContainer,
+  [CANVAS_RELATION_STATUS_NODE]: CanvasRelationStatusCard,
 } satisfies NodeTypes;
 
 const edgeTypes = {
   [CANVAS_EVIDENCE_EDGE]: CanvasEvidenceEdge,
+  [CANVAS_FLOW_EDGE]: CanvasFlowEdgeView,
 } satisfies EdgeTypes;
 
 const MIN_ZOOM = 0.25;
@@ -82,7 +108,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
   const { t } = useLocale();
   const rootRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
-  const flow = useReactFlow<CanvasFlowNode, CanvasEvidenceFlowEdge>();
+  const flow = useReactFlow<CanvasFlowNode, CanvasFlowEdge>();
   const {
     supported: fullscreenSupported,
     active: fullscreenActive,
@@ -112,8 +138,16 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
   const arrangeTimeout = useRef<number | undefined>(undefined);
   const framed = useRef(false);
   const pendingFocusDiagram = useRef<string | null>(null);
+  const pendingFocusSymbol = useRef<string | null>(null);
+  const pendingFocusStatus = useRef<string | null>(null);
+  const relationGeneration = useRef(new Map<string, number>());
+  const [relationState, setRelationState] = useState<CanvasRelationUiState>(() => ({
+    activeOwners: new Set(),
+    loads: {},
+    manualContainerIds: new Set(),
+  }));
 
-  const scene = useMemo(
+  const baseScene = useMemo(
     () =>
       buildCanvasScene(tour, beat, {
         openDiagramIds: [...openDiagramIds],
@@ -121,7 +155,36 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       }),
     [beat, openDiagramIds, showAllAnchors, tour],
   );
-  const layout = useMemo(() => layoutCanvas(scene, size), [scene, size]);
+  const relationScene = useMemo(
+    () => mergeRelationScene(baseScene, relationState),
+    [baseScene, relationState],
+  );
+  const scene = relationScene.scene;
+  const layout = useMemo(
+    () => layoutRelationCanvas(baseScene, relationScene, size),
+    [baseScene, relationScene, size],
+  );
+
+  // A symbol present in two open diagrams is one identity. Either object opens
+  // the same definition container, marked so the viewer can see the bridge.
+  const sharedSymbolIds = useMemo(() => {
+    const diagramsBySymbol = new Map<string, Set<string>>();
+    for (const diagram of scene.diagrams) {
+      for (const object of diagram.objects) {
+        if (object.symbolId === undefined) {
+          continue;
+        }
+        const diagrams = diagramsBySymbol.get(object.symbolId) ?? new Set<string>();
+        diagrams.add(diagram.id);
+        diagramsBySymbol.set(object.symbolId, diagrams);
+      }
+    }
+    return new Set(
+      [...diagramsBySymbol.entries()]
+        .filter(([, diagrams]) => diagrams.size > 1)
+        .map(([symbolId]) => symbolId),
+    );
+  }, [scene.diagrams]);
 
   useEffect(() => {
     const board = boardRef.current;
@@ -175,6 +238,12 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
 
   const announce = useCallback((message: string) => {
     setAnnouncement(message);
+  }, []);
+
+  const bumpRelationGeneration = useCallback((ownerKey: string) => {
+    const current = relationGeneration.current.get(ownerKey) ?? 0;
+    relationGeneration.current.set(ownerKey, current + 1);
+    return current + 1;
   }, []);
 
   const fitAll = useCallback(() => {
@@ -294,6 +363,331 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
     [announce, duration, flow, layout.items, scene.containers, t],
   );
 
+  const directionLabel = useCallback(
+    (direction: CanvasRelationToggleDirection) =>
+      direction === 'incoming' ? t('canvas.incomingCalls') : t('canvas.outgoingCalls'),
+    [t],
+  );
+
+  const requestDefinition = useCallback(
+    (symbolId: string) => {
+      const ownerKey = definitionOwnerKey(symbolId);
+      const generation = bumpRelationGeneration(ownerKey);
+      pendingFocusStatus.current = relationStatusKey(`relation-status:${ownerKey}`);
+      const label = symbolId.split('#')[1] ?? symbolId;
+      setRelationState((current) => ({
+        ...current,
+        loads: {
+          ...current.loads,
+          [ownerKey]: { status: 'loading' },
+        },
+      }));
+      announce(t('canvas.announce.definitionLoading', { label }));
+
+      void fetchCanvasSymbol({
+        tourId: tour.id,
+        symbolId,
+        direction: 'definition',
+      })
+        .then((response) => {
+          if (relationGeneration.current.get(ownerKey) !== generation) {
+            return;
+          }
+          pendingFocusStatus.current = null;
+          const containerId = relationContainerId(response.symbol.id);
+          setRelationState((current) => {
+            const manual = new Set(current.manualContainerIds);
+            manual.add(containerId);
+            return {
+              ...current,
+              manualContainerIds: manual,
+              loads: {
+                ...current.loads,
+                [ownerKey]: { status: 'ready', response },
+              },
+            };
+          });
+          pendingFocusSymbol.current = response.symbol.id;
+          announce(
+            t('canvas.announce.definitionOpened', {
+              label: response.symbol.qualifiedName,
+            }),
+          );
+        })
+        .catch((error: unknown) => {
+          if (relationGeneration.current.get(ownerKey) !== generation) {
+            return;
+          }
+          const unavailable = error instanceof CanvasRelationUnavailableError;
+          const message =
+            error instanceof CanvasRelationUnavailableError ||
+            error instanceof CanvasRelationRequestError
+              ? error.message
+              : t('canvas.relationError');
+          setRelationState((current) => ({
+            ...current,
+            loads: {
+              ...current.loads,
+              [ownerKey]: {
+                status: unavailable ? 'unavailable' : 'error',
+                message,
+              },
+            },
+          }));
+          announce(
+            t('canvas.announce.definitionFailed', {
+              label: symbolId.split('#')[1] ?? symbolId,
+            }),
+          );
+        });
+    },
+    [announce, bumpRelationGeneration, t, tour.id],
+  );
+
+  const requestRelations = useCallback(
+    (
+      containerId: string,
+      direction: CanvasRelationToggleDirection,
+      symbolId: string,
+      label: string,
+    ) => {
+      const ownerKey = relationOwnerKey(containerId, direction);
+      const generation = bumpRelationGeneration(ownerKey);
+      const directionWord = directionLabel(direction);
+      pendingFocusStatus.current = relationStatusKey(`relation-status:${ownerKey}`);
+      setRelationState((current) => ({
+        ...current,
+        loads: {
+          ...current.loads,
+          [ownerKey]: { status: 'loading' },
+        },
+      }));
+      announce(
+        t('canvas.announce.relationsLoading', {
+          direction: directionWord,
+          label,
+        }),
+      );
+
+      void fetchCanvasSymbol({
+        tourId: tour.id,
+        symbolId,
+        direction,
+        limit: 8,
+      })
+        .then((response) => {
+          if (relationGeneration.current.get(ownerKey) !== generation) {
+            return;
+          }
+          pendingFocusStatus.current = null;
+          setRelationState((current) => ({
+            ...current,
+            loads: {
+              ...current.loads,
+              [ownerKey]: { status: 'ready', response },
+            },
+          }));
+          if (response.relations.length === 0) {
+            announce(
+              t('canvas.announce.relationsEmpty', {
+                direction: directionWord,
+                label,
+              }),
+            );
+            return;
+          }
+          pendingFocusSymbol.current = response.relations[0]?.symbol.id ?? null;
+          announce(
+            t('canvas.announce.relationsOpened', {
+              count: response.relations.length,
+              direction: directionWord,
+              label,
+            }),
+          );
+        })
+        .catch((error: unknown) => {
+          if (relationGeneration.current.get(ownerKey) !== generation) {
+            return;
+          }
+          const unavailable = error instanceof CanvasRelationUnavailableError;
+          const message =
+            error instanceof CanvasRelationUnavailableError ||
+            error instanceof CanvasRelationRequestError
+              ? error.message
+              : t('canvas.relationError');
+          setRelationState((current) => ({
+            ...current,
+            loads: {
+              ...current.loads,
+              [ownerKey]: {
+                status: unavailable ? 'unavailable' : 'error',
+                message,
+              },
+            },
+          }));
+          announce(
+            t('canvas.announce.relationsFailed', {
+              direction: directionWord,
+              label,
+            }),
+          );
+        });
+    },
+    [announce, bumpRelationGeneration, directionLabel, t, tour.id],
+  );
+
+  const openDefinition = useCallback(
+    (symbolId: string) => {
+      const existing = scene.containers.find(
+        (container) => container.symbolId === symbolId,
+      );
+      if (existing) {
+        const isBase = baseScene.containers.some(
+          (container) => container.id === existing.id,
+        );
+        if (!isBase) {
+          setRelationState((current) => {
+            if (current.manualContainerIds.has(existing.id)) {
+              return current;
+            }
+            const manual = new Set(current.manualContainerIds);
+            manual.add(existing.id);
+            return { ...current, manualContainerIds: manual };
+          });
+        }
+        focusContainer(existing.id);
+        announce(t('canvas.announce.definitionOpened', { label: existing.label }));
+        return;
+      }
+
+      const ownerKey = definitionOwnerKey(symbolId);
+      const load: CanvasRelationLoad | undefined = relationState.loads[ownerKey];
+      if (load?.status === 'ready') {
+        const containerId = relationContainerId(load.response.symbol.id);
+        setRelationState((current) => {
+          if (current.manualContainerIds.has(containerId)) {
+            return current;
+          }
+          const manual = new Set(current.manualContainerIds);
+          manual.add(containerId);
+          return { ...current, manualContainerIds: manual };
+        });
+        pendingFocusSymbol.current = load.response.symbol.id;
+        return;
+      }
+      if (load?.status === 'loading') {
+        return;
+      }
+      requestDefinition(symbolId);
+    },
+    [
+      announce,
+      baseScene.containers,
+      focusContainer,
+      relationState.loads,
+      requestDefinition,
+      scene.containers,
+      t,
+    ],
+  );
+
+  const toggleRelation = useCallback(
+    (containerId: string, direction: CanvasRelationToggleDirection) => {
+      const container = scene.containers.find(
+        (candidate) => candidate.id === containerId,
+      );
+      const symbolId = container?.symbolId;
+      if (!container || symbolId === undefined) {
+        return;
+      }
+      const ownerKey = relationOwnerKey(containerId, direction);
+      const label = container.label;
+      const directionWord = directionLabel(direction);
+
+      if (relationState.activeOwners.has(ownerKey)) {
+        // Keep an in-flight response: it is cached for the next time this
+        // toggle opens, and it must not strand the owned cards on "loading".
+        setRelationState((current) => {
+          const active = new Set(current.activeOwners);
+          active.delete(ownerKey);
+          return { ...current, activeOwners: active };
+        });
+        announce(
+          t('canvas.announce.relationsClosed', {
+            direction: directionWord,
+            label,
+          }),
+        );
+        return;
+      }
+
+      setRelationState((current) => {
+        const active = new Set(current.activeOwners);
+        active.add(ownerKey);
+        return { ...current, activeOwners: active };
+      });
+
+      const load = relationState.loads[ownerKey];
+      if (load?.status === 'ready') {
+        if (load.response.relations.length === 0) {
+          announce(
+            t('canvas.announce.relationsEmpty', {
+              direction: directionWord,
+              label,
+            }),
+          );
+          return;
+        }
+        pendingFocusSymbol.current = load.response.relations[0]?.symbol.id ?? null;
+        announce(
+          t('canvas.announce.relationsOpened', {
+            count: load.response.relations.length,
+            direction: directionWord,
+            label,
+          }),
+        );
+        return;
+      }
+      if (load?.status === 'loading') {
+        return;
+      }
+      requestRelations(containerId, direction, symbolId, label);
+    },
+    [
+      announce,
+      directionLabel,
+      relationState.activeOwners,
+      relationState.loads,
+      requestRelations,
+      scene.containers,
+      t,
+    ],
+  );
+
+  const retryRelation = useCallback(
+    (status: RelationStatusCard) => {
+      const definitionId = definitionSymbolId(status.ownerKey);
+      if (definitionId !== null) {
+        requestDefinition(definitionId);
+        return;
+      }
+      const owner = parseRelationOwnerKey(status.ownerKey);
+      if (!owner || status.symbolId === undefined) {
+        return;
+      }
+      const container = scene.containers.find(
+        (candidate) => candidate.id === owner.containerId,
+      );
+      requestRelations(
+        owner.containerId,
+        owner.direction,
+        status.symbolId,
+        container?.label ?? status.symbolId,
+      );
+    },
+    [requestDefinition, requestRelations, scene.containers],
+  );
+
   const toggleContainer = useCallback(
     (containerId: string) => {
       const container = scene.containers.find(
@@ -314,28 +708,38 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
     (diagramId: string, objectId: string) => {
       const diagram = scene.diagrams.find((candidate) => candidate.id === diagramId);
       const object = diagram?.objects.find((candidate) => candidate.id === objectId);
-      if (!object?.anchorId) {
+      if (!object) {
         return;
       }
-      const container = scene.containers.find(
-        (candidate) => candidate.anchorId === object.anchorId,
-      );
-      if (!container) {
-        announce(t('canvas.objectUnavailable', { label: object.label }));
+
+      if (object.anchorId !== undefined) {
+        const container = scene.containers.find(
+          (candidate) => candidate.anchorId === object.anchorId,
+        );
+        if (container) {
+          setSelectedObjectId(object.id);
+          setFocusedContainerId(container.id);
+          const item = layout.items[codeContainerKey(container.id)];
+          if (item) {
+            void flow.setCenter(item.x + item.width / 2, item.y + item.height / 2, {
+              zoom: flow.getZoom(),
+              duration,
+            });
+          }
+          announce(t('canvas.announce.object', { label: container.label }));
+          return;
+        }
+      }
+
+      if (object.symbolId !== undefined) {
+        setSelectedObjectId(object.id);
+        openDefinition(object.symbolId);
         return;
       }
-      setSelectedObjectId(object.id);
-      setFocusedContainerId(container.id);
-      const item = layout.items[codeContainerKey(container.id)];
-      if (item) {
-        void flow.setCenter(item.x + item.width / 2, item.y + item.height / 2, {
-          zoom: flow.getZoom(),
-          duration,
-        });
-      }
-      announce(t('canvas.announce.object', { label: container.label }));
+
+      announce(t('canvas.objectUnavailable', { label: object.label }));
     },
-    [announce, duration, flow, layout.items, scene.containers, scene.diagrams, t],
+    [announce, duration, flow, layout.items, openDefinition, scene, t],
   );
 
   const toggleOutline = useCallback(() => {
@@ -500,6 +904,14 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       return;
     }
     previousBeatId.current = beat.id;
+    pendingFocusSymbol.current = null;
+    pendingFocusStatus.current = null;
+    relationGeneration.current.clear();
+    setRelationState({
+      activeOwners: new Set(),
+      loads: {},
+      manualContainerIds: new Set(),
+    });
     if (!followBeat) {
       return;
     }
@@ -523,6 +935,52 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       return;
     }
     pendingFocusDiagram.current = null;
+    const raf = requestAnimationFrame(() => {
+      void flow.setCenter(item.x + item.width / 2, item.y + item.height / 2, {
+        zoom: flow.getZoom(),
+        duration,
+      });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [duration, flow, layout.items]);
+
+  // A newly opened relation or definition sits in a new column, so bring it
+  // into view once its layout item exists without refitting the whole board.
+  useEffect(() => {
+    const symbolId = pendingFocusSymbol.current;
+    if (symbolId === null) {
+      return;
+    }
+    const container = scene.containers.find(
+      (candidate) => candidate.symbolId === symbolId,
+    );
+    const item = container ? layout.items[codeContainerKey(container.id)] : undefined;
+    if (!container || !item) {
+      return;
+    }
+    pendingFocusSymbol.current = null;
+    const raf = requestAnimationFrame(() => {
+      void flow.setCenter(item.x + item.width / 2, item.y + item.height / 2, {
+        zoom: flow.getZoom(),
+        duration,
+      });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [duration, flow, layout.items, scene.containers]);
+
+  // Loading, empty, and failure cards sit in the relation columns too. Bring
+  // the card that just answered into view so the state is readable and its
+  // retry action is reachable.
+  useEffect(() => {
+    const statusId = pendingFocusStatus.current;
+    if (statusId === null) {
+      return;
+    }
+    const item = layout.items[statusId];
+    if (!item) {
+      return;
+    }
+    pendingFocusStatus.current = null;
     const raf = requestAnimationFrame(() => {
       void flow.setCenter(item.x + item.width / 2, item.y + item.height / 2, {
         zoom: flow.getZoom(),
@@ -563,12 +1021,26 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
   }, []);
 
   const flowActions = useMemo<CanvasFlowActions>(
-    () => ({ activateObject, focusContainer, toggleContainer }),
-    [activateObject, focusContainer, toggleContainer],
+    () => ({
+      activateObject,
+      focusContainer,
+      toggleContainer,
+      toggleRelation,
+      openDefinition,
+      retryRelation,
+    }),
+    [
+      activateObject,
+      focusContainer,
+      openDefinition,
+      retryRelation,
+      toggleContainer,
+      toggleRelation,
+    ],
   );
   const nodes = useMemo(
-    () =>
-      buildCanvasNodes(
+    () => [
+      ...buildCanvasNodes(
         scene,
         layout,
         {
@@ -577,17 +1049,26 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
           collapsed,
           projectSlug: tour.project.slug,
           beatId: beat.id,
+          sharedSymbolIds,
+          relationState,
+          relationMeta: relationScene.relationMeta,
         },
         flowActions,
       ),
+      ...buildCanvasRelationStatusNodes(relationScene.statuses, layout, flowActions),
+    ],
     [
       beat.id,
       collapsed,
       flowActions,
       focusedContainerId,
       layout,
+      relationScene.relationMeta,
+      relationScene.statuses,
+      relationState,
       scene,
       selectedObjectId,
+      sharedSymbolIds,
       tour.project.slug,
     ],
   );
@@ -610,6 +1091,8 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       autoArrange,
       toggleFollowBeat,
       toggleFullscreen,
+      toggleRelation,
+      openDefinition,
       close: closeOutline,
     }),
     [
@@ -621,12 +1104,14 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       focusContainer,
       focusDiagram,
       home,
+      openDefinition,
       removeDiagram,
       resetZoom,
       showAll,
       toggleContainer,
       toggleFollowBeat,
       toggleFullscreen,
+      toggleRelation,
       zoomIn,
       zoomOut,
     ],
@@ -657,7 +1142,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
 
       <div ref={boardRef} className="canvas-board">
         {size.width > 0 && size.height > 0 ? (
-          <ReactFlow<CanvasFlowNode, CanvasEvidenceFlowEdge>
+          <ReactFlow<CanvasFlowNode, CanvasFlowEdge>
             nodes={nodes}
             edges={edges}
             nodeTypes={nodeTypes}
@@ -737,6 +1222,8 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
         <p className="canvas-empty-note">{t('canvas.noCode')}</p>
       ) : null}
 
+      <CanvasRelationLegend />
+
       {outlineOpen ? (
         <CanvasOutline
           scene={scene}
@@ -748,6 +1235,8 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
           focusedContainerId={focusedContainerId}
           collapsed={collapsed}
           hiddenContainerCount={scene.hiddenContainerCount}
+          relationState={relationState}
+          relationMeta={relationScene.relationMeta}
           followBeat={followBeat}
           fullscreenSupported={fullscreenSupported}
           fullscreenActive={fullscreenActive}

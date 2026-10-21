@@ -3,6 +3,12 @@ import { expect, test, type Page } from '@playwright/test';
 import { installFakeSettings, makeProfile } from './settings-fake.js';
 import { installFakeReview } from './review-fake.js';
 import { installTranslatedTours } from './locale-fake.js';
+import {
+  CANVAS_SYMBOLS,
+  behaviorKey,
+  installCanvasSymbolTargets,
+  installFakeCanvasRelations,
+} from './canvas-relations-fake.js';
 
 const pages = [
   '/',
@@ -268,6 +274,51 @@ test('canvas shortcut sheet has no blocking axe violations', async ({ page }) =>
   await page.getByTestId('canvas-view').focus();
   await page.keyboard.press('?');
   await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible();
+  await page.waitForLoadState('networkidle');
+
+  await expectNoBlockingViolations(page);
+});
+
+test('canvas relation containers and toggles have no blocking axe violations', async ({
+  page,
+}) => {
+  installCanvasSymbolTargets(page, {
+    anchors: { anchor_comments_create: CANVAS_SYMBOLS.service },
+  });
+  installFakeCanvasRelations(page);
+
+  await page.goto('/t/tour_bunbun_golden/beat_write_02?view=canvas');
+  await page.getByTestId('canvas-object').filter({ hasText: 'CommentsService' }).click();
+  const source = page.locator('[data-container-id="anchor_comments_create"]');
+  await source.getByRole('button', { name: 'Incoming', exact: true }).click();
+  await source.getByRole('button', { name: 'Outgoing', exact: true }).click();
+  await expect(
+    page.locator('[data-testid="canvas-code-container"][data-container-id^="relation:"]'),
+  ).toHaveCount(3);
+  await page.waitForLoadState('networkidle');
+
+  await expectNoBlockingViolations(page);
+});
+
+test('canvas unavailable relation state has no blocking axe violations', async ({
+  page,
+}) => {
+  installCanvasSymbolTargets(page, {
+    anchors: { anchor_comments_create: CANVAS_SYMBOLS.service },
+  });
+  installFakeCanvasRelations(page, {
+    behaviors: {
+      [behaviorKey(CANVAS_SYMBOLS.service, 'incoming')]: 'unavailable',
+    },
+  });
+
+  await page.goto('/t/tour_bunbun_golden/beat_write_02?view=canvas');
+  await page.getByTestId('canvas-object').filter({ hasText: 'CommentsService' }).click();
+  await page
+    .locator('[data-container-id="anchor_comments_create"]')
+    .getByRole('button', { name: 'Incoming', exact: true })
+    .click();
+  await expect(page.getByTestId('canvas-relation-status')).toBeVisible();
   await page.waitForLoadState('networkidle');
 
   await expectNoBlockingViolations(page);

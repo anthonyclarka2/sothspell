@@ -115,13 +115,20 @@ export const CanvasObjectCard = memo(function CanvasObjectCard({
 }: NodeProps<CanvasObjectNode>) {
   const { t } = useLocale();
   const hintId = `canvas-object-hint-${data.diagramId}-${data.objectId}`;
+  const bridgeId = `canvas-object-bridge-${data.diagramId}-${data.objectId}`;
   const explanation = t('canvas.objectUnavailable', { label: data.label });
+  const describedBy =
+    [data.resolved ? null : hintId, data.bridge ? bridgeId : null]
+      .filter((value) => value !== null)
+      .join(' ') || undefined;
 
   return (
     <div
       className="canvas-object-node"
       data-focused={data.focused}
       data-resolved={data.resolved}
+      data-target={data.target ?? 'none'}
+      data-bridge={data.bridge}
     >
       <button
         type="button"
@@ -130,18 +137,34 @@ export const CanvasObjectCard = memo(function CanvasObjectCard({
         data-object-id={data.objectId}
         disabled={!data.resolved}
         aria-current={data.focused ? 'true' : undefined}
-        aria-describedby={data.resolved ? undefined : hintId}
-        title={data.resolved ? undefined : explanation}
+        aria-describedby={describedBy}
+        title={
+          data.resolved
+            ? data.bridge
+              ? t('canvas.sharedSymbolHint')
+              : undefined
+            : explanation
+        }
         onClick={() => data.onActivate(data.diagramId, data.objectId)}
       >
         <span className="canvas-object-label">{data.label}</span>
         <span className="canvas-object-kind">{data.kind}</span>
+        {data.bridge ? (
+          <span className="canvas-object-bridge" data-testid="canvas-object-bridge">
+            {t('canvas.sharedSymbol')}
+          </span>
+        ) : null}
       </button>
       {data.resolved ? null : (
         <span id={hintId} className="visually-hidden">
           {explanation}
         </span>
       )}
+      {data.bridge ? (
+        <span id={bridgeId} className="visually-hidden">
+          {t('canvas.sharedSymbolHint')}
+        </span>
+      ) : null}
       <Handle
         type="source"
         position={Position.Right}

@@ -5,3 +5,6 @@ export { CanvasFullscreenHint } from './CanvasFullscreenHint.js';
 export { CanvasDiagramCard, CanvasObjectCard } from './CanvasDiagramCard.js';
 export { CanvasCodeContainer } from './CanvasCodeContainer.js';
 export { CanvasEvidenceEdge } from './CanvasEvidenceEdge.js';
+export { CanvasFlowEdge } from './CanvasFlowEdge.js';
+export { CanvasRelationLegend } from './CanvasRelationLegend.js';
+export { CanvasRelationStatusCard } from './CanvasRelationStatusCard.js';
