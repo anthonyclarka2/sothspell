@@ -1,4 +1,3 @@
-import type { CompiledTour } from '@sothspell/core';
 import type { DiagramKind, PositionedDiagram } from '@sothspell/diagram';
 
 /** One object inside a diagram card. Coordinates are relative to the card. */
