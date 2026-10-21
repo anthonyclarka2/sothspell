@@ -14,9 +14,9 @@
   authoring flow (`/new`) opens a local git repository or a public GitHub URL
   and authors a tour; `examples/tiny-notes/` is the demo repository. Both
   completed eras are archived under `plans/archive/v1/` and
-  `plans/archive/v2/`. The canvas era is in progress: Phase 17 is complete and
-  Phases 18–20 remain planned in `plans/ROADMAP.md` and
-  `plans/PHASE-18.md` through `plans/PHASE-20.md`.
+  `plans/archive/v2/`. The canvas era is in progress: Phases 17 and 18 are
+  complete and Phases 19–20 remain planned in `plans/ROADMAP.md` and
+  `plans/PHASE-19.md` through `plans/PHASE-20.md`.
 - **Example project:** Bunbun at `/Users/ajc/Projects/codegens/bunbun`, pinned to
   commit `9fef24d`. It is **read-only**. No command may create, modify, or delete
   anything inside that tree. All snapshots, tours, audio, logs, and runs live

@@ -85,7 +85,7 @@ axe gate at 0 critical / 0 serious for the states it introduces.
 | Phase | Status                | Primary outcome                                                          |
 | ----- | --------------------- | ------------------------------------------------------------------------ |
 | 17    | complete (2026-10-21) | Opt-in canvas, scene layout, evidence links, multiple diagrams, controls |
-| 18    | planned               | Symbol targets, call/reference index, incoming/outgoing containers       |
+| 18    | complete (2026-10-21) | Symbol targets, call/reference index, incoming/outgoing containers       |
 | 19    | planned               | Keyboard model, screen-reader outline, preferences, contrast and text    |
 | 20    | planned               | PNG/JPG/PDF export, performance budget, coverage, docs, final gate       |
 

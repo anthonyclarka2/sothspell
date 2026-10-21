@@ -1,6 +1,7 @@
 # Phase 18 — Code Relationships
 
-**Status: planned.** Planning baseline: 2026-10-21. Depends on: Phase 17.
+**Status: complete (2026-10-21).** Planning baseline: 2026-10-21. Depends on:
+Phase 17.
 
 ## Goal
 
@@ -45,8 +46,9 @@ work for authored tours, not only the hand-built golden tour.
   - flow links between the source container and each related container;
   - a relation legend and static-confidence label;
   - definition links from diagram objects and container symbol headers;
-  - identifier links inside an excerpt when the identifier exactly matches a
-    known symbol in the same file, capped at 50 per container;
+  - a bounded `identifierTargets` payload for safe future inline linking. Safe
+    in-text annotation is deferred; diagram objects and container headers open
+    definitions now.
   - a shared-symbol bridge between two open diagrams, so a symbol present in
     both opens one shared code container.
 - Loading, empty, unavailable, stale, and error states. Relation failure never
@@ -235,11 +237,9 @@ work for authored tours, not only the hand-built golden tour.
 - Extend the Phase 17 outline with Incoming/Outgoing toggles and relation
   containers, so every Phase 18 spatial action has a text equivalent before
   Phase 19 expands the outline.
-- Identifier links: annotate exact identifier matches in the rendered excerpt
-  only when the API's bounded `identifierTargets` list has one unique symbol for
-  that text. Cap at 50 per container. Ambiguous or unresolved identifiers remain
-  plain text. Links use a 24×24 minimum target or a keyboard-focusable inline
-  control.
+- Identifier targets: the API returns exact matches, capped at 50 per container;
+  in-text annotation is deferred until safe markup rendering exists. Diagram
+  objects and container headers already open definitions.
 - Shared-symbol bridge: when two open diagrams contain objects with the same
   `symbolId`, mark both objects with a dashed bridge badge and open one shared
   code container from either. If the tours have no `symbolId`, fall back to a
@@ -252,8 +252,8 @@ work for authored tours, not only the hand-built golden tour.
   right; toggling off hides only its own unowned set; overlapping incoming and
   outgoing sets share a container without one toggle hiding it; outline exposes
   the relation toggles; flow edge kind and label; reuse; no cascade; definition
-  from diagram; definition from header; identifier link; ambiguous identifier;
-  shared-symbol bridge; unavailable state; keyboard activation of buttons.
+  from diagram; definition from header; identifier target payload; shared-symbol
+  bridge; unavailable state; keyboard activation of buttons.
 - Seam: canvas fixture with a fake relation service in Playwright.
 
 ### Wave 5 — Bunbun acceptance and docs
@@ -346,3 +346,53 @@ work for authored tours, not only the hand-built golden tour.
 - Verify with a real Bunbun checkout and with the fixture project when Bunbun is
   absent.
 - Record the relation payload size and latency in `docs/canvas.md`.
+
+## Shipped (closure, 2026-10-21)
+
+- **Schema 1.2.0** — optional `symbolId` on anchors and diagram nodes, a
+  1.0.0 → 1.1.0 → 1.2.0 migration chain, and the generated-tour repair that
+  moves symbol-shaped node `anchorId` values into `symbolId`. The checked-in
+  JSON Schema and `docs/tour-format.md` report 1.2.0.
+- **Authoring** — candidate symbol IDs reach anchors and diagram nodes; the
+  shared `saveTourArtifacts` / `saveAnalysisArtifacts` writer stores the
+  snapshot and local `project.json` for the API, CLI, harness, and
+  `analyze --save`.
+- **Analyzer 0.4.0** — `callSites`, typed `this` and constructor-injection
+  resolution, import/reference lines, `unresolvedCalls`, and `calls` edges. On
+  Bunbun: 6,642 call edges and 22,923 unresolved calls. Also fixed OXC source
+  offsets for files with non-ASCII text.
+- **Relation API** — one bounded `/api/tours/:tourId/canvas/symbol` route for
+  definitions, incoming, and outgoing relations; project-record root
+  resolution; snapshot version checks; redaction checks; 8-container / 64 KiB
+  caps and a 16 KiB per-excerpt cap.
+- **Source route** — accepts `tourId`, resolves the authored/imported project
+  root, validates the project slug, and returns 409 for redacted files.
+- **Web canvas** — Incoming/Outgoing toggles with ownership and reuse,
+  orthogonal flow edges, relation labels and legend, definition links from
+  symbols and objects, loading/empty/unavailable/error states, shared-symbol
+  bridge, and outline actions.
+- **Golden fallback** — tours without `symbolId` use a stable
+  `legacy:<path>#<symbol>` target that the server resolves against the snapshot,
+  so the golden Bunbun tour opens real relations without regeneration.
+
+### Closure verification (fresh, 2026-10-21)
+
+- `pnpm test`: 120 files / 987 tests passed.
+- `pnpm typecheck`, `pnpm lint`, and `pnpm build` clean.
+- `SOTHSPELL_WEB_PORT=5275 SOTHSPELL_API_PORT=4317 pnpm test:browser`:
+  90 passed.
+- Live Bunbun journey: `CommentsService.create` Incoming shows
+  `CommentsController.create`; Outgoing shows `CommentsService.parseText`;
+  both are `calls` edges; no absolute source root in the page.
+- API route tests cover definition, incoming, outgoing, limit/offset,
+  truncation, unavailable, stale snapshot, redaction, and path escape.
+- Bunbun tree clean.
+
+### Follow-ups
+
+- In-text identifier links are not rendered yet. The API returns a bounded
+  `identifierTargets` list; safe inline annotation remains a Phase 19/20
+  follow-up. Diagram objects, container headers, and the outline already open
+  definitions.
+- Relation latency and payload size still need recording in `docs/canvas.md`
+  during Phase 20 hardening.
