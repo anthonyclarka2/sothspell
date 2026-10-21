@@ -10,7 +10,11 @@ The player has three modes:
 
 - **Read** — text and diagrams, auto-advancing at each beat's duration.
 - **Explore** — paused; the user controls chapters, beats, code, and diagrams.
-- **Listen** — reserved for Phase 5.
+- **Listen** — speech, synchronized text, and diagrams.
+
+The Stage remains the default layout. An opt-in **Canvas** view replaces the
+stage with a spatial board for the current beat; the chapter rail, narration,
+transport, and run progress stay in place. See [`canvas.md`](./canvas.md).
 
 Controls:
 
@@ -37,6 +41,11 @@ scrubbing. Resume returns to the saved offset.
 
 Diagram nodes are buttons: Enter or Space opens their code anchor. React Flow
 keeps pan and zoom on its own controls so the page never hijacks scrolling.
+
+In the canvas view, arrows/HJKL move selection, Enter enters a container, and
+Escape steps item → container → home. The canvas handles only the keys it owns;
+Space and `T` keep their player meaning on the board. See
+[`canvas.md`](./canvas.md#controls-and-shortcuts).
 
 ## Code browser
 

@@ -1,14 +1,15 @@
 # Sóþspell — Canvas Playback Roadmap (v3)
 
-**Status: planned.** Planning baseline: 2026-10-21. Source brief:
+**Status: complete (2026-10-21; automated gates; manual accessibility and PDF
+checks owner-gated).** Planning baseline: 2026-10-21. Source brief:
 [`CANVAS-FEATURES.md`](CANVAS-FEATURES.md). The spatial reference image was
 supplied in the planning session; it is not checked in.
 
 The v1 and v2 eras are archived in [`archive/`](archive/README.md). This
-roadmap starts the canvas era: an opt-in playback layout that places the tour
+roadmap covers the canvas era: an opt-in playback layout that places the tour
 diagram and its code evidence on one spatial canvas, with explicit links,
 multiple diagrams, code relationships, full keyboard and screen-reader access,
-and export.
+and export. The canvas remains opt-in pending manual accessibility sign-off.
 
 The canvas is a viewer feature. It does not change authoring prompts, narration,
 the tour format's meaning, or the embed player.
@@ -87,7 +88,7 @@ axe gate at 0 critical / 0 serious for the states it introduces.
 | 17    | complete (2026-10-21)            | Opt-in canvas, scene layout, evidence links, multiple diagrams, controls |
 | 18    | complete (2026-10-21)            | Symbol targets, call/reference index, incoming/outgoing containers       |
 | 19    | complete (2026-10-21, automated) | Keyboard model, screen-reader outline, preferences, contrast and text    |
-| 20    | planned                          | PNG/JPG/PDF export, performance budget, coverage, docs, final gate       |
+| 20    | complete (2026-10-21, automated) | PNG/JPG/PDF export, performance budget, coverage, docs, final gate       |
 
 ## 1. Product direction
 

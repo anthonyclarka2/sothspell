@@ -13,7 +13,6 @@ resume later.
 
 <img width="1611" height="1008" alt="Screenshot 2026-10-20 at 13 21 12" src="https://github.com/user-attachments/assets/158512de-98c1-4242-b06b-a21d1bb23ce5" />
 
-
 ## Contributors
 
 I welcome PRs and issues! I request that a human reads the whole bug report
@@ -28,7 +27,7 @@ looking for work.
 ## Quick start
 
 Prerequisites: If you want to use voice support other than browser-based speech,
-you will need an ElevenLabs API key. If you want to create your own narrations, 
+you will need an ElevenLabs API key. If you want to create your own narrations,
 or ask questions during an existing tour, you will need an LLM API key.
 
 ### Web
@@ -192,7 +191,7 @@ stores only small, attributed excerpts.
 
 ## Documentation
 
-- [Canvas roadmap](plans/ROADMAP.md) — the planned canvas era: scene, code
+- [Canvas roadmap](plans/ROADMAP.md) — the completed canvas era: scene, code
   relationships, accessibility, export, performance, and risks.
 - [Phase 17](plans/PHASE-17.md) — canvas foundation, evidence links, multiple
   diagrams, controls, and fullscreen.
@@ -238,6 +237,8 @@ stores only small, attributed excerpts.
   validation, repair, quality reports, and the author CLI.
 - [Player and code browser](docs/player.md) — playback controls, keyboard map,
   virtualized code pages, stale badges, and progress.
+- [Canvas playback](docs/canvas.md) — the opt-in spatial board, evidence and
+  relation links, keyboard/preferences, export, and performance.
 - [Narration](docs/narration.md) — browser and cloud speech, synchronization,
   caching, and privacy.
 - [Guide and interludes](docs/guide.md) — in-tour questions, citations,
@@ -361,6 +362,6 @@ human review UI, and the embeddable player. A reviewed real-model Bunbun tour
 and live cloud narration remain owner-gated on provider credentials; fixture and
 browser paths are verified.
 
-The canvas era is planned in [`plans/ROADMAP.md`](plans/ROADMAP.md) as Phases
-17–20. No canvas code exists yet; the plans cover the scene, code relationships,
-keyboard and screen-reader access, export, and the 60 fps budget.
+The canvas era is complete in [`plans/ROADMAP.md`](plans/ROADMAP.md) as Phases
+17–20. The canvas is opt-in; manual VoiceOver/NVDA, real Save-as-PDF, and
+real-device touch checks remain owner-gated.

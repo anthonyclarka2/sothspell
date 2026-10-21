@@ -1,7 +1,7 @@
 # Plans Index
 
-Current era: canvas playback (Phases 17–20). Last planning commit:
-`6eff007` on `feature/canvas`.
+Current era: canvas playback (Phases 17–20). **Complete (automated gates;
+manual accessibility and PDF sign-off owner-gated).** Completed 2026-10-21.
 
 ## Documents
 
@@ -12,7 +12,7 @@ Current era: canvas playback (Phases 17–20). Last planning commit:
 | [`PHASE-17.md`](PHASE-17.md)               | **Complete:** foundation, renderer, evidence links, multiple diagrams, controls, fullscreen, outline                       |
 | [`PHASE-18.md`](PHASE-18.md)               | **Complete:** relationships, schema 1.2.0, symbol targets, call edges, relation API, incoming/outgoing, definitions        |
 | [`PHASE-19.md`](PHASE-19.md)               | **Complete (automated):** keyboard, outline, preferences, contrast, large text, compact view; manual VoiceOver in Phase 20 |
-| [`PHASE-20.md`](PHASE-20.md)               | Export, performance, coverage, docs, final gate                                                                            |
+| [`PHASE-20.md`](PHASE-20.md)               | **Complete (automated):** export, performance, coverage, docs, final gate; manual SR/PDF owner-gated                       |
 | [`../issues/`](../issues/)                 | 18 numbered implementation issues in the Bunbun text format                                                                |
 
 ## Feature to phase

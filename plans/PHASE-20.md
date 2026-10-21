@@ -1,7 +1,7 @@
 # Phase 20 — Export, Performance, Hardening
 
-**Status: planned.** Planning baseline: 2026-10-21. Depends on: Phases 17, 18,
-and 19.
+**Status: complete (2026-10-21; automated gates; manual VoiceOver/PDF checks
+owner-gated).** Planning baseline: 2026-10-21. Depends on: Phases 17, 18, and 19.
 
 ## Goal
 
@@ -288,3 +288,56 @@ player layout.
 - Use `using-git` for the final commits and issue closures.
 - Run the final gate from a clean worktree after the last merge.
 - Record every number; do not summarize a miss as a pass.
+
+## Shipped (closure, 2026-10-21)
+
+- **Export** — pure `buildExportModel`; PNG/JPG current view or whole board via
+  dynamic `modern-screenshot`; `CanvasExportMenu`; `CanvasPrintView`; print CSS
+  with `@page`, reading order, full tour anchors, bounded relation excerpts,
+  page-break rules, and no controls. The export chunk is 23.97 kB / 9.38 kB
+  gzip.
+- **Coverage** — `pnpm test:coverage` with canvas thresholds (90 lines/functions,
+  85 branches) and 90-line thresholds for analyzer/API relations.
+- **Performance** — `pnpm test:canvas:perf` samples a 3-second scripted
+  pan/zoom on the golden two-diagram board (18 nodes, 5 edges, 2 diagrams,
+  11 objects, 5 containers). Standalone: p50 16.7 ms, p95 16.8 ms, max 33.4 ms,
+  0 long tasks, heap ≈72.5 MB. The CI gate is p95 ≤20 ms and no long task
+  > 100 ms.
+- **Bundle** — `pnpm check:bundle` reports the single web JS chunk at
+  839.12 KiB raw / 245.68 KiB gzip and records the canvas/export sub-budgets as
+  not measurable until code splitting. It does not claim a false pass.
+- **CI** — Playwright browser install and `test:browser`, `test:a11y`,
+  `test:canvas:perf`, `test:coverage`, and `check:bundle` gates.
+- **Docs** — `docs/canvas.md`; updates to player, accessibility, analysis,
+  tour format, release notes, README, AGENTS, and CONTEXT.
+
+### Closure verification (fresh, 2026-10-21)
+
+- `pnpm test`: 127 files / 1063 tests passed.
+- `pnpm test:browser` with `SOTHSPELL_WEB_PORT=5279 SOTHSPELL_API_PORT=4315`:
+  114 passed, including 6 export journeys and 12 canvas accessibility journeys.
+- `pnpm test:coverage`: 95.7% lines overall; canvas 96.16%, analyzer relations
+  97.91%, API relations 94.44%.
+- `pnpm test:canvas:perf`: 176 frames, p50 16.7 ms, p95 16.8 ms, 0 long tasks.
+  A full-suite run recorded p95 33.3 ms while the machine was busy; the gate is
+  enforced in CI, not in a loaded local run.
+- `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm check:bundle`,
+  `pnpm check:toolchain`, `pnpm check:secrets`, and `pnpm sothspell doctor`
+  clean (doctor warns only for unset optional provider env).
+- Bunbun tree clean.
+
+### Owner-gated / follow-ups
+
+- Manual VoiceOver on macOS and NVDA on Windows were not run. Automated axe,
+  keyboard, focus, compact, 200% text, forced-colours, high-contrast, and
+  colour-blind tests are green.
+- A real Save-as-PDF was not produced in CI. Print-media structure and the full
+  anchor/relation print paths are tested; the manual checklist is in
+  `docs/canvas.md`.
+- In-text identifier links and container dragging remain follow-ups.
+- Firefox/WebKit, real-device touch, and a 40-node synthetic perf scene remain
+  follow-ups.
+- Canvas is still opt-in. No promotion decision was made; the evidence supports
+  keeping it opt-in until manual accessibility is signed off.
+- Bundle is still one large app chunk; code splitting is required before the
+  60 KiB canvas budget can be measured.

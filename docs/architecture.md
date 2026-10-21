@@ -12,7 +12,8 @@ packages/authoring GuideModel, context packs, curriculum, chapters, ask, drilldo
 packages/player playback state machine and narration synchronization helpers
 packages/narration sentence splitting, alignment, browser speech, ElevenLabs, store
 packages/diagram diagram IR, ELK layout, sequence model
-packages/harness harness adapter contract (reserved)
+packages/canvas pure scene, layout, selection, preferences, export model
+packages/harness harness adapter contract and shared host runtime
 ```
 
 ## Pipeline
