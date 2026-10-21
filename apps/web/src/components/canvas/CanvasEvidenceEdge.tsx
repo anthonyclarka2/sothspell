@@ -16,7 +16,9 @@ export const CanvasEvidenceEdge = memo(function CanvasEvidenceEdge({
   targetY,
   targetPosition,
   markerEnd,
+  data,
 }: EdgeProps<CanvasEvidenceFlowEdge>) {
+  const selected = data?.selected === true;
   const [path] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -28,15 +30,16 @@ export const CanvasEvidenceEdge = memo(function CanvasEvidenceEdge({
   });
 
   return (
-    <g data-testid="canvas-evidence-edge">
+    <g data-testid="canvas-evidence-edge" data-selected={selected}>
       <BaseEdge
         id={id}
         path={path}
         markerEnd={markerEnd}
         interactionWidth={12}
         style={{
-          strokeWidth: 'var(--canvas-evidence-width, 1.5px)',
-          stroke: 'var(--canvas-edge)',
+          strokeWidth: selected ? 3 : 'var(--canvas-evidence-width, 1.5px)',
+          stroke: selected ? 'var(--canvas-edge-selected)' : 'var(--canvas-edge)',
+          filter: selected ? 'drop-shadow(0 0 2px var(--accent))' : undefined,
         }}
       />
     </g>

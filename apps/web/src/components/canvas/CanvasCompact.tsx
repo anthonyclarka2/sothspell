@@ -316,6 +316,13 @@ export function CanvasCompact({
                 </p>
               </header>
               <div className="canvas-compact-actions">
+                <button
+                  type="button"
+                  className="canvas-outline-action"
+                  onClick={() => actions.closeContainer(container.id)}
+                >
+                  {t('canvas.closeContainer', { label: container.label })}
+                </button>
                 {totalLines > COLLAPSED_LINES ? (
                   <button
                     type="button"

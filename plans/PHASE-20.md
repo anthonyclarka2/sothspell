@@ -334,7 +334,9 @@ player layout.
 - A real Save-as-PDF was not produced in CI. Print-media structure and the full
   anchor/relation print paths are tested; the manual checklist is in
   `docs/canvas.md`.
-- In-text identifier links and container dragging remain follow-ups.
+- In-text identifier links remain a follow-up. Container dragging, resizing,
+  closing, selection, and fullscreen re-fit shipped in the Phase 21 interaction
+  patch.
 - Firefox/WebKit, real-device touch, and a 40-node synthetic perf scene remain
   follow-ups.
 - Canvas is still opt-in. No promotion decision was made; the evidence supports

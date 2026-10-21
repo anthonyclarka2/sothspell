@@ -7,7 +7,7 @@ import {
   type CSSProperties,
 } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Handle, NodeResizer, Position, type NodeProps } from '@xyflow/react';
 import { useLocale } from '../../i18n/locale.js';
 import { canvasCodeLineHandle, type CanvasCodeNode } from './canvas-flow.js';
 import { COLLAPSED_LINES, lineCountOf, shikiHtmlForCanvas } from './code-html.js';
@@ -62,11 +62,19 @@ export const CanvasCodeContainer = memo(function CanvasCodeContainer({
           : tops,
       );
     };
+    let frame = 0;
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    };
     measure();
     const observer =
-      typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
+      typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : null;
     observer?.observe(inner);
-    return () => observer?.disconnect();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+    };
   }, [collapsed, container.html, data.textScale, visibleLines]);
 
   return (
@@ -78,9 +86,23 @@ export const CanvasCodeContainer = memo(function CanvasCodeContainer({
       data-symbol-id={symbolId}
       data-relation-kind={data.relation?.kind}
       data-focused={data.focused}
+      data-selected={data.selected}
       tabIndex={-1}
     >
-      <header className="canvas-code-header">
+      <NodeResizer
+        isVisible={data.resizable}
+        minWidth={280}
+        minHeight={180}
+        lineClassName="canvas-resize-line"
+        handleClassName="canvas-resize-handle"
+        onResize={(_event, params) =>
+          data.onResize(container.id, {
+            width: Math.round(params.width),
+            height: Math.round(params.height),
+          })
+        }
+      />
+      <header className="canvas-code-header canvas-drag-handle">
         <div className="canvas-code-identity">
           <h3>
             {symbolId === undefined ? (
@@ -108,6 +130,18 @@ export const CanvasCodeContainer = memo(function CanvasCodeContainer({
           </p>
         </div>
         <div className="canvas-code-actions">
+          <button
+            type="button"
+            className="canvas-icon-button canvas-close nodrag"
+            aria-label={t('canvas.closeContainer', { label: container.label })}
+            data-canvas-item="close"
+            onClick={(event) => {
+              event.stopPropagation();
+              data.onClose(container.id);
+            }}
+          >
+            <span aria-hidden="true">×</span>
+          </button>
           {totalLines > COLLAPSED_LINES ? (
             <button
               type="button"

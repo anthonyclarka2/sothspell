@@ -39,12 +39,14 @@ export const CanvasFlowEdge = memo(function CanvasFlowEdge({
     borderRadius: 10,
   });
   const relation = data?.relation ?? 'calls';
+  const selected = data?.selected === true;
 
   return (
     <g
       data-testid="canvas-flow-edge"
       data-relation-kind={relation}
       data-confidence={data?.confidence}
+      data-selected={selected}
     >
       <BaseEdge
         id={id}
@@ -52,8 +54,13 @@ export const CanvasFlowEdge = memo(function CanvasFlowEdge({
         markerEnd={markerEnd}
         interactionWidth={18}
         style={{
-          strokeWidth: 'var(--canvas-flow-width, 4px)',
-          stroke: 'var(--canvas-relation-color, var(--canvas-flow-edge))',
+          strokeWidth: selected
+            ? 'calc(var(--canvas-flow-width, 4px) + 2px)'
+            : 'var(--canvas-flow-width, 4px)',
+          stroke: selected
+            ? 'var(--canvas-edge-selected)'
+            : 'var(--canvas-relation-color, var(--canvas-flow-edge))',
+          opacity: selected ? 1 : 0.9,
           ...(DASH[relation] === undefined ? {} : { strokeDasharray: DASH[relation] }),
         }}
       />

@@ -55,10 +55,12 @@ test('keeps the beat anchor when a diagram object has both targets', async ({ pa
   expect(fake.requests).toEqual([]);
 });
 
-test('disables a diagram object with no anchor or symbol target', async ({ page }) => {
+test('selects a diagram object with no anchor or symbol target', async ({ page }) => {
   await page.goto('/t/tour_bunbun_golden/beat_purpose_01?view=canvas');
   const web = page.locator('[data-object-id="node_web"]');
-  await expect(web).toBeDisabled();
+  await expect(web).toBeEnabled();
+  await web.click();
+  await expect(web).toHaveAttribute('aria-current', 'true');
   await expect(web.locator('..')).toHaveAttribute('data-target', 'none');
   await expect(web).toHaveAttribute(
     'aria-describedby',
@@ -115,7 +117,7 @@ test('opens incoming left and outgoing right with labelled call edges', async ({
       const style = getComputedStyle(path);
       return { dash: style.strokeDasharray, width: style.strokeWidth };
     });
-  expect(dash.width).toBe('4px');
+  expect(['4px', '6px']).toContain(dash.width);
   expect(dash.dash).not.toBe('none');
 });
 

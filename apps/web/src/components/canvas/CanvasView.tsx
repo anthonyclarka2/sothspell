@@ -9,6 +9,7 @@ import {
   ReactFlowProvider,
   useReactFlow,
   type EdgeTypes,
+  type NodeChange,
   type NodeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -80,6 +81,7 @@ import {
   CANVAS_FLOW_EDGE,
   CANVAS_OBJECT_NODE,
   CANVAS_RELATION_STATUS_NODE,
+  canvasObjectKey,
   type CanvasFlowActions,
   type CanvasFlowEdge,
   type CanvasFlowNode,
@@ -134,6 +136,33 @@ function diagramSelector(diagramId: string): string {
   return `[data-canvas-diagram="true"][data-diagram-id="${diagramId}"]`;
 }
 
+/**
+ * Closed containers stay in the scene so they can reopen, but they are removed
+ * from the rendered scene and from every link that targeted them.
+ */
+function withoutClosedContainers(
+  scene: ReturnType<typeof buildCanvasScene>,
+  closed: ReadonlySet<string>,
+): ReturnType<typeof buildCanvasScene> {
+  if (closed.size === 0) {
+    return scene;
+  }
+  const containers = scene.containers.filter((container) => !closed.has(container.id));
+  if (containers.length === scene.containers.length) {
+    return scene;
+  }
+  const ids = new Set(containers.map((container) => container.id));
+  return {
+    ...scene,
+    containers,
+    links: scene.links.filter((link) =>
+      link.kind === 'evidence'
+        ? ids.has(link.toContainerId)
+        : ids.has(link.fromContainerId) && ids.has(link.toContainerId),
+    ),
+  };
+}
+
 export interface CanvasViewProps {
   tour: CompiledTour;
   chapter: CompiledChapter;
@@ -181,8 +210,19 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
     () => new Set(),
   );
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
+  const [selectedDiagramId, setSelectedDiagramId] = useState<string | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [focusedContainerId, setFocusedContainerId] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [closedContainerIds, setClosedContainerIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const [manualPositions, setManualPositions] = useState<
+    Record<string, { x: number; y: number }>
+  >({});
+  const [manualSizes, setManualSizes] = useState<
+    Record<string, { width: number; height: number }>
+  >({});
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [showAllAnchors, setShowAllAnchors] = useState(false);
@@ -246,17 +286,29 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
     () => mergeRelationScene(baseScene, relationState),
     [baseScene, relationState],
   );
-  const scene = relationScene.scene;
+  const baseVisibleScene = useMemo(
+    () => withoutClosedContainers(baseScene, closedContainerIds),
+    [baseScene, closedContainerIds],
+  );
+  const scene = useMemo(
+    () => withoutClosedContainers(relationScene.scene, closedContainerIds),
+    [closedContainerIds, relationScene.scene],
+  );
   const relationContainerIds = useMemo(() => {
-    const baseIds = new Set(baseScene.containers.map((container) => container.id));
+    const baseIds = new Set(baseVisibleScene.containers.map((container) => container.id));
     return scene.containers
       .filter((container) => !baseIds.has(container.id))
       .map((container) => container.id);
-  }, [baseScene.containers, scene.containers]);
+  }, [baseVisibleScene.containers, scene.containers]);
   const layout = useMemo(
     () =>
-      layoutRelationCanvas(baseScene, relationScene, size, preferences.textScale / 100),
-    [baseScene, preferences.textScale, relationScene, size],
+      layoutRelationCanvas(
+        baseVisibleScene,
+        { ...relationScene, scene },
+        size,
+        preferences.textScale / 100,
+      ),
+    [baseVisibleScene, preferences.textScale, relationScene, scene, size],
   );
   const sceneKey = useMemo(
     () =>
@@ -797,6 +849,8 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
         return;
       }
       setSelectedObjectId(null);
+      setSelectedDiagramId(diagramId);
+      setSelectedNodeId(diagramCardKey(diagramId));
       setFocusedContainerId(null);
       selectionRef.current = { selection: { level: 'canvas', diagramId } };
       updateFocus(diagramCanvasFocus(diagramId));
@@ -820,6 +874,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
 
   const autoArrange = useCallback(() => {
     captureUndo();
+    setManualPositions({});
     setArranged(true);
     window.clearTimeout(arrangeTimeout.current);
     arrangeTimeout.current = window.setTimeout(() => setArranged(false), 700);
@@ -875,6 +930,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
         return;
       }
       setFocusedContainerId(container.id);
+      setSelectedNodeId(codeContainerKey(container.id));
       setSelectedObjectId(null);
       selectionRef.current = {
         selection: {
@@ -893,6 +949,51 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       announce(t('canvas.announce.object', { label: container.label }));
     },
     [announce, duration, flow, layout.items, scene.containers, t],
+  );
+
+  const closeContainer = useCallback(
+    (containerId: string) => {
+      const container = scene.containers.find(
+        (candidate) => candidate.id === containerId,
+      );
+      setClosedContainerIds((current) => {
+        if (current.has(containerId)) {
+          return current;
+        }
+        const next = new Set(current);
+        next.add(containerId);
+        return next;
+      });
+      setFocusedContainerId((current) => (current === containerId ? null : current));
+      setSelectedNodeId((current) =>
+        current === codeContainerKey(containerId) ? null : current,
+      );
+      setCollapsed((current) => {
+        if (!(containerId in current)) {
+          return current;
+        }
+        const next = { ...current };
+        delete next[containerId];
+        return next;
+      });
+      if (container) {
+        announce(t('canvas.announce.containerClosed', { label: container.label }));
+      }
+    },
+    [announce, scene.containers, t],
+  );
+
+  const resizeContainer = useCallback(
+    (containerId: string, nextSize: { width: number; height: number }) => {
+      setManualSizes((current) => ({
+        ...current,
+        [codeContainerKey(containerId)]: {
+          width: Math.max(280, Math.round(nextSize.width)),
+          height: Math.max(180, Math.round(nextSize.height)),
+        },
+      }));
+    },
+    [],
   );
 
   const enterContainer = useCallback(
@@ -985,6 +1086,14 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
           }
           pendingFocusStatus.current = null;
           const containerId = relationContainerId(response.symbol.id);
+          setClosedContainerIds((current) => {
+            if (!current.has(containerId)) {
+              return current;
+            }
+            const next = new Set(current);
+            next.delete(containerId);
+            return next;
+          });
           setRelationState((current) => {
             const manual = new Set(current.manualContainerIds);
             manual.add(containerId);
@@ -1074,6 +1183,17 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
             return;
           }
           pendingFocusStatus.current = null;
+          setClosedContainerIds((current) => {
+            const reopened = new Set(current);
+            let changed = false;
+            for (const relation of response.relations) {
+              const id = relationContainerId(relation.symbol.id);
+              if (reopened.delete(id)) {
+                changed = true;
+              }
+            }
+            return changed ? reopened : current;
+          });
           setRelationState((current) => ({
             ...current,
             loads: {
@@ -1321,13 +1441,23 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       if (!object) {
         return;
       }
+      setSelectedObjectId(object.id);
+      setSelectedDiagramId(diagramId);
+      setSelectedNodeId(null);
 
       if (object.anchorId !== undefined) {
-        const container = scene.containers.find(
+        const container = relationScene.scene.containers.find(
           (candidate) => candidate.anchorId === object.anchorId,
         );
         if (container) {
-          setSelectedObjectId(object.id);
+          setClosedContainerIds((current) => {
+            if (!current.has(container.id)) {
+              return current;
+            }
+            const next = new Set(current);
+            next.delete(container.id);
+            return next;
+          });
           setFocusedContainerId(container.id);
           const item = layout.items[codeContainerKey(container.id)];
           if (item) {
@@ -1342,14 +1472,22 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       }
 
       if (object.symbolId !== undefined) {
-        setSelectedObjectId(object.id);
         openDefinition(object.symbolId);
         return;
       }
 
       announce(t('canvas.objectUnavailable', { label: object.label }));
     },
-    [announce, duration, flow, layout.items, openDefinition, scene, t],
+    [
+      announce,
+      duration,
+      flow,
+      layout.items,
+      openDefinition,
+      relationScene.scene.containers,
+      scene.diagrams,
+      t,
+    ],
   );
 
   const toggleOutline = useCallback(() => {
@@ -1365,6 +1503,8 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
   const resetLayouts = useCallback(() => {
     suppressLayoutSave.current = true;
     clearCanvasViewports();
+    setManualPositions({});
+    setManualSizes({});
     undoSnapshot.current = null;
     setCanUndo(false);
     setNotice(null);
@@ -1750,7 +1890,12 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
   const previousBeatId = useRef(beat.id);
   useEffect(() => {
     setSelectedObjectId(null);
+    setSelectedDiagramId(null);
+    setSelectedNodeId(null);
     setFocusedContainerId(null);
+    setClosedContainerIds(new Set());
+    setManualPositions({});
+    setManualSizes({});
     setShowAllAnchors(false);
     if (previousBeatId.current === beat.id) {
       return;
@@ -1915,6 +2060,32 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
     return () => window.clearTimeout(timeout);
   }, [announce, fullscreenActive, t]);
 
+  // Fullscreen changes the board's measured size. Fit after the browser has
+  // committed that resize, otherwise the previous windowed viewport leaves
+  // cards off-centre or off-screen.
+  useEffect(() => {
+    if (!fullscreenActive) {
+      return;
+    }
+    let cancelled = false;
+    const frame = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (cancelled) {
+          return;
+        }
+        void flow.fitView({
+          padding: FIT_PADDING,
+          duration: 0,
+          maxZoom: 1.2,
+        });
+      });
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+    };
+  }, [flow, fullscreenActive]);
+
   useEffect(() => {
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
@@ -1933,27 +2104,65 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       activateObject,
       focusContainer,
       toggleContainer,
+      closeContainer,
+      resizeContainer,
       toggleRelation,
       openDefinition,
       retryRelation,
     }),
     [
       activateObject,
+      closeContainer,
       focusContainer,
       openDefinition,
+      resizeContainer,
       retryRelation,
       toggleContainer,
       toggleRelation,
     ],
   );
-  const nodes = useMemo(
-    () => [
+
+  const onNodesChange = useCallback((changes: NodeChange<CanvasFlowNode>[]) => {
+    const next: Record<string, { x: number; y: number }> = {};
+    for (const change of changes) {
+      if (change.type !== 'position' || change.position === undefined) {
+        continue;
+      }
+      next[change.id] = change.position;
+    }
+    if (Object.keys(next).length === 0) {
+      return;
+    }
+    setManualPositions((current) => ({ ...current, ...next }));
+  }, []);
+
+  const onNodeClick = useCallback((_event: unknown, node: CanvasFlowNode) => {
+    setSelectedNodeId(node.id);
+    if (node.type === CANVAS_CODE_NODE) {
+      const data = node.data as { container?: { id: string } };
+      if (data.container !== undefined) {
+        setFocusedContainerId(data.container.id);
+        setSelectedObjectId(null);
+      }
+      return;
+    }
+    if (node.type === CANVAS_DIAGRAM_NODE) {
+      const data = node.data as { id?: string };
+      if (data.id !== undefined) {
+        setSelectedDiagramId(data.id);
+        setSelectedObjectId(null);
+      }
+    }
+  }, []);
+  const nodes = useMemo(() => {
+    const built = [
       ...buildCanvasNodes(
         scene,
         layout,
         {
           selectedObjectId,
           focusedContainerId,
+          selectedNodeId,
           collapsed,
           projectSlug: tour.project.slug,
           tourId: tour.id,
@@ -1966,24 +2175,58 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
         flowActions,
       ),
       ...buildCanvasRelationStatusNodes(relationScene.statuses, layout, flowActions),
-    ],
-    [
-      beat.id,
-      collapsed,
-      flowActions,
-      focusedContainerId,
-      layout,
-      preferences.textScale,
-      relationScene.relationMeta,
-      relationScene.statuses,
-      relationState,
-      scene,
-      selectedObjectId,
-      sharedSymbolIds,
-      tour.project.slug,
-    ],
+    ];
+    return built.map((node) => {
+      const position = manualPositions[node.id];
+      const nodeSize = manualSizes[node.id];
+      if (position === undefined && nodeSize === undefined) {
+        return node;
+      }
+      return {
+        ...node,
+        ...(position === undefined ? {} : { position }),
+        ...(nodeSize === undefined
+          ? {}
+          : {
+              width: nodeSize.width,
+              height: nodeSize.height,
+              style: {
+                ...node.style,
+                width: nodeSize.width,
+                height: nodeSize.height,
+              },
+            }),
+      };
+    });
+  }, [
+    beat.id,
+    collapsed,
+    flowActions,
+    focusedContainerId,
+    layout,
+    manualPositions,
+    manualSizes,
+    preferences.textScale,
+    relationScene.relationMeta,
+    relationScene.statuses,
+    relationState,
+    scene,
+    selectedNodeId,
+    selectedObjectId,
+    sharedSymbolIds,
+    tour.project.slug,
+  ]);
+  const edges = useMemo(
+    () =>
+      buildCanvasEdges(scene, {
+        nodeId: selectedNodeId,
+        objectKey:
+          selectedDiagramId !== null && selectedObjectId !== null
+            ? canvasObjectKey(selectedDiagramId, selectedObjectId)
+            : null,
+      }),
+    [scene, selectedDiagramId, selectedNodeId, selectedObjectId],
   );
-  const edges = useMemo(() => buildCanvasEdges(scene), [scene]);
 
   const outlineActions = useMemo<CanvasOutlineActions>(
     () => ({
@@ -1993,6 +2236,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       focusObject: activateObject,
       focusContainer,
       toggleContainer,
+      closeContainer,
       showAllAnchors: showAll,
       zoomIn,
       zoomOut,
@@ -2011,6 +2255,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       addDiagram,
       autoArrange,
       closeOutline,
+      closeContainer,
       fitAll,
       focusContainer,
       focusDiagram,
@@ -2155,7 +2400,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
             edgeTypes={edgeTypes}
             minZoom={MIN_ZOOM}
             maxZoom={MAX_ZOOM}
-            nodesDraggable={false}
+            nodesDraggable
             nodesConnectable={false}
             nodesFocusable={false}
             edgesFocusable={false}
@@ -2164,8 +2409,13 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
             panOnDrag
             zoomOnScroll
             zoomOnPinch
+            onNodesChange={onNodesChange}
+            onNodeClick={onNodeClick}
+            onNodeDragStart={(_event, node) => setSelectedNodeId(node.id)}
             onPaneClick={() => {
               setSelectedObjectId(null);
+              setSelectedDiagramId(null);
+              setSelectedNodeId(null);
               setFocusedContainerId(null);
               updateFocus(rootCanvasFocus());
               selectionRef.current = { selection: homeCanvasSelection(scene) };

@@ -3,9 +3,9 @@ import { lineCountOf, shikiHtmlForCanvas } from './code-html.js';
 
 const THREE_LINES =
   '<pre class="shiki" style="color:#111" tabindex="0"><code>' +
-  '<span class="line" data-line="1">one</span>\n' +
-  '<span class="line" data-line="2">two</span>\n' +
-  '<span class="line" data-line="3">three</span>' +
+  '<span class="line sothspell-line" data-line="1">one</span>\n' +
+  '<span class="line sothspell-line" data-line="2">two</span>\n' +
+  '<span class="line sothspell-line" data-line="3">three</span>' +
   '</code></pre>';
 
 describe('canvas code HTML', () => {
@@ -27,6 +27,13 @@ describe('canvas code HTML', () => {
   it('keeps every line when the container is expanded', () => {
     const html = shikiHtmlForCanvas(THREE_LINES, 24);
     expect(html).toContain('data-line="3"');
+  });
+
+  it('removes the preserved newlines between block line spans', () => {
+    const html = shikiHtmlForCanvas(THREE_LINES, undefined);
+    expect(html).not.toContain('</span>\n<span class="line"');
+    expect(html).not.toContain('<code>\n');
+    expect(html).not.toContain('\n</code>');
   });
 
   it('returns unchanged markup when there is no Shiki code wrapper', () => {
