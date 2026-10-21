@@ -1,6 +1,7 @@
 import { layoutCanvas } from './layout.js';
 import type {
   CanvasDirection,
+  CanvasItemDirection,
   CanvasLayoutItem,
   CanvasSelection,
   CanvasSelectionAction,
@@ -43,6 +44,7 @@ export function reduceCanvasSelection(
   scene: CanvasScene,
   state: CanvasSelectionState,
   action: CanvasSelectionAction,
+  items: readonly string[] = [],
 ): CanvasSelectionState {
   switch (action.type) {
     case 'selectContainer':
@@ -50,11 +52,13 @@ export function reduceCanvasSelection(
     case 'selectObject':
       return selectObject(scene, state, action.diagramId, action.objectId);
     case 'enter':
-      return enterSelection(scene, state);
+      return enterSelection(scene, state, items);
     case 'escape':
       return escapeCanvasSelection(scene, state);
     case 'move':
       return moveSelection(scene, state, action.direction);
+    case 'moveItem':
+      return moveCanvasItem(scene, state, items, action.direction);
   }
 }
 
@@ -65,6 +69,19 @@ export function escapeCanvasSelection(
 ): CanvasSelectionState {
   const { selection } = state;
 
+  if (selection.level === 'item') {
+    const containerId = selection.containerId;
+    if (containerId !== undefined && hasContainer(scene, containerId)) {
+      return {
+        selection: {
+          level: 'container',
+          diagramId: diagramContext(scene, selection),
+          containerId,
+        },
+      };
+    }
+    return { selection: homeCanvasSelection(scene) };
+  }
   if (selection.level === 'container') {
     return { selection: homeCanvasSelection(scene) };
   }
@@ -75,6 +92,88 @@ export function escapeCanvasSelection(
     return { selection: homeCanvasSelection(scene) };
   }
   return state;
+}
+
+/**
+ * Enters the first item of the selected container. The scene has no item model:
+ * symbols, line links, relation toggles, and actions belong to the renderer, so
+ * the caller passes the visible order and this reducer never invents an id.
+ */
+export function enterCanvasItem(
+  scene: CanvasScene,
+  state: CanvasSelectionState,
+  itemIds: readonly string[],
+): CanvasSelectionState {
+  const { selection } = state;
+  const containerId = selection.containerId;
+  if (
+    selection.level !== 'container' ||
+    containerId === undefined ||
+    !hasContainer(scene, containerId)
+  ) {
+    return state;
+  }
+
+  const itemId = usableItemIds(itemIds)[0];
+  if (itemId === undefined) {
+    return state;
+  }
+
+  return {
+    selection: {
+      level: 'item',
+      diagramId: diagramContext(scene, selection),
+      containerId,
+      itemId,
+    },
+  };
+}
+
+/**
+ * Moves through the caller's item order. Item lists wrap at both ends because
+ * the order is short and the viewer should not need a second key to reverse
+ * direction. A stale item id, such as one removed by a relation reload, restarts
+ * at the first item instead of escaping the container.
+ */
+export function moveCanvasItem(
+  scene: CanvasScene,
+  state: CanvasSelectionState,
+  itemIds: readonly string[],
+  direction: CanvasItemDirection,
+): CanvasSelectionState {
+  const { selection } = state;
+  const containerId = selection.containerId;
+  if (
+    selection.level !== 'item' ||
+    containerId === undefined ||
+    !hasContainer(scene, containerId)
+  ) {
+    return state;
+  }
+
+  const items = usableItemIds(itemIds);
+  if (items.length === 0) {
+    return state;
+  }
+
+  const currentIndex =
+    selection.itemId === undefined ? -1 : items.indexOf(selection.itemId);
+  const step = direction === 'next' ? 1 : -1;
+  const nextIndex =
+    currentIndex === -1 ? 0 : (currentIndex + step + items.length) % items.length;
+  const itemId = items[nextIndex];
+  if (itemId === undefined || itemId === selection.itemId) {
+    return state;
+  }
+
+  return {
+    selection: {
+      level: 'item',
+      diagramId: selection.diagramId,
+      containerId,
+      itemId,
+    },
+  };
 }
 
 /** Selection used by the initial outline and by the home control. */
@@ -127,8 +226,12 @@ function selectObject(
 function enterSelection(
   scene: CanvasScene,
   state: CanvasSelectionState,
+  items: readonly string[],
 ): CanvasSelectionState {
   const { selection } = state;
+  if (selection.level === 'container') {
+    return enterCanvasItem(scene, state, items);
+  }
   if (
     selection.level !== 'canvas' ||
     selection.diagramId === null ||
@@ -233,7 +336,8 @@ function currentNode(
   nodes: MoveNode[],
 ): MoveNode | null {
   const key =
-    selection.level === 'container' && selection.containerId !== undefined
+    (selection.level === 'container' || selection.level === 'item') &&
+    selection.containerId !== undefined
       ? codeContainerKey(selection.containerId)
       : selection.diagramId !== null
         ? diagramCardKey(selection.diagramId)
@@ -354,4 +458,12 @@ function diagramContext(scene: CanvasScene, selection: CanvasSelection): string 
   return diagramId !== null && scene.diagrams.some((diagram) => diagram.id === diagramId)
     ? diagramId
     : scene.homeDiagramId;
+}
+
+function hasContainer(scene: CanvasScene, containerId: string): boolean {
+  return scene.containers.some((container) => container.id === containerId);
+}
+
+function usableItemIds(itemIds: readonly string[]): string[] {
+  return itemIds.filter((itemId) => itemId.length > 0);
 }

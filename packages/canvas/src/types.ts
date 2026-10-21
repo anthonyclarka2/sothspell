@@ -151,7 +151,10 @@ export interface CanvasRelationResponse {
 
 export type CanvasDirection = 'up' | 'down' | 'left' | 'right';
 
-export type CanvasSelectionLevel = 'canvas' | 'container';
+/** Item order inside one container comes from the renderer, not the scene. */
+export type CanvasItemDirection = 'previous' | 'next';
+
+export type CanvasSelectionLevel = 'canvas' | 'container' | 'item';
 
 export interface CanvasSelection {
   level: CanvasSelectionLevel;
@@ -159,6 +162,8 @@ export interface CanvasSelection {
   diagramId: string | null;
   containerId?: string;
   objectId?: string;
+  /** The focused item inside `containerId`; Phase 19 uses this for roving focus. */
+  itemId?: string;
 }
 
 export interface CanvasSelectionState {
@@ -170,7 +175,8 @@ export type CanvasSelectionAction =
   | { type: 'selectObject'; diagramId: string; objectId: string }
   | { type: 'enter' }
   | { type: 'escape' }
-  | { type: 'move'; direction: CanvasDirection };
+  | { type: 'move'; direction: CanvasDirection }
+  | { type: 'moveItem'; direction: CanvasItemDirection };
 
 export function diagramCardKey(id: string): string {
   return `diagram:${id}`;
