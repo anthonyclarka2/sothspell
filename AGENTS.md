@@ -14,8 +14,9 @@
   authoring flow (`/new`) opens a local git repository or a public GitHub URL
   and authors a tour; `examples/tiny-notes/` is the demo repository. Both
   completed eras are archived under `plans/archive/v1/` and
-  `plans/archive/v2/`. The canvas era is planned only: `plans/ROADMAP.md` and
-  `plans/PHASE-17.md` through `plans/PHASE-20.md`; no canvas code exists yet.
+  `plans/archive/v2/`. The canvas era is in progress: Phase 17 is complete and
+  Phases 18–20 remain planned in `plans/ROADMAP.md` and
+  `plans/PHASE-18.md` through `plans/PHASE-20.md`.
 - **Example project:** Bunbun at `/Users/ajc/Projects/codegens/bunbun`, pinned to
   commit `9fef24d`. It is **read-only**. No command may create, modify, or delete
   anything inside that tree. All snapshots, tours, audio, logs, and runs live
@@ -164,8 +165,8 @@ Do not claim completion without fresh verification output.
 - `packages/harness/` — harness adapter contract; the shared runtime and the
   Claude Code and Codex adapters.
 - `packages/opencode-plugin/` — OpenCode V2 plugin (Phase 7).
-- `packages/canvas/` — planned canvas scene, layout, selection, view
-  preferences, and export model for Phase 17 onward.
+- `packages/canvas/` — canvas scene, deterministic layout, selection, view
+  preferences, and export model. Phase 17 scene/layout/renderer are shipped.
 - `examples/bunbun-tour/` — checked-in golden tour pinned to Bunbun `9fef24d`.
 - `issues/` — the local text issue tracker, one numbered file per issue.
 - `$SOTHSPELL_HOME/projects/<slug>/snapshot.json` and `project.json` — the local

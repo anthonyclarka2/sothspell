@@ -1,7 +1,7 @@
 # Phase 17 — Canvas Foundation
 
-**Status: planned.** Planning baseline: 2026-10-21. Depends on: the v1 player,
-the v2 embed decision, and the compiled tour.
+**Status: complete (2026-10-21).** Planning baseline: 2026-10-21. Depends on:
+the v1 player, the v2 embed decision, and the compiled tour.
 
 ## Goal
 
@@ -229,3 +229,43 @@ relationships, the full keyboard model, or export.
   does not.
 - Verify in real Chrome, not only happy-dom.
 - Record the first canvas bundle size and the default-scene frame sample.
+
+## Shipped (closure, 2026-10-21)
+
+- **`packages/canvas`** — pure scene, deterministic layout, viewport fitting,
+  and selection. 40 unit tests cover home/satellite diagrams, the six-container
+  cap, evidence links, no-overlap layout, viewport clamps, and selection moves.
+- **Opt-in canvas** — `?view=canvas` on the existing player route, a Stage/Canvas
+  switch that preserves playback and run state, and a `<768 px` Stage fallback
+  with a Phase 19 note.
+- **Renderer** — React Flow diagram cards with object child nodes, memoized
+  custom nodes/edges, orthogonal rounded evidence links, code containers with
+  per-line target handles, 24-line collapse, and code-page links.
+- **Controls** — zoom in/out, percentage, reset, fit, home, auto-arrange,
+  follow-beat, outline, fullscreen, shortcut sheet. Fullscreen has a two-second
+  pulse and a dismissible return hint.
+- **Outline** — a minimal ordered text path for every Phase 17 action.
+- **Shortcuts** — `F`, `0`, `1`, `+`/`-`, `Shift+A`, `Shift+H`, `O`, `B`, `?`,
+  and `Esc`, scoped to the canvas root.
+
+### Closure verification (fresh, 2026-10-21)
+
+- `pnpm exec vitest run packages/canvas apps/web`: 6 files / 58 tests.
+- `pnpm test`: 108 files / 902 tests passed on the pre-closure run; one isolated
+  rerun of `packages/authoring/src/bunbun-authoring.acceptance.test.ts` passed
+  after a 5s timeout in a parallel full-suite run.
+- `pnpm typecheck`, `pnpm lint`, and `pnpm build` clean.
+- `SOTHSPELL_WEB_PORT=5273 SOTHSPELL_API_PORT=4318 pnpm test:browser`:
+  72 passed, including 8 canvas journeys and the canvas axe states.
+- Real Chrome: fullscreen via button, `F`, and `Esc`; keyboard object activation;
+  no focus theft.
+- Bunbun tree clean.
+
+### Follow-ups
+
+- Code-page capability gating and authored/imported project roots land in Phase
+  18 with the shared project record.
+- Compact canvas, auto-zoom/auto-arrange preferences, full keyboard navigation,
+  and the relation-aware outline land in Phase 19.
+- 60 fps measurement, export, and the coverage gate land in Phase 20.
+- Manual container dragging and saved layouts remain Phase 19 work.
