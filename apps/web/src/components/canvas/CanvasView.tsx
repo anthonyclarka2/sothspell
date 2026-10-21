@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import {
   Background,
   ReactFlow,
@@ -26,6 +27,7 @@ import { CanvasControls } from './CanvasControls.js';
 import { CanvasEvidenceEdge } from './CanvasEvidenceEdge.js';
 import { CanvasFullscreenHint } from './CanvasFullscreenHint.js';
 import { CanvasOutline, type CanvasOutlineActions } from './CanvasOutline.js';
+import { CanvasShortcuts } from './CanvasShortcuts.js';
 import {
   buildCanvasEdges,
   buildCanvasNodes,
@@ -90,6 +92,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
   const duration = reducedMotion ? 0 : FRAME_DURATION;
 
   const [size, setSize] = useState({ width: 0, height: 0 });
+  const [flowReady, setFlowReady] = useState(false);
   const [openDiagramIds, setOpenDiagramIds] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
@@ -97,12 +100,14 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
   const [focusedContainerId, setFocusedContainerId] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [outlineOpen, setOutlineOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [followBeat, setFollowBeat] = useState(true);
   const [showAllAnchors, setShowAllAnchors] = useState(false);
   const [announcement, setAnnouncement] = useState('');
   const [hintVisible, setHintVisible] = useState(false);
   const [fullscreenPulse, setFullscreenPulse] = useState(false);
   const wasFullscreen = useRef(false);
+  const shortcutsReturnFocus = useRef<HTMLElement | null>(null);
   const [arranged, setArranged] = useState(false);
   const arrangeTimeout = useRef<number | undefined>(undefined);
   const framed = useRef(false);
@@ -142,7 +147,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
   // Frame the board once, after the first real measurement. Later window
   // resizes keep the viewer's pan and zoom instead of stealing the viewport.
   useEffect(() => {
-    if (framed.current || size.width < 200 || size.height < 200) {
+    if (!flowReady || framed.current || size.width < 200 || size.height < 200) {
       return;
     }
     framed.current = true;
@@ -159,7 +164,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       });
     });
     return () => cancelAnimationFrame(raf);
-  }, [flow, layout.bounds, size]);
+  }, [flow, flowReady, layout.bounds, size]);
 
   useEffect(
     () => () => {
@@ -362,6 +367,128 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
     announce(t('canvas.announce.outlineOff'));
   }, [announce, t]);
 
+  const openShortcuts = useCallback(() => {
+    shortcutsReturnFocus.current = document.activeElement as HTMLElement | null;
+    setShortcutsOpen(true);
+    announce(t('canvas.announce.shortcutsOn'));
+  }, [announce, t]);
+
+  const closeShortcuts = useCallback(() => {
+    setShortcutsOpen(false);
+    announce(t('canvas.announce.shortcutsOff'));
+    shortcutsReturnFocus.current?.focus();
+    shortcutsReturnFocus.current = null;
+  }, [announce, t]);
+
+  const onKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLElement>) => {
+      if (event.defaultPrevented) {
+        return;
+      }
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.isContentEditable ||
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
+        target?.tagName === 'SELECT'
+      ) {
+        return;
+      }
+
+      const handled = () => {
+        event.preventDefault();
+        event.stopPropagation();
+      };
+
+      switch (event.key) {
+        case 'f':
+        case 'F':
+          handled();
+          toggleFullscreen();
+          break;
+        case '+':
+        case '=':
+          handled();
+          zoomIn();
+          break;
+        case '-':
+        case '_':
+          handled();
+          zoomOut();
+          break;
+        case '0':
+          handled();
+          fitAll();
+          break;
+        case '1':
+          handled();
+          resetZoom();
+          break;
+        case 'H':
+          if (event.shiftKey) {
+            handled();
+            home();
+          }
+          break;
+        case 'A':
+          if (event.shiftKey) {
+            handled();
+            autoArrange();
+          }
+          break;
+        case 'o':
+        case 'O':
+          handled();
+          toggleOutline();
+          break;
+        case 'b':
+        case 'B':
+          handled();
+          toggleFollowBeat();
+          break;
+        case '?':
+          handled();
+          openShortcuts();
+          break;
+        case 'Escape':
+          if (shortcutsOpen) {
+            handled();
+            closeShortcuts();
+          } else if (fullscreenActive) {
+            handled();
+            fullscreenToggle();
+          } else if (outlineOpen) {
+            handled();
+            closeOutline();
+          }
+          break;
+        default:
+          break;
+      }
+    },
+    [
+      autoArrange,
+      closeOutline,
+      closeShortcuts,
+      fitAll,
+      fullscreenActive,
+      fullscreenToggle,
+      home,
+      openShortcuts,
+      outlineOpen,
+      resetZoom,
+      shortcutsOpen,
+      toggleFollowBeat,
+      toggleFullscreen,
+      toggleOutline,
+      zoomIn,
+      zoomOut,
+    ],
+  );
+
   // A beat change resets the local focus but never the player. Follow beat is
   // the only behaviour that moves the viewport, and it can be turned off.
   const previousBeatId = useRef(beat.id);
@@ -423,98 +550,17 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
   }, [announce, fullscreenActive, t]);
 
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) {
-        return;
-      }
-      if (event.metaKey || event.ctrlKey || event.altKey) {
-        return;
-      }
+    const onPointerDown = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
-      if (
-        target?.isContentEditable ||
-        target?.tagName === 'INPUT' ||
-        target?.tagName === 'TEXTAREA' ||
-        target?.tagName === 'SELECT'
-      ) {
+      if (target?.closest('button, a, input, textarea, select')) {
         return;
       }
-
-      switch (event.key) {
-        case 'f':
-        case 'F':
-          event.preventDefault();
-          toggleFullscreen();
-          break;
-        case '+':
-        case '=':
-          event.preventDefault();
-          zoomIn();
-          break;
-        case '-':
-        case '_':
-          event.preventDefault();
-          zoomOut();
-          break;
-        case '0':
-          event.preventDefault();
-          resetZoom();
-          break;
-        case '1':
-          event.preventDefault();
-          fitAll();
-          break;
-        case 'h':
-        case 'H':
-          event.preventDefault();
-          home();
-          break;
-        case 'a':
-        case 'A':
-          event.preventDefault();
-          autoArrange();
-          break;
-        case 'o':
-        case 'O':
-          event.preventDefault();
-          toggleOutline();
-          break;
-        case 'b':
-        case 'B':
-          event.preventDefault();
-          toggleFollowBeat();
-          break;
-        case 'Escape':
-          if (fullscreenActive) {
-            event.preventDefault();
-            fullscreenToggle();
-          } else if (outlineOpen) {
-            event.preventDefault();
-            closeOutline();
-          }
-          break;
-        default:
-          break;
-      }
+      rootRef.current?.focus();
     };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [
-    autoArrange,
-    closeOutline,
-    fitAll,
-    fullscreenActive,
-    fullscreenToggle,
-    home,
-    outlineOpen,
-    resetZoom,
-    toggleFollowBeat,
-    toggleFullscreen,
-    toggleOutline,
-    zoomIn,
-    zoomOut,
-  ]);
+    const root = rootRef.current;
+    root?.addEventListener('pointerdown', onPointerDown);
+    return () => root?.removeEventListener('pointerdown', onPointerDown);
+  }, []);
 
   const flowActions = useMemo<CanvasFlowActions>(
     () => ({ activateObject, focusContainer, toggleContainer }),
@@ -597,6 +643,8 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       className={`canvas-root${arranged ? ' canvas-root--arranged' : ''}`}
       aria-label={t('canvas.canvasView')}
       data-testid="canvas-view"
+      tabIndex={0}
+      onKeyDown={onKeyDown}
     >
       <p
         className="visually-hidden"
@@ -608,29 +656,32 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       </p>
 
       <div ref={boardRef} className="canvas-board">
-        <ReactFlow<CanvasFlowNode, CanvasEvidenceFlowEdge>
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          minZoom={MIN_ZOOM}
-          maxZoom={MAX_ZOOM}
-          nodesDraggable={false}
-          nodesConnectable={false}
-          nodesFocusable={false}
-          edgesFocusable={false}
-          elementsSelectable={false}
-          disableKeyboardA11y
-          panOnDrag
-          zoomOnScroll
-          zoomOnPinch
-          onPaneClick={() => {
-            setSelectedObjectId(null);
-            setFocusedContainerId(null);
-          }}
-        >
-          <Background gap={18} size={1.2} color="var(--line-strong)" />
-        </ReactFlow>
+        {size.width > 0 && size.height > 0 ? (
+          <ReactFlow<CanvasFlowNode, CanvasEvidenceFlowEdge>
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            minZoom={MIN_ZOOM}
+            maxZoom={MAX_ZOOM}
+            nodesDraggable={false}
+            nodesConnectable={false}
+            nodesFocusable={false}
+            edgesFocusable={false}
+            elementsSelectable={false}
+            disableKeyboardA11y
+            panOnDrag
+            zoomOnScroll
+            zoomOnPinch
+            onPaneClick={() => {
+              setSelectedObjectId(null);
+              setFocusedContainerId(null);
+            }}
+            onInit={() => setFlowReady(true)}
+          >
+            <Background gap={18} size={1.2} color="var(--line-strong)" />
+          </ReactFlow>
+        ) : null}
       </div>
 
       <div className="canvas-tray" role="group" aria-label={t('canvas.trayLabel')}>
@@ -721,7 +772,10 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
         onToggleOutline={toggleOutline}
         onToggleFollowBeat={toggleFollowBeat}
         onToggleFullscreen={toggleFullscreen}
+        onShowShortcuts={openShortcuts}
       />
+
+      {shortcutsOpen ? <CanvasShortcuts onClose={closeShortcuts} /> : null}
 
       {fullscreenActive && hintVisible ? (
         <CanvasFullscreenHint onDismiss={() => setHintVisible(false)} />

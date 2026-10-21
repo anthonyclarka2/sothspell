@@ -2792,6 +2792,11 @@ pre,
   inset: 0;
 }
 
+.canvas-root:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
 .canvas-board .react-flow {
   background: transparent;
 }
@@ -3380,6 +3385,82 @@ pre,
   color: var(--muted);
   font-size: 13px;
   text-align: center;
+}
+
+.canvas-shortcuts-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+}
+
+.canvas-shortcuts {
+  width: min(420px, 100%);
+  max-height: min(560px, 100%);
+  overflow: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.canvas-shortcuts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.canvas-shortcuts-header h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.canvas-shortcuts-list {
+  margin: 0;
+  padding: 8px 14px 14px;
+}
+
+.canvas-shortcuts-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.canvas-shortcuts-row:last-child {
+  border-bottom: 0;
+}
+
+.canvas-shortcuts-row dt,
+.canvas-shortcuts-row dd {
+  margin: 0;
+}
+
+.canvas-shortcuts-row kbd {
+  display: inline-block;
+  min-width: 24px;
+  padding: 2px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  background: var(--panel-strong);
+  color: var(--ink);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  text-align: center;
+}
+
+.canvas-shortcuts-row dd {
+  color: var(--muted);
+  font-size: 12.5px;
 }
 
 .canvas-fullscreen-hint {

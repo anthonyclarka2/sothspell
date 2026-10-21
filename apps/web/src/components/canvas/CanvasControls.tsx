@@ -9,6 +9,7 @@ import {
   ListBullets,
   Minus,
   Plus,
+  Question,
 } from '@phosphor-icons/react';
 import { useViewport } from '@xyflow/react';
 import { useLocale } from '../../i18n/locale.js';
@@ -28,6 +29,7 @@ export interface CanvasControlsProps {
   onToggleOutline: () => void;
   onToggleFollowBeat: () => void;
   onToggleFullscreen: () => void;
+  onShowShortcuts: () => void;
 }
 
 interface ControlButtonProps {
@@ -90,6 +92,7 @@ export function CanvasControls({
   onToggleOutline,
   onToggleFollowBeat,
   onToggleFullscreen,
+  onShowShortcuts,
 }: CanvasControlsProps) {
   const { t } = useLocale();
   const { zoom } = useViewport();
@@ -117,22 +120,22 @@ export function CanvasControls({
         </ControlButton>
         <ControlButton
           label={`${t('canvas.resetZoom')} 1:1`}
-          shortcut="0"
+          shortcut="1"
           onClick={onResetZoom}
         >
           <span className="canvas-control-text">1:1</span>
         </ControlButton>
-        <ControlButton label={t('canvas.fitAll')} shortcut="1" onClick={onFitAll}>
+        <ControlButton label={t('canvas.fitAll')} shortcut="0" onClick={onFitAll}>
           <CornersOut size={16} aria-hidden="true" />
         </ControlButton>
       </div>
       <div className="canvas-control-group">
-        <ControlButton label={t('canvas.home')} shortcut="H" onClick={onHome}>
+        <ControlButton label={t('canvas.home')} shortcut="Shift+H" onClick={onHome}>
           <House size={16} aria-hidden="true" />
         </ControlButton>
         <ControlButton
           label={t('canvas.autoArrange')}
-          shortcut="A"
+          shortcut="Shift+A"
           onClick={onAutoArrange}
         >
           <ArrowsClockwise size={16} aria-hidden="true" />
@@ -154,6 +157,13 @@ export function CanvasControls({
           onClick={onToggleOutline}
         >
           <ListBullets size={16} aria-hidden="true" />
+        </ControlButton>
+        <ControlButton
+          label={t('canvas.shortcuts')}
+          shortcut="?"
+          onClick={onShowShortcuts}
+        >
+          <Question size={16} aria-hidden="true" />
         </ControlButton>
         {fullscreenSupported ? (
           <ControlButton

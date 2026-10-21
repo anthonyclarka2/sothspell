@@ -148,6 +148,21 @@ test('pulses and hints after fullscreen, then returns with Escape and F', async 
   await expect(page.getByText('Press F or Esc to return')).toBeHidden();
 });
 
+test('opens the shortcut sheet with ? and returns focus on Escape', async ({ page }) => {
+  await page.goto('/t/tour_bunbun_golden/beat_purpose_01?view=canvas');
+  await page.getByTestId('canvas-view').focus();
+  await page.keyboard.press('?');
+
+  const dialog = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText('Shift+A')).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Close' })).toBeFocused();
+
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(page.getByTestId('canvas-view')).toBeFocused();
+});
+
 test('keeps two diagrams apart at desktop and tablet widths', async ({ page }) => {
   for (const { width, height } of [
     { width: 1024, height: 768 },

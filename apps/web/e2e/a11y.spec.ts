@@ -263,6 +263,16 @@ test('canvas with evidence, two diagrams, and the outline has no blocking axe vi
   await expectNoBlockingViolations(page);
 });
 
+test('canvas shortcut sheet has no blocking axe violations', async ({ page }) => {
+  await page.goto('/t/tour_bunbun_golden/beat_purpose_01?view=canvas');
+  await page.getByTestId('canvas-view').focus();
+  await page.keyboard.press('?');
+  await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible();
+  await page.waitForLoadState('networkidle');
+
+  await expectNoBlockingViolations(page);
+});
+
 /* Phase 15 review (merged) */
 
 test('review page has no blocking axe violations: reading state', async ({ page }) => {

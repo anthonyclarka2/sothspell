@@ -119,6 +119,10 @@ const en = {
   'canvas.announce.showAll': 'Showing all anchored code.',
   'canvas.announce.followOn': 'Follow beat on.',
   'canvas.announce.followOff': 'Follow beat off.',
+  'canvas.shortcuts': 'Keyboard shortcuts',
+  'canvas.close': 'Close',
+  'canvas.announce.shortcutsOn': 'Keyboard shortcuts opened.',
+  'canvas.announce.shortcutsOff': 'Keyboard shortcuts closed.',
 
   'narration.label': 'Narration',
   'narration.readMode': 'Read mode',
@@ -336,6 +340,10 @@ const es: Catalog = {
   'canvas.announce.showAll': 'Mostrando todo el código anclado.',
   'canvas.announce.followOn': 'Seguir el beat activado.',
   'canvas.announce.followOff': 'Seguir el beat desactivado.',
+  'canvas.shortcuts': 'Atajos de teclado',
+  'canvas.close': 'Cerrar',
+  'canvas.announce.shortcutsOn': 'Atajos de teclado abiertos.',
+  'canvas.announce.shortcutsOff': 'Atajos de teclado cerrados.',
 
   'narration.label': 'Narración',
   'narration.readMode': 'Modo lectura',
@@ -548,6 +556,10 @@ const ar: Catalog = {
   'canvas.announce.showAll': 'يُعرض كل الكود المرتبط.',
   'canvas.announce.followOn': 'متابعة المقطع مفعّلة.',
   'canvas.announce.followOff': 'متابعة المقطع متوقفة.',
+  'canvas.shortcuts': 'اختصارات لوحة المفاتيح',
+  'canvas.close': 'إغلاق',
+  'canvas.announce.shortcutsOn': 'فُتحت اختصارات لوحة المفاتيح.',
+  'canvas.announce.shortcutsOff': 'أُغلقت اختصارات لوحة المفاتيح.',
 
   'narration.label': 'السرد',
   'narration.readMode': 'وضع القراءة',
