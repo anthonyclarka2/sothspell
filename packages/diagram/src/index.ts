@@ -42,6 +42,8 @@ export const DiagramNodeSchema = z.object({
   label: z.string().min(1).max(48),
   type: DiagramNodeTypeSchema,
   anchorId: z.string().min(1).optional(),
+  /** The analyzer symbol ID this object opens, when one is known. */
+  symbolId: z.string().min(1).optional(),
 });
 
 export const DiagramEdgeSchema = z.object({
@@ -124,6 +126,7 @@ export interface PositionedNode {
   width: number;
   height: number;
   anchorId?: string;
+  symbolId?: string;
 }
 
 export interface PositionedEdge {
@@ -196,6 +199,7 @@ export async function layoutDiagram(
       width: positioned?.width ?? NODE_WIDTH,
       height: positioned?.height ?? NODE_HEIGHT,
       ...(node.anchorId === undefined ? {} : { anchorId: node.anchorId }),
+      ...(node.symbolId === undefined ? {} : { symbolId: node.symbolId }),
     } satisfies PositionedNode;
   });
 

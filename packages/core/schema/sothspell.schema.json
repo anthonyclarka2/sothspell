@@ -4,7 +4,11 @@
   "properties": {
     "schemaVersion": {
       "type": "string",
-      "const": "1.1.0"
+      "enum": [
+        "1.0.0",
+        "1.1.0",
+        "1.2.0"
+      ]
     },
     "id": {
       "type": "string",
@@ -168,6 +172,10 @@
                       "anchorId": {
                         "type": "string",
                         "minLength": 1
+                      },
+                      "symbolId": {
+                        "type": "string",
+                        "minLength": 1
                       }
                     },
                     "required": [
@@ -274,6 +282,10 @@
                         "minLength": 1
                       },
                       "symbol": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "symbolId": {
                         "type": "string",
                         "minLength": 1
                       },
