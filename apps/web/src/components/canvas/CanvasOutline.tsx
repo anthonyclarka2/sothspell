@@ -4,6 +4,12 @@ import type { CanvasScene } from '@sothspell/canvas';
 import type { PositionedDiagram } from '@sothspell/diagram';
 import { useLocale } from '../../i18n/locale.js';
 import { COLLAPSED_LINES } from './code-html.js';
+import {
+  relationOwnerKey,
+  type CanvasRelationMeta,
+  type CanvasRelationToggleDirection,
+  type CanvasRelationUiState,
+} from './relation-scene.js';
 
 export interface CanvasOutlineActions {
   focusDiagram: (diagramId: string) => void;
@@ -12,6 +18,8 @@ export interface CanvasOutlineActions {
   focusObject: (diagramId: string, objectId: string) => void;
   focusContainer: (containerId: string) => void;
   toggleContainer: (containerId: string) => void;
+  toggleRelation: (containerId: string, direction: CanvasRelationToggleDirection) => void;
+  openDefinition: (symbolId: string) => void;
   showAllAnchors: () => void;
   zoomIn: () => void;
   zoomOut: () => void;
@@ -34,6 +42,8 @@ export interface CanvasOutlineProps {
   focusedContainerId: string | null;
   collapsed: Record<string, boolean>;
   hiddenContainerCount: number;
+  relationState: CanvasRelationUiState;
+  relationMeta: Record<string, CanvasRelationMeta>;
   followBeat: boolean;
   fullscreenSupported: boolean;
   fullscreenActive: boolean;
@@ -57,6 +67,8 @@ export function CanvasOutline({
   focusedContainerId,
   collapsed,
   hiddenContainerCount,
+  relationState,
+  relationMeta,
   followBeat,
   fullscreenSupported,
   fullscreenActive,
@@ -119,9 +131,12 @@ export function CanvasOutline({
                 {diagram.objects.length === 0 ? null : (
                   <ol>
                     {diagram.objects.map((object) => {
-                      const resolved = scene.containers.some(
-                        (container) => container.anchorId === object.anchorId,
-                      );
+                      const resolved =
+                        (object.anchorId !== undefined &&
+                          scene.containers.some(
+                            (container) => container.anchorId === object.anchorId,
+                          )) ||
+                        object.symbolId !== undefined;
                       return (
                         <li key={object.id}>
                           {resolved ? (
@@ -177,6 +192,12 @@ export function CanvasOutline({
               {scene.containers.map((container) => {
                 const isCollapsed = collapsed[container.id] ?? container.collapsed;
                 const totalLines = container.excerpt.split('\n').length;
+                const meta = relationMeta[container.id];
+                const symbolId = container.symbolId;
+                const incomingKey = relationOwnerKey(container.id, 'incoming');
+                const outgoingKey = relationOwnerKey(container.id, 'outgoing');
+                const incomingActive = relationState.activeOwners.has(incomingKey);
+                const outgoingActive = relationState.activeOwners.has(outgoingKey);
                 return (
                   <li key={container.id}>
                     <div className="canvas-outline-row">
@@ -193,6 +214,47 @@ export function CanvasOutline({
                       <span className="canvas-outline-meta mono">
                         {container.path}:{container.startLine}–{container.endLine}
                       </span>
+                    </div>
+                    <div className="canvas-outline-row">
+                      {symbolId === undefined ? (
+                        <span className="canvas-outline-note">
+                          {t('canvas.noSymbolTarget')}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="canvas-outline-action"
+                          onClick={() => actions.openDefinition(symbolId)}
+                        >
+                          {t('canvas.openDefinition', { label: container.label })}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="canvas-outline-action"
+                        aria-pressed={incomingActive}
+                        disabled={symbolId === undefined}
+                        onClick={() => actions.toggleRelation(container.id, 'incoming')}
+                      >
+                        {t('canvas.incoming')}
+                      </button>
+                      <button
+                        type="button"
+                        className="canvas-outline-action"
+                        aria-pressed={outgoingActive}
+                        disabled={symbolId === undefined}
+                        onClick={() => actions.toggleRelation(container.id, 'outgoing')}
+                      >
+                        {t('canvas.outgoing')}
+                      </button>
+                      {meta?.relation === undefined ? null : (
+                        <span className="canvas-outline-meta">
+                          {t('canvas.relationBadge', {
+                            relation: meta.relation,
+                            confidence: t('canvas.relationStatic'),
+                          })}
+                        </span>
+                      )}
                     </div>
                     <div className="canvas-outline-row">
                       {totalLines > COLLAPSED_LINES ? (

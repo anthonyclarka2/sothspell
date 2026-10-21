@@ -21,7 +21,7 @@ export const CanvasCodeContainer = memo(function CanvasCodeContainer({
   data,
 }: NodeProps<CanvasCodeNode>) {
   const { t } = useLocale();
-  const { container, collapsed } = data;
+  const { container, collapsed, symbolId } = data;
   const totalLines = lineCountOf(container.excerpt);
   const visibleLines = collapsed ? Math.min(COLLAPSED_LINES, totalLines) : totalLines;
   const html = useMemo(
@@ -29,17 +29,33 @@ export const CanvasCodeContainer = memo(function CanvasCodeContainer({
     [collapsed, container.html],
   );
   const linkedLines = new Set(data.linkedLines);
+  const explanationId = `canvas-relation-hint-${container.id}`;
 
   return (
     <article
       className="canvas-card canvas-code-container"
       data-testid="canvas-code-container"
       data-container-id={container.id}
+      data-symbol-id={symbolId}
+      data-relation-kind={data.relation?.kind}
       data-focused={data.focused}
     >
       <header className="canvas-code-header">
         <div className="canvas-code-identity">
-          <h3>{container.label}</h3>
+          <h3>
+            {symbolId === undefined ? (
+              container.label
+            ) : (
+              <button
+                type="button"
+                className="canvas-symbol-link nodrag"
+                aria-label={t('canvas.openDefinition', { label: container.label })}
+                onClick={() => data.onOpenDefinition(symbolId)}
+              >
+                {container.label}
+              </button>
+            )}
+          </h3>
           <p className="mono">
             {t('canvas.codeMeta', {
               path: container.path,
@@ -72,6 +88,56 @@ export const CanvasCodeContainer = memo(function CanvasCodeContainer({
           </Link>
         </div>
       </header>
+      <div className="canvas-code-toolbar">
+        <div
+          className="canvas-relation-toggles nodrag"
+          role="group"
+          aria-label={t('canvas.relationToggleGroup', { label: container.label })}
+        >
+          <button
+            type="button"
+            className="canvas-relation-toggle"
+            aria-pressed={data.incoming.active}
+            disabled={data.incoming.disabled}
+            aria-describedby={data.incoming.disabled ? explanationId : undefined}
+            data-relation-direction="incoming"
+            data-loading={data.incoming.loading}
+            onClick={() => data.onToggleRelation(container.id, 'incoming')}
+          >
+            {data.incoming.loading ? t('canvas.incomingLoading') : t('canvas.incoming')}
+          </button>
+          <button
+            type="button"
+            className="canvas-relation-toggle"
+            aria-pressed={data.outgoing.active}
+            disabled={data.outgoing.disabled}
+            aria-describedby={data.outgoing.disabled ? explanationId : undefined}
+            data-relation-direction="outgoing"
+            data-loading={data.outgoing.loading}
+            onClick={() => data.onToggleRelation(container.id, 'outgoing')}
+          >
+            {data.outgoing.loading ? t('canvas.outgoingLoading') : t('canvas.outgoing')}
+          </button>
+        </div>
+        {data.relation === null ? null : (
+          <span
+            className="canvas-relation-badge"
+            title={t('canvas.relationConfidence', {
+              confidence: data.relation.confidence,
+            })}
+          >
+            {t('canvas.relationBadge', {
+              relation: data.relation.kind,
+              confidence: t('canvas.relationStatic'),
+            })}
+          </span>
+        )}
+        {data.incoming.disabled ? (
+          <span id={explanationId} className="visually-hidden">
+            {t('canvas.noSymbolTarget')}
+          </span>
+        ) : null}
+      </div>
       <div className="canvas-code-body">
         <div className="canvas-code-inner">
           <div
@@ -102,6 +168,20 @@ export const CanvasCodeContainer = memo(function CanvasCodeContainer({
               );
             })}
           </div>
+          <Handle
+            type="source"
+            position={Position.Right}
+            id="flow-right"
+            isConnectable={false}
+            className="canvas-flow-handle"
+          />
+          <Handle
+            type="target"
+            position={Position.Left}
+            id="flow-left"
+            isConnectable={false}
+            className="canvas-flow-handle"
+          />
         </div>
       </div>
     </article>
