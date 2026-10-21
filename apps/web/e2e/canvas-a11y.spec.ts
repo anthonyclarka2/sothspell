@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import {
   CANVAS_SYMBOLS,
@@ -29,6 +30,19 @@ async function seedPreferences(
     },
     { key: PREFERENCES_KEY, value: { ...BASE_PREFERENCES, ...patch } },
   );
+}
+
+async function expectNoBlockingViolations(page: Page): Promise<void> {
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  const blocking = results.violations.filter(
+    (violation) => violation.impact === 'critical' || violation.impact === 'serious',
+  );
+  expect(
+    blocking,
+    blocking.map((violation) => `${violation.id}: ${violation.help}`).join('\n'),
+  ).toEqual([]);
 }
 
 function installWriteRelations(page: Page): void {
@@ -390,4 +404,27 @@ test('high contrast and colour-blind palette apply readable tokens', async ({ pa
   await expect(path).toBeVisible();
   const stroke = await path.evaluate((element) => getComputedStyle(element).stroke);
   expect(stroke).toBe('rgb(0, 114, 178)');
+});
+
+test('export menu and print sheet have no blocking axe violations', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.print = () => undefined;
+  });
+  await page.goto('/t/tour_bunbun_golden/beat_request_01?view=canvas');
+  await page.getByTestId('canvas-object').filter({ hasText: 'main.ts' }).click();
+  await expect(page.getByTestId('canvas-code-container')).toHaveCount(1);
+
+  await page.getByTestId('canvas-export-button').click();
+  await expect(page.getByTestId('canvas-export-panel')).toBeVisible();
+  await expectNoBlockingViolations(page);
+
+  await page.getByRole('button', { name: /PDF · print layout/i }).click();
+  await expect(page.getByTestId('canvas-print-view')).toHaveCount(1);
+  await expectNoBlockingViolations(page);
+
+  // The screen state hides the sheet; print media is the state a reader sees
+  // in the print preview, so axe checks both.
+  await page.emulateMedia({ media: 'print' });
+  await expect(page.getByTestId('canvas-print-view')).toBeVisible();
+  await expectNoBlockingViolations(page);
 });

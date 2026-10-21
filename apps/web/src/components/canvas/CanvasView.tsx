@@ -14,12 +14,14 @@ import {
 import '@xyflow/react/dist/style.css';
 import {
   buildCanvasScene,
+  buildExportModel,
   codeContainerKey,
   createCanvasSelection,
   diagramCardKey,
   homeCanvasSelection,
   reduceCanvasSelection,
   viewportFor,
+  type CanvasPrintModel,
   type CanvasSelectionState,
 } from '@sothspell/canvas';
 import type { CompiledBeat, CompiledChapter, CompiledTour } from '@sothspell/core';
@@ -32,16 +34,19 @@ import {
 import { useLocale } from '../../i18n/locale.js';
 import { useFullscreen } from '../../lib/use-fullscreen.js';
 import { useMediaQuery } from '../../lib/use-media-query.js';
+import { captureCanvasImage, waitForCanvasPaint } from '../../lib/canvas-export.js';
 import { CanvasCodeContainer } from './CanvasCodeContainer.js';
 import { CanvasCompact } from './CanvasCompact.js';
 import { CanvasDiagramCard, CanvasObjectCard } from './CanvasDiagramCard.js';
 import { CanvasControls } from './CanvasControls.js';
 import { CanvasDisplayMenu } from './CanvasDisplayMenu.js';
 import { CanvasEvidenceEdge } from './CanvasEvidenceEdge.js';
+import { CanvasExportMenu } from './CanvasExportMenu.js';
 import { CanvasFlowEdge as CanvasFlowEdgeView } from './CanvasFlowEdge.js';
 import { CanvasFullscreenHint } from './CanvasFullscreenHint.js';
 import { CanvasNotice, type CanvasNoticeKind } from './CanvasNotice.js';
 import { CanvasOutline, type CanvasOutlineActions } from './CanvasOutline.js';
+import { CanvasPrintView } from './CanvasPrintView.js';
 import { CanvasRelationLegend } from './CanvasRelationLegend.js';
 import { CanvasRelationStatusCard } from './CanvasRelationStatusCard.js';
 import { CanvasShortcuts } from './CanvasShortcuts.js';
@@ -226,6 +231,8 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
     loads: {},
     manualContainerIds: new Set(),
   }));
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [printView, setPrintView] = useState<CanvasPrintModel | null>(null);
 
   const baseScene = useMemo(
     () =>
@@ -240,6 +247,12 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
     [baseScene, relationState],
   );
   const scene = relationScene.scene;
+  const relationContainerIds = useMemo(() => {
+    const baseIds = new Set(baseScene.containers.map((container) => container.id));
+    return scene.containers
+      .filter((container) => !baseIds.has(container.id))
+      .map((container) => container.id);
+  }, [baseScene.containers, scene.containers]);
   const layout = useMemo(
     () =>
       layoutRelationCanvas(baseScene, relationScene, size, preferences.textScale / 100),
@@ -617,6 +630,147 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
     });
     announce(t('canvas.announce.fit'));
   }, [announce, duration, flow, t]);
+
+  const runImageExport = useCallback(
+    async (format: 'png' | 'jpg', scope: 'view' | 'board'): Promise<boolean> => {
+      const root = rootRef.current;
+      // The compact canvas is already a normal-flow reading layout; the board
+      // capture target only exists on the spatial renderer.
+      const board =
+        boardRef.current ?? root?.querySelector<HTMLElement>('.canvas-compact') ?? null;
+      if (!root || !board) {
+        setExportError(t('canvas.export.failed'));
+        return false;
+      }
+
+      const isBoardElement = board === boardRef.current;
+      const previousViewport = flow.getViewport();
+      const model = buildExportModel(scene, {
+        scope,
+        format,
+        relationContainerIds,
+        ...(isBoardElement
+          ? {
+              viewport: {
+                ...previousViewport,
+                width: board.clientWidth,
+                height: board.clientHeight,
+              },
+            }
+          : {}),
+      });
+      const wasSuppressed = suppressLayoutSave.current;
+      setExportError(null);
+
+      try {
+        await captureCanvasImage({
+          root,
+          board,
+          format,
+          filename: model.fileName,
+          backgroundColor: getComputedStyle(root).backgroundColor,
+          prepare:
+            scope === 'board' && isBoardElement
+              ? async () => {
+                  // One fitted viewport is the whole-board export; a pan must
+                  // not leave cards out of the capture or persist the fit.
+                  suppressLayoutSave.current = true;
+                  await flow.fitView({
+                    padding: FIT_PADDING,
+                    duration: 0,
+                    maxZoom: 1.2,
+                  });
+                }
+              : undefined,
+          restore:
+            scope === 'board' && isBoardElement
+              ? async () => {
+                  await flow.setViewport(previousViewport, { duration: 0 });
+                }
+              : undefined,
+        });
+        announce(t('canvas.announce.exported', { filename: model.fileName }));
+        return true;
+      } catch {
+        setExportError(t('canvas.export.failed'));
+        announce(t('canvas.announce.exportFailed'));
+        return false;
+      } finally {
+        suppressLayoutSave.current = wasSuppressed;
+      }
+    },
+    [announce, flow, relationContainerIds, scene, t],
+  );
+
+  const startPrint = useCallback(async (): Promise<boolean> => {
+    setExportError(null);
+    // Print is the complete beat handout: open every anchor the beat cites,
+    // not only the six the board opened first. Relation expansions still merge
+    // so a relation the viewer opened prints with its bounded excerpt.
+    const printBase = buildCanvasScene(tour, beat, {
+      openDiagramIds: [...openDiagramIds],
+      containerLimit: beat.anchors.length,
+    });
+    const printScene = mergeRelationScene(printBase, relationState);
+    const printBaseIds = new Set(printBase.containers.map((container) => container.id));
+    const printRelations = printScene.scene.containers
+      .filter((container) => !printBaseIds.has(container.id))
+      .map((container) => container.id);
+    const model = buildExportModel(printScene.scene, {
+      scope: 'board',
+      format: 'pdf',
+      relationContainerIds: printRelations,
+      exportedAt: new Date().toISOString(),
+    });
+    if (model.print === null) {
+      setExportError(t('canvas.export.failed'));
+      return false;
+    }
+    setPrintView(model.print);
+    announce(t('canvas.announce.printReady'));
+    return true;
+  }, [announce, beat, openDiagramIds, relationState, t, tour]);
+
+  // The print sheet has to be in layout before the print dialog snapshots it.
+  // afterprint is the only reliable signal that the dialog closed, so the
+  // sheet stays mounted until then and then focus returns to the export button.
+  useEffect(() => {
+    if (printView === null) {
+      return;
+    }
+    let cancelled = false;
+    const restore = () => {
+      setPrintView(null);
+      requestAnimationFrame(() => {
+        rootRef.current
+          ?.querySelector<HTMLElement>('[data-testid="canvas-export-button"]')
+          ?.focus();
+      });
+    };
+    window.addEventListener('afterprint', restore);
+    const frame = requestAnimationFrame(() => {
+      void (async () => {
+        await waitForCanvasPaint();
+        if (cancelled) {
+          return;
+        }
+        try {
+          window.print();
+        } catch {
+          if (!cancelled) {
+            setPrintView(null);
+            setExportError(t('canvas.export.failed'));
+            announce(t('canvas.announce.exportFailed'));
+          }
+        }
+      })();
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+      window.removeEventListener('afterprint', restore);
+    };
+  }, [announce, printView, t]);
 
   const zoomIn = useCallback(() => {
     const next = Math.min(MAX_ZOOM, flow.getZoom() * 1.2);
@@ -1292,6 +1446,9 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       if (target?.closest('.canvas-display')) {
         return;
       }
+      if (target?.closest('.canvas-export')) {
+        return;
+      }
       if (target?.closest('.canvas-outline')) {
         if (event.key === 'Escape' && outlineOpen) {
           handled();
@@ -1876,6 +2033,17 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
   );
   const showDiagram = scene.diagrams.length > 0;
 
+  const exportMenu = (variant: 'tray' | 'compact') => (
+    <CanvasExportMenu
+      variant={variant}
+      cardCount={scene.diagrams.length + scene.containers.length}
+      error={exportError}
+      onClearError={() => setExportError(null)}
+      onImage={runImageExport}
+      onPrint={startPrint}
+    />
+  );
+
   if (compact) {
     return (
       <section
@@ -1888,6 +2056,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
         data-contrast={preferences.contrast}
         data-palette={preferences.palette}
         data-text-scale={preferences.textScale}
+        data-canvas-printing={printView === null ? undefined : 'true'}
       >
         <p
           className="visually-hidden"
@@ -1919,6 +2088,8 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
           onShowShortcuts={openShortcuts}
           onRetryRelation={retryRelation}
           actions={outlineActions}
+          exportAction={exportMenu('compact')}
+          exportRef={boardRef}
         />
         {notice ? (
           <CanvasNotice
@@ -1940,6 +2111,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
             onDisableAutoArrange={() => disableAuto('autoArrange')}
           />
         ) : null}
+        {printView === null ? null : <CanvasPrintView model={printView} />}
       </section>
     );
   }
@@ -1957,6 +2129,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       data-contrast={preferences.contrast}
       data-palette={preferences.palette}
       data-text-scale={preferences.textScale}
+      data-canvas-printing={printView === null ? undefined : 'true'}
       tabIndex={0}
       onKeyDown={onKeyDown}
       onFocusCapture={onFocusCapture}
@@ -2061,6 +2234,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
           onResetPreferences={resetPreferences}
           onResetLayouts={resetLayouts}
         />
+        {exportMenu('tray')}
       </div>
 
       {showDiagram ? null : <p className="canvas-empty-note">{t('canvas.noDiagram')}</p>}
@@ -2136,6 +2310,8 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       {fullscreenActive && hintVisible ? (
         <CanvasFullscreenHint onDismiss={() => setHintVisible(false)} />
       ) : null}
+
+      {printView === null ? null : <CanvasPrintView model={printView} />}
     </section>
   );
 }
