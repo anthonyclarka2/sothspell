@@ -10,6 +10,14 @@ export { buildProjectBrief, renderProjectBriefMarkdown } from './brief.js';
 
 export { resolveAnchor, type AnchorInput, type ResolvedAnchor } from './anchor.js';
 
+export {
+  selectSymbolRelations,
+  type SelectedSymbolRelation,
+  type SymbolRelationDirection,
+  type SymbolRelationKind,
+  type SymbolRelationSelection,
+} from './relations.js';
+
 export { parsePrismaModels } from './prisma.js';
 
 export { loadSnapshot, saveSnapshot, snapshotPathFor } from './store.js';

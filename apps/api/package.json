@@ -17,6 +17,7 @@
     "@sothspell/accounts": "workspace:*",
     "@sothspell/analyzer": "workspace:*",
     "@sothspell/authoring": "workspace:*",
+    "@sothspell/canvas": "workspace:*",
     "@sothspell/core": "workspace:*",
     "@sothspell/import": "workspace:*",
     "@sothspell/narration": "workspace:*",

@@ -262,6 +262,9 @@ importers:
       '@sothspell/authoring':
         specifier: workspace:*
         version: link:../../packages/authoring
+      '@sothspell/canvas':
+        specifier: workspace:*
+        version: link:../../packages/canvas
       '@sothspell/core':
         specifier: workspace:*
         version: link:../../packages/core

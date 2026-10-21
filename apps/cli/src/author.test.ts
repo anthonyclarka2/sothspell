@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -55,23 +56,43 @@ describe('sothspell author CLI', () => {
   it('writes a compilable tour with the fixture model', async () => {
     const root = await makeProject();
     const out = await mkdtemp(path.join(tmpdir(), 'sothspell-author-out-'));
-    roots.push(out);
+    const home = await mkdtemp(path.join(tmpdir(), 'sothspell-author-home-'));
+    roots.push(out, home);
+    const previousHome = process.env.SOTHSPELL_HOME;
+    process.env.SOTHSPELL_HOME = home;
     const output = capture();
 
-    const code = await runCli(
-      ['author', root, '--model', 'fixture', '--out', out, '--no-cache'],
-      output.io,
-    );
+    try {
+      const code = await runCli(
+        ['author', root, '--model', 'fixture', '--out', out, '--no-cache'],
+        output.io,
+      );
 
-    expect(code).toBe(0);
-    const document = parseSothspell(
-      JSON.parse(await readFile(path.join(out, 'tour.json'), 'utf8')) as unknown,
-    );
-    const compiled = await compileSothspell(document);
+      expect(code).toBe(0);
+      const document = parseSothspell(
+        JSON.parse(await readFile(path.join(out, 'tour.json'), 'utf8')) as unknown,
+      );
+      const compiled = await compileSothspell(document);
 
-    expect(compiled.chapters.length).toBeGreaterThanOrEqual(3);
-    expect(compiled.chapters[0]?.beats[0]?.anchors[0]?.html).toContain('shiki');
-    expect(output.stdout.join('\n')).toContain('Wrote');
+      expect(compiled.chapters.length).toBeGreaterThanOrEqual(3);
+      expect(compiled.chapters[0]?.beats[0]?.anchors[0]?.html).toContain('shiki');
+      expect(output.stdout.join('\n')).toContain('Wrote');
+
+      const projectDirectory = path.join(home, 'projects', 'author-cli-fixture');
+      const record = JSON.parse(
+        await readFile(path.join(projectDirectory, 'project.json'), 'utf8'),
+      ) as { sourceRoot: string; sourceKind: string };
+      expect(record.sourceRoot).toBe(await realpath(root));
+      expect(record.sourceKind).toBe('local');
+      expect(existsSync(path.join(projectDirectory, 'snapshot.json'))).toBe(true);
+      expect(await readFile(path.join(out, 'tour.json'), 'utf8')).not.toContain(root);
+    } finally {
+      if (previousHome === undefined) {
+        delete process.env.SOTHSPELL_HOME;
+      } else {
+        process.env.SOTHSPELL_HOME = previousHome;
+      }
+    }
   });
 
   it('requires a model when SOTHSPELL_MODEL is unset and no profile is active', async () => {
@@ -101,7 +122,9 @@ describe('sothspell author CLI', () => {
     const home = await mkdtemp(path.join(tmpdir(), 'sothspell-author-home-'));
     roots.push(out, home);
     const previous = process.env.SOTHSPELL_MODEL;
+    const previousHome = process.env.SOTHSPELL_HOME;
     process.env.SOTHSPELL_MODEL = 'fixture';
+    process.env.SOTHSPELL_HOME = home;
     const output = capture();
 
     try {
@@ -119,6 +142,45 @@ describe('sothspell author CLI', () => {
         delete process.env.SOTHSPELL_MODEL;
       } else {
         process.env.SOTHSPELL_MODEL = previous;
+      }
+      if (previousHome === undefined) {
+        delete process.env.SOTHSPELL_HOME;
+      } else {
+        process.env.SOTHSPELL_HOME = previousHome;
+      }
+    }
+  });
+
+  it('writes a tour file and a sibling quality file when --out is a file', async () => {
+    const root = await makeProject();
+    const out = await mkdtemp(path.join(tmpdir(), 'sothspell-author-out-'));
+    const home = await mkdtemp(path.join(tmpdir(), 'sothspell-author-home-'));
+    roots.push(out, home);
+    const previousHome = process.env.SOTHSPELL_HOME;
+    process.env.SOTHSPELL_HOME = home;
+    const output = capture();
+    const destination = path.join(out, 'custom-tour.json');
+
+    try {
+      const code = await runCli(
+        ['author', root, '--model', 'fixture', '--out', destination, '--no-cache'],
+        output.io,
+      );
+
+      expect(code).toBe(0);
+      const document = parseSothspell(
+        JSON.parse(await readFile(destination, 'utf8')) as unknown,
+      );
+      expect(document.id.length).toBeGreaterThan(0);
+      expect(existsSync(path.join(out, 'custom-tour-quality.json'))).toBe(true);
+      expect(
+        existsSync(path.join(home, 'projects', 'author-cli-fixture', 'project.json')),
+      ).toBe(true);
+    } finally {
+      if (previousHome === undefined) {
+        delete process.env.SOTHSPELL_HOME;
+      } else {
+        process.env.SOTHSPELL_HOME = previousHome;
       }
     }
   });

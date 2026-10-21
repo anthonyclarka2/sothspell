@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -105,6 +105,14 @@ describe('sothspell CLI', () => {
       expect(
         existsSync(path.join(home, 'projects', 'cli-fixture', 'snapshot.json')),
       ).toBe(true);
+      const record = JSON.parse(
+        await readFile(
+          path.join(home, 'projects', 'cli-fixture', 'project.json'),
+          'utf8',
+        ),
+      ) as { sourceRoot: string; sourceKind: string };
+      expect(record.sourceRoot).toBe(await realpath(root));
+      expect(record.sourceKind).toBe('local');
     } finally {
       if (previous === undefined) {
         delete process.env.SOTHSPELL_HOME;
