@@ -7,6 +7,7 @@ import { installTranslatedTours } from './locale-fake.js';
 const pages = [
   '/',
   '/t/tour_bunbun_golden/beat_purpose_01',
+  '/t/tour_bunbun_golden/beat_purpose_01?view=canvas',
   '/p/bunbun/source/apps/api/src/main.ts?anchor=anchor_main_bootstrap&beat=beat_request_01',
   '/import',
   '/new',
@@ -245,6 +246,18 @@ test('account error state has no blocking axe violations', async ({ page }) => {
   );
 
   await page.goto('/account');
+  await page.waitForLoadState('networkidle');
+
+  await expectNoBlockingViolations(page);
+});
+
+test('canvas with evidence, two diagrams, and the outline has no blocking axe violations', async ({
+  page,
+}) => {
+  await page.goto('/t/tour_bunbun_golden/beat_purpose_01?view=canvas');
+  await page.getByTestId('canvas-object').filter({ hasText: 'ATProto PDS' }).click();
+  await page.getByRole('button', { name: 'Add Repository map' }).click();
+  await page.getByRole('button', { name: 'Show outline' }).click();
   await page.waitForLoadState('networkidle');
 
   await expectNoBlockingViolations(page);

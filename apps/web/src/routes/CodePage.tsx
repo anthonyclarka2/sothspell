@@ -150,6 +150,7 @@ export function CodePage() {
               className="secondary-action"
               to="/t/$tourId/$beatId"
               params={{ tourId: data.tourId, beatId: search.beat }}
+              search={{ view: undefined }}
             >
               <ArrowLeft size={16} weight="bold" className="rtl-flip" />
               {t('code.backToBeat')}

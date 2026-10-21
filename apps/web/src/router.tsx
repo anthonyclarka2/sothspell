@@ -61,6 +61,9 @@ const homeRoute = createRoute({
 const playerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/t/$tourId/$beatId',
+  validateSearch: (search: Record<string, unknown>) => ({
+    view: search.view === 'canvas' ? ('canvas' as const) : undefined,
+  }),
   component: PlayerPage,
 });
 
