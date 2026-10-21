@@ -45,6 +45,7 @@ export function HomePage() {
               className="primary-action"
               to="/t/$tourId/$beatId"
               params={{ tourId: tourData.id, beatId }}
+              search={{ view: undefined }}
             >
               <Play size={16} weight="fill" />
               {t('home.play')}
@@ -96,6 +97,7 @@ export function HomePage() {
               <Link
                 to="/t/$tourId/$beatId"
                 params={{ tourId: tourData.id, beatId: chapter.beats[0]?.id ?? beatId }}
+                search={{ view: undefined }}
               >
                 {t('home.startChapter')}
               </Link>
