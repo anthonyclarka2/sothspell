@@ -92,6 +92,9 @@ function normalizeContainerLimit(limit: number | undefined): number {
 }
 
 function codeContainer(anchor: CompiledAnchor): CanvasCodeContainer {
+  const symbolId =
+    anchor.symbolId ??
+    (anchor.symbol === undefined ? undefined : `legacy:${anchor.path}#${anchor.symbol}`);
   return {
     id: anchor.id,
     anchorId: anchor.id,
@@ -103,7 +106,7 @@ function codeContainer(anchor: CompiledAnchor): CanvasCodeContainer {
     excerpt: anchor.excerpt,
     html: anchor.html,
     collapsed: true,
-    ...optionalSymbolId(anchor),
+    ...(symbolId === undefined ? {} : { symbolId }),
   };
 }
 

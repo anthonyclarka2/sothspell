@@ -325,11 +325,11 @@ export function installFakeCanvasRelations(
       const tourId = decodeURIComponent(match[1]!);
       const endpoint = match[2];
       const symbolId = url.searchParams.get('symbolId') ?? '';
+      const directionParam = url.searchParams.get('direction');
       const direction: CanvasRelationDirection =
-        endpoint === 'symbol'
-          ? 'definition'
-          : ((url.searchParams.get('direction') as CanvasRelationDirection | null) ??
-            'incoming');
+        endpoint === 'relations'
+          ? ((directionParam as CanvasRelationDirection | null) ?? 'incoming')
+          : ((directionParam as CanvasRelationDirection | null) ?? 'definition');
       const limit = Number(url.searchParams.get('limit') ?? '8');
       const offset = Number(url.searchParams.get('offset') ?? '0');
       requests.push({

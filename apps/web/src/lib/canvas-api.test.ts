@@ -32,7 +32,7 @@ describe('canvas relation client', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const url = String((fetchMock.mock.calls[0] as unknown[])[0]);
     expect(url).toBe(
-      '/api/tours/tour%2Fwith%3Achars/canvas/symbol?symbolId=symbol%3Aapps%2Fapi%2Fsrc%2Fmain.ts%23bootstrap',
+      '/api/tours/tour%2Fwith%3Achars/canvas/symbol?symbolId=symbol%3Aapps%2Fapi%2Fsrc%2Fmain.ts%23bootstrap&direction=definition',
     );
   });
 
@@ -52,7 +52,7 @@ describe('canvas relation client', () => {
 
     const url = String((fetchMock.mock.calls[0] as unknown[])[0]);
     expect(url).toBe(
-      '/api/tours/tour_bunbun_golden/canvas/relations?symbolId=symbol%3Asrc%2Fa.ts%23a&direction=incoming&limit=8&offset=16',
+      '/api/tours/tour_bunbun_golden/canvas/symbol?symbolId=symbol%3Asrc%2Fa.ts%23a&direction=incoming&limit=8&offset=16',
     );
   });
 

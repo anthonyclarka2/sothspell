@@ -78,6 +78,7 @@ export interface CanvasCodeContainerData extends Record<string, unknown> {
   focused: boolean;
   linkedLines: number[];
   projectSlug: string;
+  tourId: string;
   beatId: string;
   symbolId: string | undefined;
   relation: { kind: CanvasRelationKind; confidence: CanvasRelationConfidence } | null;
@@ -132,6 +133,7 @@ export interface CanvasFlowState {
   /** Per-container override; the scene's own collapse flag is the default. */
   collapsed: Record<string, boolean>;
   projectSlug: string;
+  tourId: string;
   beatId: string;
   sharedSymbolIds: ReadonlySet<string>;
   relationState: CanvasRelationUiState;
@@ -294,6 +296,7 @@ export function buildCanvasNodes(
           )
           .map((link) => link.toLine),
         projectSlug: state.projectSlug,
+        tourId: state.tourId,
         beatId: state.beatId,
         symbolId: container.symbolId,
         relation:

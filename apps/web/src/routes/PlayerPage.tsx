@@ -330,7 +330,7 @@ export function PlayerPage() {
     void navigate({
       to: '/p/$projectId/source/$',
       params: { projectId: tour.project.slug, _splat: anchor.path },
-      search: { anchor: anchorId, beat: beat.id },
+      search: { anchor: anchorId, beat: beat.id, tourId: tour.id },
     });
   };
 
@@ -482,6 +482,7 @@ export function PlayerPage() {
               chapter={chapter}
               beat={beat}
               projectSlug={tour.project.slug}
+              tourId={tour.id}
               onOpenAnchor={openAnchor}
             />
           )}

@@ -36,6 +36,7 @@ export interface CanvasOutlineProps {
   scene: CanvasScene;
   chapterDiagrams: PositionedDiagram[];
   projectSlug: string;
+  tourId: string;
   beatId: string;
   openDiagramIds: ReadonlySet<string>;
   selectedObjectId: string | null;
@@ -61,6 +62,7 @@ export function CanvasOutline({
   scene,
   chapterDiagrams,
   projectSlug,
+  tourId,
   beatId,
   openDiagramIds,
   selectedObjectId,
@@ -272,7 +274,7 @@ export function CanvasOutline({
                       <Link
                         to="/p/$projectId/source/$"
                         params={{ projectId: projectSlug, _splat: container.path }}
-                        search={{ anchor: container.anchorId, beat: beatId }}
+                        search={{ anchor: container.anchorId, beat: beatId, tourId }}
                         className="canvas-outline-action"
                       >
                         {t('canvas.openCodePage')}

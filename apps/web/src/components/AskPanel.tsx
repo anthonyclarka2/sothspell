@@ -119,7 +119,7 @@ export function AskPanel({
                     <Link
                       to="/p/$projectId/source/$"
                       params={{ projectId: projectSlug, _splat: citation.path }}
-                      search={{ anchor: citation.id, beat: beatId }}
+                      search={{ anchor: citation.id, beat: beatId, tourId }}
                       target="_blank"
                       rel="noreferrer"
                     >

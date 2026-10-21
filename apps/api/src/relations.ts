@@ -292,22 +292,38 @@ function isSafePathError(error: unknown): boolean {
   );
 }
 
+function findSymbol(
+  snapshot: ProjectSnapshot,
+  path: string,
+  qualifiedName: string,
+): SymbolNode | null {
+  const matches = snapshot.symbols.filter(
+    (symbol) =>
+      symbol.path === path &&
+      (symbol.qualifiedName === qualifiedName || symbol.name === qualifiedName),
+  );
+  return matches.length === 1 ? (matches[0] ?? null) : null;
+}
+
 function resolveSymbol(
   snapshot: ProjectSnapshot,
   query: RelationQuery,
 ): SymbolNode | null {
   if (query.symbolId !== undefined) {
+    if (query.symbolId.startsWith('legacy:')) {
+      const rest = query.symbolId.slice('legacy:'.length);
+      const separator = rest.lastIndexOf('#');
+      if (separator < 1) {
+        return null;
+      }
+      return findSymbol(snapshot, rest.slice(0, separator), rest.slice(separator + 1));
+    }
     return snapshot.symbols.find((symbol) => symbol.id === query.symbolId) ?? null;
   }
   if (query.path === undefined || query.symbol === undefined) {
     return null;
   }
-  const matches = snapshot.symbols.filter(
-    (symbol) =>
-      symbol.path === query.path &&
-      (symbol.qualifiedName === query.symbol || symbol.name === query.symbol),
-  );
-  return matches.length === 1 ? (matches[0] ?? null) : null;
+  return findSymbol(snapshot, query.path, query.symbol);
 }
 
 export function createRelationService(

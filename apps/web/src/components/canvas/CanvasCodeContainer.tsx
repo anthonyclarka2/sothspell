@@ -81,7 +81,11 @@ export const CanvasCodeContainer = memo(function CanvasCodeContainer({
           <Link
             to="/p/$projectId/source/$"
             params={{ projectId: data.projectSlug, _splat: container.path }}
-            search={{ anchor: container.anchorId, beat: data.beatId }}
+            search={{
+              anchor: container.anchorId,
+              beat: data.beatId,
+              tourId: data.tourId,
+            }}
             className="canvas-text-action canvas-code-link nodrag"
           >
             {t('canvas.openCodePage')}

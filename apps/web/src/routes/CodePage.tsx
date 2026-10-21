@@ -14,6 +14,7 @@ interface CodeParams {
 interface CodeSearch {
   anchor?: string;
   beat?: string;
+  tourId?: string;
 }
 
 function VirtualCode({ lines, startLine }: { lines: AnchorLine[]; startLine: number }) {
@@ -84,8 +85,8 @@ export function CodePage() {
   const filePath = params['_splat'];
 
   const anchor = useAsync(
-    () => fetchAnchor(params.projectId, filePath, anchorId),
-    [params.projectId, filePath, anchorId],
+    () => fetchAnchor(params.projectId, filePath, anchorId, search.tourId),
+    [params.projectId, filePath, anchorId, search.tourId],
   );
 
   if (!anchorId) {
@@ -175,7 +176,11 @@ export function CodePage() {
                       void navigate({
                         to: '/p/$projectId/source/$',
                         params: { projectId: data.projectId, _splat: data.path },
-                        search: { anchor: entry.anchorId, beat: entry.beatId },
+                        search: {
+                          anchor: entry.anchorId,
+                          beat: entry.beatId,
+                          tourId: search.tourId,
+                        },
                       })
                     }
                   >

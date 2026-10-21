@@ -48,10 +48,9 @@ export class CanvasRelationRequestError extends Error {
 export async function fetchCanvasSymbol(
   input: FetchCanvasSymbolInput,
 ): Promise<CanvasRelationResponse> {
-  const endpoint = input.direction === 'definition' ? 'symbol' : 'relations';
   const params = new URLSearchParams({ symbolId: input.symbolId });
+  params.set('direction', input.direction);
   if (input.direction !== 'definition') {
-    params.set('direction', input.direction);
     if (input.limit !== undefined) {
       params.set('limit', String(input.limit));
     }
@@ -61,7 +60,7 @@ export async function fetchCanvasSymbol(
   }
 
   const response = await fetch(
-    `/api/tours/${encodeURIComponent(input.tourId)}/canvas/${endpoint}?${params.toString()}`,
+    `/api/tours/${encodeURIComponent(input.tourId)}/canvas/symbol?${params.toString()}`,
   );
   if (response.ok) {
     return (await response.json()) as CanvasRelationResponse;

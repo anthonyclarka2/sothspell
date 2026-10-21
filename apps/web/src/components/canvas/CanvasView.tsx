@@ -1048,6 +1048,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
           focusedContainerId,
           collapsed,
           projectSlug: tour.project.slug,
+          tourId: tour.id,
           beatId: beat.id,
           sharedSymbolIds,
           relationState,
@@ -1229,6 +1230,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
           scene={scene}
           chapterDiagrams={chapter.diagrams}
           projectSlug={tour.project.slug}
+          tourId={tour.id}
           beatId={beat.id}
           openDiagramIds={openDiagramIds}
           selectedObjectId={selectedObjectId}

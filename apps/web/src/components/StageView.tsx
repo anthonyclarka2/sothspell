@@ -7,6 +7,7 @@ export interface StageViewProps {
   chapter: CompiledChapter;
   beat: CompiledBeat;
   projectSlug: string;
+  tourId: string;
   onOpenAnchor: (anchorId: string) => void;
 }
 
@@ -15,7 +16,13 @@ export interface StageViewProps {
  * extracted from the player route so the canvas view can replace it without
  * duplicating playback, narration, or the surrounding player chrome.
  */
-export function StageView({ chapter, beat, projectSlug, onOpenAnchor }: StageViewProps) {
+export function StageView({
+  chapter,
+  beat,
+  projectSlug,
+  tourId,
+  onOpenAnchor,
+}: StageViewProps) {
   const { t } = useLocale();
 
   return (
@@ -33,7 +40,7 @@ export function StageView({ chapter, beat, projectSlug, onOpenAnchor }: StageVie
           <strong>{beat.anchors[0]?.label ?? t('player.codeEvidence')}</strong>
           <span className="mono">{beat.anchors[0]?.language ?? 'text'}</span>
         </div>
-        <CodePane projectSlug={projectSlug} beat={beat} />
+        <CodePane projectSlug={projectSlug} tourId={tourId} beat={beat} />
       </section>
     </div>
   );

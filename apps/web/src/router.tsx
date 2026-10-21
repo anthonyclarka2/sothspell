@@ -73,6 +73,7 @@ const codeRoute = createRoute({
   validateSearch: (search: Record<string, unknown>) => ({
     anchor: typeof search.anchor === 'string' ? search.anchor : undefined,
     beat: typeof search.beat === 'string' ? search.beat : undefined,
+    tourId: typeof search.tourId === 'string' ? search.tourId : undefined,
   }),
   component: CodePage,
 });
