@@ -11,6 +11,9 @@ can pause at any moment, open the code, click a diagram node, or ask a question;
 answering does not lose their place. Progress is recorded so the walkthrough can
 resume later.
 
+<img width="1611" height="1008" alt="Screenshot 2026-10-20 at 13 21 12" src="https://github.com/user-attachments/assets/158512de-98c1-4242-b06b-a21d1bb23ce5" />
+
+
 ## Contributors
 
 I welcome PRs and issues! I request that a human reads the whole bug report
