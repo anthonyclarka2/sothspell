@@ -396,7 +396,7 @@ SOTHSPELL_MODEL=openai/gpt-5.2 pnpm sothspell author \
 ```
 
 Review `quality.json`, run the checklist in
-[`skills/sothspell-author/SKILL.md`](../../skills/sothspell-author/SKILL.md), and
+[`skills/sothspell-author/SKILL.md`](../../../skills/sothspell-author/SKILL.md), and
 commit the generated tour only after that review. Until then the checked-in
 golden tour remains the reviewed artifact.
 

@@ -22,8 +22,8 @@ This document is the hub plan. Phase-level plans live beside it:
 - [Phase 7 — OpenCode V2 Plugin](PHASE-7.md)
 - [Phase 8 — Self-Hosted Release & Hardening](PHASE-8.md)
 
-Domain vocabulary lives in [`CONTEXT.md`](../../CONTEXT.md). Agent instructions
-live in [`AGENTS.md`](../../AGENTS.md).
+Domain vocabulary lives in [`CONTEXT.md`](../../../CONTEXT.md). Agent instructions
+live in [`AGENTS.md`](../../../AGENTS.md).
 
 Status convention: `**Status: planned**` → `**Status: in progress**` →
 `**Status: complete (<date>)**`, with shipped evidence recorded under the phase.
@@ -236,7 +236,7 @@ the wordmark and the editorial rhythm, not by parchment textures.
 
 ## 6. Domain model
 
-The authoritative glossary is [`CONTEXT.md`](../../CONTEXT.md). The core terms:
+The authoritative glossary is [`CONTEXT.md`](../../../CONTEXT.md). The core terms:
 
 - **Sóþspell** — a versioned, portable walkthrough artifact.
 - **Project snapshot** — an immutable, read-only view of a repository at a

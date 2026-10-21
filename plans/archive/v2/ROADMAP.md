@@ -1,12 +1,16 @@
 # Sóþspell — Next-Stage Roadmap (v2)
 
-**Status: planned.** Planning baseline: 2026-10-17.
+**Status: complete (2026-10-17); archived 2026-10-21.** Planning baseline:
+2026-10-17.
+
+This roadmap is archived. See the [archive index](../README.md) for the current
+plan eras.
 
 The v1 local-first release is complete and its plans are archived in
-[`plans/archive/`](archive/README.md). This roadmap starts a new stage: from a
-single-user local player to a multi-harness, multi-language, collaborative
-platform with importable repositories, reviewable tours, and embeddable
-players.
+[`plans/archive/v1/`](../v1/README.md). This roadmap started the second stage:
+from a single-user local player to a multi-harness, multi-language,
+collaborative platform with importable repositories, reviewable tours, and
+embeddable players.
 
 This file was started empty for the next stage; the features below were added in
 the 2026-10-17 planning session and are sequenced as Phases 9–16.
@@ -98,7 +102,7 @@ progress. The next stage removes the four constraints that limit adoption:
 
 ## 2. New domain concepts
 
-These are added to [`CONTEXT.md`](../CONTEXT.md) as the phases land.
+These are added to [`CONTEXT.md`](../../../CONTEXT.md) as the phases land.
 
 - **Connection profile** — a named, user-owned configuration for one provider
   connection: authoring model, narration voice, or another capability. It has a

@@ -5,16 +5,16 @@
 - **Sóþspell** (ASCII slug `sothspell`) is an AI-guided project walkthrough
   application. It generates a cinematic, semi-interactive explanation of a
   codebase with synchronized narration, diagrams, and highlighted code anchors.
-  The website shipped first; the OpenCode V2 plugin is complete; Claude Code,
-  Codex, and other harness adapters are Phase 10 of the next stage.
+  The website shipped first; the OpenCode V2 plugin and the Claude Code and
+  Codex harness adapters are complete.
 - **Repository status: v1 release complete (2026-10-17); next stage complete
   (2026-10-17).** Phases 9–16 are complete: preferences, harness plugins,
   GitHub import, accounts and sync, language analyzers, translation, review UI,
   and the embeddable player. The web authoring flow (`/new`) opens a local git
   repository or a public GitHub URL and authors a tour; `examples/tiny-notes/`
-  is the demo repository. The v1 plans are archived in `plans/archive/`; the
-  next-stage roadmap and Phases 9–16 live in `plans/ROADMAP.md` and
-  `plans/PHASE-9.md` through `plans/PHASE-16.md`.
+  is the demo repository. Both eras are archived under `plans/archive/v1/` and
+  `plans/archive/v2/`; new work starts a fresh roadmap and phase plan in
+  `plans/`.
 - **Example project:** Bunbun at `/Users/ajc/Projects/codegens/bunbun`, pinned to
   commit `9fef24d`. It is **read-only**. No command may create, modify, or delete
   anything inside that tree. All snapshots, tours, audio, logs, and runs live
@@ -156,15 +156,16 @@ Do not claim completion without fresh verification output.
 - `packages/player/` — framework-free playback state machine.
 - `packages/narration/` — browser and ElevenLabs adapters, alignment, cache.
 - `packages/diagram/` — diagram IR, validation, ELK layout.
-- `packages/harness/` — harness adapter contract; Phase 10 adds the shared
-  runtime and the Claude Code and Codex adapters.
+- `packages/harness/` — harness adapter contract; the shared runtime and the
+  Claude Code and Codex adapters.
 - `packages/opencode-plugin/` — OpenCode V2 plugin (Phase 7).
 - `examples/bunbun-tour/` — checked-in golden tour pinned to Bunbun `9fef24d`.
 - `docs/` — development, architecture, analysis, authoring, player, narration,
   guide, plugin, self-hosting, privacy, accessibility, and troubleshooting.
-- `plans/ROADMAP.md` — the next-stage roadmap (Phases 9–16).
-- `plans/PHASE-9.md` … `plans/PHASE-16.md` — next-stage phase plans.
-- `plans/archive/` — the archived v1 roadmap and Phases 1–8.
+- `plans/` — the current roadmap and phase plans for new work.
+- `plans/archive/v1/` — the v1 roadmap and Phases 1–8.
+- `plans/archive/v2/` — the next-stage roadmap and Phases 9–16.
+- `plans/archive/README.md` — the archive index and binding constraints.
 - `CONTEXT.md` — domain glossary. Required reading before domain code.
 - `AGENTS.md` — this file.
 
@@ -207,14 +208,12 @@ or "chat" for these concepts in code, tests, or docs.
 
 ## Plans and phase docs
 
-- [`plans/ROADMAP.md`](plans/ROADMAP.md) is the hub for the next stage: feature
-  inventory, phase sequence, architecture changes, cross-cutting requirements,
-  testing standards, and risks.
-- `plans/PHASE-9.md` through `plans/PHASE-16.md` are the next-stage phase plans.
-  Each has a goal, scope, decisions, waves, test seams, Bunbun acceptance, exit
-  criteria, and risks.
-- `plans/archive/` holds the v1 roadmap and Phases 1–8, plus an archive index
-  that records the shipped baseline and the decisions that stay binding.
+- `plans/ROADMAP.md` and `plans/PHASE-*.md` hold the current era's roadmap and
+  phase plans once planning starts. Each has a goal, scope, decisions, waves,
+  test seams, Bunbun acceptance, exit criteria, and risks.
+- [`plans/archive/`](plans/archive/README.md) holds completed eras: v1 (Phases
+  1–8) and v2 (Phases 9–16). Each era records its shipped baseline; the index
+  records the decisions that stay binding.
 - Status lines: `planned` → `in progress` → `complete (<date>)`, with shipped
   evidence under the phase.
 - Update the phase plan when a decision changes during implementation. Do not
