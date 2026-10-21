@@ -14,6 +14,7 @@
     "@phosphor-icons/react": "2.1.10",
     "@sothspell/core": "workspace:*",
     "@sothspell/diagram": "workspace:*",
+    "@sothspell/canvas": "workspace:*",
     "@sothspell/narration": "workspace:*",
     "@sothspell/player": "workspace:*",
     "@tanstack/react-router": "1.170.45",
