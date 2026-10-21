@@ -4497,3 +4497,462 @@ pre,
   transition: none;
   animation: none;
 }
+
+/* ------------------------------------------------------------------------- */
+/* Phase 20: export menu and print sheet                                     */
+/* ------------------------------------------------------------------------- */
+
+.canvas-export {
+  position: relative;
+  z-index: 8;
+}
+
+.canvas-export--tray {
+  margin-inline-start: 2px;
+}
+
+.canvas-export-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 99px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 11.5px;
+  font-weight: 540;
+  cursor: pointer;
+}
+
+.canvas-export-button:hover,
+.canvas-export-button[aria-expanded='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.canvas-export-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 11;
+  width: min(304px, calc(100vw - 32px));
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+}
+
+.canvas-export-hint,
+.canvas-export-count {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.canvas-export-group {
+  display: grid;
+  gap: 2px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+}
+
+.canvas-export-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+  text-align: start;
+  cursor: pointer;
+}
+
+.canvas-export-action:hover:not(:disabled),
+.canvas-export-action:focus-visible {
+  border-color: var(--line-strong);
+  background: var(--panel-strong);
+}
+
+.canvas-export-action:disabled {
+  cursor: progress;
+  opacity: 0.78;
+}
+
+.canvas-export-pending {
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.canvas-export-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, var(--line));
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--danger) 7%, var(--panel));
+  color: var(--ink);
+  font-size: 11.5px;
+}
+
+.canvas-export-error p {
+  margin: 0;
+}
+
+/* A capture is the board, not the workspace around it. Selection, notices,
+   menus, and the outline are transient and must not appear in the image. */
+.canvas-root[data-canvas-export='image'] .canvas-controls,
+.canvas-root[data-canvas-export='image'] .canvas-tray,
+.canvas-root[data-canvas-export='image'] .canvas-outline,
+.canvas-root[data-canvas-export='image'] .canvas-notice,
+.canvas-root[data-canvas-export='image'] .canvas-display,
+.canvas-root[data-canvas-export='image'] .canvas-export,
+.canvas-root[data-canvas-export='image'] .canvas-fullscreen-hint,
+.canvas-root[data-canvas-export='image'] .canvas-relation-legend {
+  display: none !important;
+}
+
+.canvas-root[data-canvas-export='image'] .canvas-card,
+.canvas-root[data-canvas-export='image'] .canvas-object,
+.canvas-root[data-canvas-export='image'] .canvas-object-node[data-focused='true'] .canvas-object {
+  outline: none !important;
+  animation: none !important;
+}
+
+.canvas-root[data-canvas-export='image'] .canvas-object-node[data-focused='true'] .canvas-object {
+  border-color: var(--line-strong);
+  background: var(--panel);
+  box-shadow: none;
+}
+
+.canvas-root[data-canvas-export='image'] .canvas-object[aria-current='true'],
+.canvas-root[data-canvas-export='image'] .canvas-relation-toggle[aria-pressed='true'] {
+  border-color: var(--line-strong);
+  background: var(--panel);
+  color: var(--ink);
+}
+
+/* The screen keeps the print sheet out of layout; print media swaps the app
+   chrome for the document flow. */
+.canvas-print-view {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: portrait;
+    margin: 16mm 14mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  body:has(.canvas-print-view) .topbar,
+  body:has(.canvas-print-view) .player-viewbar,
+  body:has(.canvas-print-view) .chapter-rail,
+  body:has(.canvas-print-view) .narration,
+  body:has(.canvas-print-view) .transport,
+  body:has(.canvas-print-view) .canvas-controls,
+  body:has(.canvas-print-view) .canvas-tray,
+  body:has(.canvas-print-view) .canvas-outline,
+  body:has(.canvas-print-view) .canvas-notice,
+  body:has(.canvas-print-view) .canvas-fullscreen-hint {
+    display: none !important;
+  }
+
+  body:has(.canvas-print-view) .app-shell,
+  body:has(.canvas-print-view) .player-page,
+  body:has(.canvas-print-view) .player-layout,
+  body:has(.canvas-print-view) .stage-column {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .canvas-root[data-canvas-printing='true'] {
+    position: static !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    background: #fff !important;
+  }
+
+  .canvas-root[data-canvas-printing='true'] > :not(.canvas-print-view) {
+    display: none !important;
+  }
+
+  .canvas-print-view {
+    display: block !important;
+    color: #111418;
+    background: #fff;
+    font-size: 11pt;
+    line-height: 1.45;
+  }
+
+  .canvas-print-title {
+    margin: 0 0 8mm;
+    padding: 0 0 6mm;
+    border-bottom: 2px solid #111418;
+  }
+
+  .canvas-print-kicker {
+    margin: 0 0 1.5mm;
+    color: #5b6472;
+    font-size: 8pt;
+    font-weight: 620;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .canvas-print-title h1 {
+    margin: 0;
+    color: #111418;
+    font-size: 24pt;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .canvas-print-subtitle {
+    margin: 2mm 0 0;
+    color: #5b6472;
+    font-size: 11pt;
+  }
+
+  .canvas-print-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3mm 8mm;
+    margin: 5mm 0 0;
+  }
+
+  .canvas-print-meta div {
+    min-width: 0;
+  }
+
+  .canvas-print-meta dt {
+    color: #5b6472;
+    font-size: 7.5pt;
+    font-weight: 620;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .canvas-print-meta dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: 10pt;
+  }
+
+  .canvas-print-section {
+    margin: 0 0 8mm;
+  }
+
+  .canvas-print-section h2,
+  .canvas-print-footer h2 {
+    margin: 0 0 3mm;
+    padding: 0 0 1.5mm;
+    border-bottom: 1px solid #c9cfd9;
+    color: #111418;
+    font-size: 14pt;
+    break-after: avoid;
+  }
+
+  .canvas-print-figure {
+    margin: 0;
+  }
+
+  .canvas-print-diagram {
+    display: block;
+    width: 100%;
+    max-height: 90mm;
+    border: 1px solid #c9cfd9;
+    background: #fff;
+  }
+
+  .canvas-print-diagram rect {
+    fill: #f6f7f9;
+    stroke: #5b6472;
+    stroke-width: 1;
+  }
+
+  .canvas-print-diagram text {
+    fill: #111418;
+    font-family: 'Geist Variable', system-ui, sans-serif;
+  }
+
+  .canvas-print-node-label {
+    font-size: 12px;
+    font-weight: 620;
+  }
+
+  .canvas-print-node-kind {
+    fill: #5b6472 !important;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .canvas-print-wire {
+    fill: none;
+    stroke: #5b6472;
+    stroke-width: 1.4;
+  }
+
+  .canvas-print-wire-label {
+    fill: #5b6472 !important;
+    font-size: 9px;
+  }
+
+  .canvas-print-list {
+    display: grid;
+    gap: 6mm;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .canvas-print-card {
+    padding: 4mm;
+    border: 1px solid #c9cfd9;
+    border-radius: 2mm;
+    background: #fff;
+    break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .canvas-print-card-header {
+    margin: 0 0 2.5mm;
+    break-after: avoid;
+  }
+
+  .canvas-print-card-header h3 {
+    margin: 0;
+    color: #111418;
+    font-size: 12pt;
+    line-height: 1.25;
+  }
+
+  .canvas-print-card-header p {
+    margin: 1mm 0 0;
+    color: #5b6472;
+    font-size: 8.5pt;
+    overflow-wrap: anywhere;
+  }
+
+  .canvas-print-relation {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2mm;
+    margin: 0 0 2mm;
+    color: #333;
+    font-size: 9pt;
+    break-inside: avoid;
+  }
+
+  .canvas-print-relation-badge {
+    padding: 0.4mm 1.6mm;
+    border: 1px solid #c9cfd9;
+    border-radius: 99px;
+    color: #5b6472;
+    font-size: 8pt;
+    white-space: nowrap;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .canvas-print-code,
+  .canvas-print-code pre,
+  .canvas-print-code .shiki,
+  .canvas-print-code .line {
+    max-width: none !important;
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .canvas-print-code {
+    margin: 0;
+    padding: 2mm 0 0;
+    border-top: 1px solid #e1e5ec;
+    font-size: 8.5pt;
+    line-height: 1.35;
+  }
+
+  .canvas-print-code .shiki {
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .canvas-print-note {
+    margin: 3mm 0 0;
+    color: #5b6472;
+    font-size: 9pt;
+  }
+
+  .canvas-print-relations {
+    display: grid;
+    gap: 2mm;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .canvas-print-relations li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2mm;
+    font-size: 9.5pt;
+    break-inside: avoid;
+  }
+
+  .canvas-print-footer {
+    margin-top: 8mm;
+    padding-top: 4mm;
+    border-top: 1px solid #c9cfd9;
+    color: #333;
+    font-size: 9pt;
+  }
+
+  .canvas-print-footer h2 {
+    font-size: 11pt;
+  }
+
+  .canvas-print-footer p {
+    margin: 2mm 0 0;
+  }
+
+  .canvas-print-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1mm 5mm;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .canvas-export-panel {
+    width: calc(100vw - 28px);
+  }
+}

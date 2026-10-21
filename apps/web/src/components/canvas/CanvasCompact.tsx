@@ -1,3 +1,4 @@
+import type { ReactNode, RefObject } from 'react';
 import { Link } from '@tanstack/react-router';
 import type { CompiledBeat, CompiledChapter, CompiledTour } from '@sothspell/core';
 import type { CanvasScene } from '@sothspell/canvas';
@@ -35,6 +36,10 @@ export interface CanvasCompactProps {
   onShowShortcuts: () => void;
   onRetryRelation: (status: CanvasRelationStatusCard) => void;
   actions: CanvasOutlineActions;
+  /** The export menu lives in the compact toolbar instead of the tray. */
+  exportAction?: ReactNode;
+  /** The compact reading layout is the capture target on a phone. */
+  exportRef?: RefObject<HTMLDivElement | null>;
 }
 
 /**
@@ -64,6 +69,8 @@ export function CanvasCompact({
   onShowShortcuts,
   onRetryRelation,
   actions,
+  exportAction,
+  exportRef,
 }: CanvasCompactProps) {
   const { t } = useLocale();
   const homeDiagram = scene.diagrams.find((diagram) => diagram.home);
@@ -77,6 +84,7 @@ export function CanvasCompact({
 
   return (
     <div
+      ref={exportRef}
       className="canvas-compact"
       data-testid="canvas-compact"
       data-motion={preferences.motion}
@@ -135,6 +143,7 @@ export function CanvasCompact({
             onResetPreferences={onResetPreferences}
             onResetLayouts={onResetLayouts}
           />
+          {exportAction}
         </div>
       </header>
 

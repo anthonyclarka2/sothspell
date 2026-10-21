@@ -77,6 +77,16 @@ export function buildCanvasScene(
     containers,
     hiddenContainerCount: beat.anchors.length - containers.length,
     links,
+    metadata: {
+      tourTitle: tour.title,
+      projectSlug: tour.project.slug,
+      projectName: tour.project.name,
+      revision: tour.project.revision.commit,
+      revisionDirty: tour.project.revision.dirty,
+      locale: tour.locale,
+      chapterTitle: chapter.title,
+      beatTitle: beat.title,
+    },
   };
 }
 

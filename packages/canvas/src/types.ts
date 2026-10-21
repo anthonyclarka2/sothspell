@@ -63,6 +63,23 @@ export interface CanvasFlowLink {
 
 export type CanvasLink = CanvasEvidenceLink | CanvasFlowLink;
 
+/**
+ * Human-readable identity for exports. The ids alone are enough to draw the
+ * board, but a PNG or a print handout has to name the tour and revision it came
+ * from, so the builder records them once instead of every consumer looking the
+ * beat up again.
+ */
+export interface CanvasSceneMetadata {
+  tourTitle: string;
+  projectSlug: string;
+  projectName: string;
+  revision: string;
+  revisionDirty: boolean;
+  locale: string;
+  chapterTitle: string;
+  beatTitle: string;
+}
+
 /** The pure data model of one canvas view. */
 export interface CanvasScene {
   tourId: string;
@@ -74,6 +91,8 @@ export interface CanvasScene {
   /** Anchors that exist on the beat but were not opened by the limit. */
   hiddenContainerCount: number;
   links: CanvasLink[];
+  /** Optional so hand-built scenes in tests and adapters stay valid. */
+  metadata?: CanvasSceneMetadata;
 }
 
 export interface BuildCanvasSceneOptions {
