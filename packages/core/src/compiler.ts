@@ -14,6 +14,8 @@ export interface CompiledAnchor {
   id: string;
   path: string;
   symbol?: string;
+  /** The analyzer symbol ID this anchor targets, when the tour carries one. */
+  symbolId?: string;
   label?: string;
   startLine: number;
   endLine: number;
@@ -126,6 +128,7 @@ async function resolveAnchor(
     excerpt,
     html,
     ...(anchor.symbol === undefined ? {} : { symbol: anchor.symbol }),
+    ...(anchor.symbolId === undefined ? {} : { symbolId: anchor.symbolId }),
     ...(anchor.label === undefined ? {} : { label: anchor.label }),
   };
 }

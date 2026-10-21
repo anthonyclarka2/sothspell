@@ -92,5 +92,15 @@ export {
   type DrilldownResult,
 } from './drilldown.js';
 export { assembleDocument, totalDurationMs } from './assemble.js';
+export {
+  saveAnalysisArtifacts,
+  saveTourArtifacts,
+  type ProjectRecord,
+  type ProjectSourceKind,
+  type SaveAnalysisArtifactsInput,
+  type SaveTourArtifactsInput,
+  type SavedAnalysisArtifacts,
+  type SavedTourArtifacts,
+} from './save.js';
 export { loadPrompt, renderPrompt, PROMPT_VERSION } from './prompts.js';
 export { validateChapterDraft, validatePlan } from './validate.js';

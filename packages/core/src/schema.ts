@@ -2,20 +2,27 @@ import { z } from 'zod';
 import { DiagramInstructionSchema } from '@sothspell/diagram';
 
 /**
- * Schema versions. `1.1.0` adds a tour locale and per-locale translations;
- * `parseSothspell` migrates `1.0.0` documents so the checked-in golden tour and
+ * Schema versions. `1.1.0` added a tour locale and per-locale translations;
+ * `1.2.0` adds an optional symbol target to code anchors and diagram nodes.
+ * `parseSothspell` runs the migration chain so the checked-in golden tour and
  * older artifacts keep parsing without a rewrite.
  */
-export const SCHEMA_VERSION = '1.1.0' as const;
-export const PREVIOUS_SCHEMA_VERSION = '1.0.0' as const;
+export const SCHEMA_VERSION = '1.2.0' as const;
+/** The locale and translation step of the migration chain. */
+export const LOCALE_SCHEMA_VERSION = '1.1.0' as const;
+/** The original shipping format, before locale or symbol targets. */
+export const BASE_SCHEMA_VERSION = '1.0.0' as const;
+/** The version immediately before the current one. */
+export const PREVIOUS_SCHEMA_VERSION = LOCALE_SCHEMA_VERSION;
 export const DEFAULT_LOCALE = 'en' as const;
 
 /**
- * Both versions stay parseable during the transition; `parseSothspell` migrates
- * a `1.0.0` tour forward, so every document that leaves the parser is current.
+ * Every version stays parseable during the transition; `parseSothspell` migrates
+ * an older tour forward, so every document that leaves the parser is current.
  */
 export const SUPPORTED_SCHEMA_VERSIONS = [
-  PREVIOUS_SCHEMA_VERSION,
+  BASE_SCHEMA_VERSION,
+  LOCALE_SCHEMA_VERSION,
   SCHEMA_VERSION,
 ] as const;
 
@@ -60,6 +67,8 @@ export const CodeAnchorSchema = z.object({
       message: 'anchor path must be repository-relative',
     }),
   symbol: z.string().min(1).optional(),
+  /** The analyzer symbol ID this anchor targets, when one is known. */
+  symbolId: z.string().min(1).optional(),
   lines: LineRangeSchema,
   contentHash: Sha256Schema,
   label: z.string().min(1).max(96).optional(),
@@ -392,23 +401,130 @@ export function translationIssues(
 }
 
 /**
- * Turns an unknown artifact into a current-version document. The only migration
- * so far records the source locale on `1.0.0` tours; their shape is otherwise
- * unchanged.
+ * The forward migration chain. Each step owns one version hop and returns a new
+ * document; a version with no step is unknown and stays untouched so the schema
+ * rejects it instead of silently upgrading something it does not understand.
+ */
+interface SchemaMigration {
+  readonly to: string;
+  migrate(document: Record<string, unknown>): Record<string, unknown>;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function addLocale(document: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...document,
+    schemaVersion: LOCALE_SCHEMA_VERSION,
+    locale: document.locale ?? DEFAULT_LOCALE,
+  };
+}
+
+function collectAnchorIds(document: Record<string, unknown>): Set<string> {
+  const ids = new Set<string>();
+  const chapters = Array.isArray(document.chapters) ? document.chapters : [];
+  for (const chapter of chapters) {
+    if (!isRecord(chapter)) {
+      continue;
+    }
+    const beats = Array.isArray(chapter.beats) ? chapter.beats : [];
+    for (const beat of beats) {
+      if (!isRecord(beat)) {
+        continue;
+      }
+      const anchors = Array.isArray(beat.anchors) ? beat.anchors : [];
+      for (const anchor of anchors) {
+        if (isRecord(anchor) && typeof anchor.id === 'string') {
+          ids.add(anchor.id);
+        }
+      }
+    }
+  }
+  return ids;
+}
+
+/**
+ * A generated tour used a candidate symbol ID as `DiagramNode.anchorId`. That
+ * value was never a real anchor, so a node that cites it cannot open evidence.
+ * Move it to `symbolId` only when it has the symbol shape and no anchor in the
+ * document owns the ID; an explicit anchor reference always wins.
+ */
+function repairNodeSymbolTarget(node: unknown, anchorIds: Set<string>): unknown {
+  if (!isRecord(node)) {
+    return node;
+  }
+  const anchorId = node.anchorId;
+  if (
+    typeof anchorId !== 'string' ||
+    !anchorId.startsWith('symbol:') ||
+    anchorIds.has(anchorId)
+  ) {
+    return node;
+  }
+  const next: Record<string, unknown> = { ...node };
+  delete next.anchorId;
+  next.symbolId = typeof node.symbolId === 'string' ? node.symbolId : anchorId;
+  return next;
+}
+
+function addSymbolTargets(document: Record<string, unknown>): Record<string, unknown> {
+  const anchorIds = collectAnchorIds(document);
+  const chapters = Array.isArray(document.chapters)
+    ? document.chapters.map((chapter) => {
+        if (!isRecord(chapter)) {
+          return chapter;
+        }
+        const diagrams = Array.isArray(chapter.diagrams)
+          ? chapter.diagrams.map((diagram) => {
+              if (!isRecord(diagram)) {
+                return diagram;
+              }
+              const nodes = Array.isArray(diagram.nodes)
+                ? diagram.nodes.map((node) => repairNodeSymbolTarget(node, anchorIds))
+                : diagram.nodes;
+              return { ...diagram, nodes };
+            })
+          : chapter.diagrams;
+        return { ...chapter, diagrams };
+      })
+    : document.chapters;
+
+  return { ...document, schemaVersion: SCHEMA_VERSION, chapters };
+}
+
+const SCHEMA_MIGRATIONS: Record<string, SchemaMigration> = {
+  [BASE_SCHEMA_VERSION]: { to: LOCALE_SCHEMA_VERSION, migrate: addLocale },
+  [LOCALE_SCHEMA_VERSION]: { to: SCHEMA_VERSION, migrate: addSymbolTargets },
+};
+
+/**
+ * Turns an unknown artifact into a current-version document by walking the
+ * migration chain. The input is never mutated; an unknown or cyclic version is
+ * returned as-is so validation fails with the original document.
  */
 export function migrateSothspell(input: unknown): unknown {
-  if (!input || typeof input !== 'object') {
+  if (!isRecord(input)) {
     return input;
   }
-  const record = input as Record<string, unknown>;
-  if (record.schemaVersion !== PREVIOUS_SCHEMA_VERSION) {
-    return input;
+
+  let document = input;
+  let version =
+    typeof document.schemaVersion === 'string' ? document.schemaVersion : undefined;
+  const visited = new Set<string>();
+
+  while (version !== undefined && version !== SCHEMA_VERSION) {
+    const step = SCHEMA_MIGRATIONS[version];
+    if (!step || visited.has(version)) {
+      return input;
+    }
+    visited.add(version);
+    document = step.migrate(document);
+    version = step.to;
   }
-  return {
-    ...record,
-    schemaVersion: SCHEMA_VERSION,
-    locale: record.locale ?? DEFAULT_LOCALE,
-  };
+
+  return document;
 }
 
 /**

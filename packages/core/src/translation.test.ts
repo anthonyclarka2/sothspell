@@ -255,6 +255,31 @@ describe('applyTranslation', () => {
     expect(rendered.translations).toBeUndefined();
   });
 
+  it('preserves symbol IDs on anchors and diagram nodes', () => {
+    const raw = structuredClone(sourceDocument()) as Record<string, unknown>;
+    raw.schemaVersion = '1.2.0';
+    const chapters = raw.chapters as Array<Record<string, unknown>>;
+    const beat = (chapters[0]!.beats as Array<Record<string, unknown>>)[0]!;
+    const anchor = (beat.anchors as Array<Record<string, unknown>>)[0]!;
+    anchor.symbolId = 'symbol:src/api.ts#readSourceRange';
+    const diagram = (chapters[0]!.diagrams as Array<Record<string, unknown>>)[0]!;
+    const node = (diagram.nodes as Array<Record<string, unknown>>)[0]!;
+    node.symbolId = 'symbol:src/api.ts#readSourceRange';
+
+    const source = parseSothspell(raw);
+    const rendered = applyTranslation(
+      withTranslation(source, translationFor(source)),
+      'es',
+    );
+
+    expect(rendered.chapters[0]!.beats[0]!.anchors[0]!.symbolId).toBe(
+      'symbol:src/api.ts#readSourceRange',
+    );
+    expect(rendered.chapters[0]!.diagrams[0]!.nodes[0]!.symbolId).toBe(
+      'symbol:src/api.ts#readSourceRange',
+    );
+  });
+
   it('falls back to the source strings when the translation omits diagram labels', () => {
     const source = parseSothspell(sourceDocument());
     const translation = translationFor(source);
