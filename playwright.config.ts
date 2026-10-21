@@ -5,6 +5,12 @@ import { defineConfig, devices } from '@playwright/test';
 const webPort = Number(process.env.SOTHSPELL_WEB_PORT ?? 5173);
 const apiPort = Number(process.env.SOTHSPELL_API_PORT ?? 4319);
 
+// Local runs use the installed Chrome channel; CI sets PLAYWRIGHT_CHANNEL to an
+// empty string so Playwright uses its bundled Chromium and does not depend on a
+// system browser. An explicit value still wins for other local or hosted runs.
+const configuredChannel = process.env.PLAYWRIGHT_CHANNEL?.trim();
+const channel = configuredChannel === '' ? undefined : (configuredChannel ?? 'chrome');
+
 export default defineConfig({
   testDir: './apps/web/e2e',
   fullyParallel: false,
@@ -15,7 +21,7 @@ export default defineConfig({
   use: {
     baseURL: `http://127.0.0.1:${webPort}`,
     trace: 'on-first-retry',
-    channel: 'chrome',
+    ...(channel === undefined ? {} : { channel }),
   },
   webServer: [
     {

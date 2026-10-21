@@ -11,6 +11,10 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    env:
+      # Empty selects Playwright's bundled Chromium in CI; local runs default
+      # to the installed Chrome channel.
+      PLAYWRIGHT_CHANNEL: ''
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -22,9 +26,15 @@ jobs:
           cache: pnpm
       - run: pnpm check:secrets
       - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm audit --prod --audit-level high
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test
+      - run: pnpm test:coverage
       - run: pnpm build
+      - run: pnpm check:bundle
+      - run: pnpm test:browser
+      - run: pnpm test:a11y
+      - run: pnpm test:canvas:perf
       - run: pnpm check:toolchain

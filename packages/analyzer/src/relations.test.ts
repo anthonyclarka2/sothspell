@@ -323,4 +323,100 @@ describe('selectSymbolRelations', () => {
     );
     expect(selection.relations).toEqual([]);
   });
+
+  it('ignores an edge whose other endpoint is not in the symbol index', () => {
+    const source = symbol('symbol:src/source.ts#run', { path: 'src/source.ts' });
+    const target = symbol('symbol:src/target.ts#save', { path: 'src/target.ts' });
+    const missingCaller: GraphEdge = {
+      from: 'symbol:src/missing.ts#caller',
+      to: target.id,
+      kind: 'calls',
+      confidence: 'syntax',
+      atLine: 4,
+    };
+    const missingCallee: GraphEdge = {
+      from: source.id,
+      to: 'symbol:src/missing.ts#save',
+      kind: 'calls',
+      confidence: 'syntax',
+      atLine: 6,
+    };
+
+    expect(
+      selectSymbolRelations(
+        snapshot([source, target], [missingCaller]),
+        target.id,
+        'incoming',
+        8,
+      ).relations,
+    ).toEqual([]);
+    expect(
+      selectSymbolRelations(
+        snapshot([source, target], [missingCallee]),
+        source.id,
+        'outgoing',
+        8,
+      ).relations,
+    ).toEqual([]);
+  });
+
+  it('returns nothing for an unsupported direction', () => {
+    // The public union has two directions; the service is defensive because a
+    // future caller may pass a persisted value that predates validation.
+    const target = symbol('symbol:src/target.ts#save', { path: 'src/target.ts' });
+    const selection = selectSymbolRelations(
+      snapshot(
+        [target],
+        [
+          {
+            from: target.id,
+            to: target.id,
+            kind: 'calls',
+            confidence: 'syntax',
+            atLine: 4,
+          },
+        ],
+      ),
+      target.id,
+      'sideways' as unknown as 'incoming',
+      8,
+    );
+
+    expect(selection.relations).toEqual([]);
+  });
+
+  it('orders same-path symbols at the same line by symbol id', () => {
+    const target = symbol('symbol:src/target.ts#save', { path: 'src/target.ts' });
+    const beta = symbol('symbol:src/a.ts#beta', {
+      path: 'src/a.ts',
+      startLine: 12,
+    });
+    const alpha = symbol('symbol:src/a.ts#alpha', {
+      path: 'src/a.ts',
+      startLine: 12,
+    });
+    const edges: GraphEdge[] = [
+      { from: beta.id, to: target.id, kind: 'calls', confidence: 'syntax', atLine: 3 },
+      { from: alpha.id, to: target.id, kind: 'calls', confidence: 'syntax', atLine: 8 },
+    ];
+
+    const forward = selectSymbolRelations(
+      snapshot([target, beta, alpha], edges),
+      target.id,
+      'incoming',
+      8,
+    );
+    const reversed = selectSymbolRelations(
+      snapshot([target, alpha, beta], edges.toReversed()),
+      target.id,
+      'incoming',
+      8,
+    );
+
+    expect(forward.relations.map((relation) => relation.symbol.id)).toEqual([
+      alpha.id,
+      beta.id,
+    ]);
+    expect(reversed.relations).toEqual(forward.relations);
+  });
 });
