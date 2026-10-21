@@ -84,13 +84,15 @@ export interface CanvasCodeContainerData extends Record<string, unknown> {
   relation: { kind: CanvasRelationKind; confidence: CanvasRelationConfidence } | null;
   incoming: CanvasRelationToggleView;
   outgoing: CanvasRelationToggleView;
+  /** Re-measures line handles when the canvas text scale changes. */
+  textScale: number;
   onFocus: (containerId: string) => void;
   onToggleCollapse: (containerId: string) => void;
   onToggleRelation: (
     containerId: string,
     direction: CanvasRelationToggleDirection,
   ) => void;
-  onOpenDefinition: (symbolId: string) => void;
+  onOpenDefinition: (symbolId: string, sourceContainerId?: string) => void;
 }
 
 export interface CanvasRelationStatusData extends Record<string, unknown> {
@@ -138,6 +140,7 @@ export interface CanvasFlowState {
   sharedSymbolIds: ReadonlySet<string>;
   relationState: CanvasRelationUiState;
   relationMeta: Record<string, CanvasRelationMeta>;
+  textScale: number;
 }
 
 export interface CanvasFlowActions {
@@ -145,7 +148,7 @@ export interface CanvasFlowActions {
   focusContainer: (containerId: string) => void;
   toggleContainer: (containerId: string) => void;
   toggleRelation: (containerId: string, direction: CanvasRelationToggleDirection) => void;
-  openDefinition: (symbolId: string) => void;
+  openDefinition: (symbolId: string, sourceContainerId?: string) => void;
   retryRelation: (status: CanvasRelationStatusCard) => void;
 }
 
@@ -180,6 +183,16 @@ export function buildCanvasNodes(
     if (!item) {
       continue;
     }
+    const scale = state.textScale / 100;
+    const diagramWidth = diagram.diagram.width * scale;
+    const diagramHeight = diagram.diagram.height * scale;
+    const objects = diagram.objects.map((object) => ({
+      ...object,
+      x: object.x * scale,
+      y: object.y * scale,
+      width: object.width * scale,
+      height: object.height * scale,
+    }));
 
     nodes.push({
       id: item.id,
@@ -202,16 +215,16 @@ export function buildCanvasNodes(
         home: diagram.home,
         width: item.width,
         height: item.height,
-        diagramWidth: diagram.diagram.width,
-        diagramHeight: diagram.diagram.height,
-        objects: diagram.objects,
+        diagramWidth,
+        diagramHeight,
+        objects,
         wires: diagram.diagram.edges,
       },
     });
 
-    const insetX = Math.max(0, (item.width - diagram.diagram.width) / 2);
-    const insetY = Math.max(0, item.height - diagram.diagram.height - insetX);
-    for (const object of diagram.objects) {
+    const insetX = Math.max(0, (item.width - diagramWidth) / 2);
+    const insetY = Math.max(0, item.height - diagramHeight - insetX);
+    for (const object of objects) {
       const anchorResolved =
         object.anchorId !== undefined && resolvedAnchorIds.has(object.anchorId);
       const target: CanvasObjectData['target'] = anchorResolved
@@ -308,6 +321,7 @@ export function buildCanvasNodes(
               },
         incoming: toggle('incoming'),
         outgoing: toggle('outgoing'),
+        textScale: state.textScale,
         onFocus: actions.focusContainer,
         onToggleCollapse: actions.toggleContainer,
         onToggleRelation: actions.toggleRelation,
@@ -427,7 +441,7 @@ export function buildCanvasEdges(scene: CanvasScene): CanvasFlowEdge[] {
         type: MarkerType.ArrowClosed,
         width: 18,
         height: 18,
-        color: 'var(--canvas-flow-edge)',
+        color: 'var(--canvas-relation-color, var(--canvas-flow-edge))',
       },
     });
   }

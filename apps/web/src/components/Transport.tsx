@@ -90,6 +90,7 @@ export function Transport({
         <label className="transport-speed">
           <span className="visually-hidden">{t('transport.speed')}</span>
           <select
+            aria-label={t('transport.speed')}
             value={String(snapshot.speed)}
             onChange={(event) => onSpeed(Number(event.target.value))}
           >

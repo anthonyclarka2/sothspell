@@ -19,7 +19,7 @@ export interface CanvasOutlineActions {
   focusContainer: (containerId: string) => void;
   toggleContainer: (containerId: string) => void;
   toggleRelation: (containerId: string, direction: CanvasRelationToggleDirection) => void;
-  openDefinition: (symbolId: string) => void;
+  openDefinition: (symbolId: string, sourceContainerId?: string) => void;
   showAllAnchors: () => void;
   zoomIn: () => void;
   zoomOut: () => void;
@@ -226,7 +226,7 @@ export function CanvasOutline({
                         <button
                           type="button"
                           className="canvas-outline-action"
-                          onClick={() => actions.openDefinition(symbolId)}
+                          onClick={() => actions.openDefinition(symbolId, container.id)}
                         >
                           {t('canvas.openDefinition', { label: container.label })}
                         </button>

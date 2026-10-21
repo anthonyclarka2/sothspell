@@ -383,6 +383,7 @@ export function layoutRelationCanvas(
   base: CanvasScene,
   build: CanvasRelationScene,
   viewport: CanvasSize,
+  textScale = 1,
 ): CanvasRelationLayout {
   const baseLayout = layoutCanvas(base, viewport);
   const items: Record<string, CanvasLayoutItem> = { ...baseLayout.items };
@@ -459,7 +460,44 @@ export function layoutRelationCanvas(
     }
   }
 
-  return { items, bounds: boundsOf(items), statusItems };
+  return scaleLayout({ items, bounds: boundsOf(items), statusItems }, textScale);
+}
+
+/**
+ * Text scale scales the card geometry with the type. The browser then renders
+ * both a larger card and larger text, so a 200% preference never squeezes the
+ * excerpt into a fixed 420 px box. The saved viewport still uses unscaled
+ * world coordinates via React Flow.
+ */
+function scaleLayout(layout: CanvasRelationLayout, scale: number): CanvasRelationLayout {
+  if (!Number.isFinite(scale) || scale <= 0 || scale === 1) {
+    return layout;
+  }
+  const scaleItem = (item: CanvasLayoutItem): CanvasLayoutItem => ({
+    ...item,
+    x: item.x * scale,
+    y: item.y * scale,
+    width: item.width * scale,
+    height: item.height * scale,
+  });
+  const items: Record<string, CanvasLayoutItem> = {};
+  const statusItems: Record<string, CanvasLayoutItem> = {};
+  for (const [key, item] of Object.entries(layout.items)) {
+    items[key] = scaleItem(item);
+  }
+  for (const [key, item] of Object.entries(layout.statusItems)) {
+    statusItems[key] = items[key] ?? scaleItem(item);
+  }
+  return {
+    items,
+    statusItems,
+    bounds: {
+      x: layout.bounds.x * scale,
+      y: layout.bounds.y * scale,
+      width: layout.bounds.width * scale,
+      height: layout.bounds.height * scale,
+    },
+  };
 }
 
 function placeColumn(

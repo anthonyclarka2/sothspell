@@ -34,7 +34,10 @@ export const CanvasEvidenceEdge = memo(function CanvasEvidenceEdge({
         path={path}
         markerEnd={markerEnd}
         interactionWidth={12}
-        style={{ strokeWidth: 1.5, stroke: 'var(--canvas-edge)' }}
+        style={{
+          strokeWidth: 'var(--canvas-evidence-width, 1.5px)',
+          stroke: 'var(--canvas-edge)',
+        }}
       />
     </g>
   );
