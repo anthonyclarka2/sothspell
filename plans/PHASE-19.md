@@ -285,3 +285,46 @@ This phase closes the accessibility gate for the canvas era.
 - Verify with the real Chrome accessibility tree and a real screen reader, not
   only axe.
 - Record manual results and screenshots in `docs/canvas.md`.
+
+## Shipped (closure, 2026-10-21)
+
+- **Preferences** — versioned localStorage for auto-zoom, auto-arrange, follow
+  beat, motion, contrast, palette, text scale, first-run flags, and saved
+  viewports. Invalid values fall back per field; reset is in the display menu.
+- **Auto-zoom and auto-arrange** — source-plus-container framing, deterministic
+  arrangement, 220 ms transform (instant under reduced motion), first-run
+  notices with Undo and in-place disable, and persistent shortcut-sheet actions.
+- **Display menu** — appearance controls for motion, contrast, palette, text
+  size, auto-zoom, auto-arrange, follow beat, and resets. Root attributes:
+  `data-motion`, `data-contrast`, `data-palette`, `data-text-scale`.
+- **Keyboard** — arrow/HJKL spatial movement, Enter to enter/activate, Escape
+  item → container → home, Shift+H home, Shift+A arrange, `0` fit, `1` reset,
+  `F` fullscreen, `?` shortcuts. Handled keys stop before the player; Space and
+  `T` keep their player meaning on the board.
+- **Compact canvas** — below 768 px the same scene becomes a vertical list with
+  objects, code, relation toggles/status, and the full action set.
+- **Modes** — high contrast, `prefers-contrast: more`, forced colours, an
+  Okabe–Ito colour-blind palette with line styles and labels, 200% text with
+  re-measured line handles, and a visible focus ring.
+- **Tests** — 17 new preference/focus unit tests, 15 new canvas accessibility
+  browser tests, display/compact/preferences axe states.
+
+### Closure verification (fresh, 2026-10-21)
+
+- `pnpm test`: 123 files / 1025 tests passed.
+- `pnpm typecheck`, `pnpm lint`, and `pnpm build` clean.
+- `SOTHSPELL_WEB_PORT=5277 SOTHSPELL_API_PORT=4316 pnpm test:browser`:
+  105 passed, including keyboard/HJKL, Space and `T` handoff, auto-zoom/arrange
+  undo and disable, preference persistence, compact at 375 px, 200% text,
+  forced colours, `prefers-contrast`, high contrast, and colour-blind palette.
+- Axe: 0 critical / 0 serious in every new state.
+- Web bundle after the accessibility layer: 809.79 kB / 238.08 kB gzip.
+- Bunbun tree clean.
+
+### Follow-ups
+
+- Manual VoiceOver and NVDA checks have not been run. VoiceOver is the required
+  Phase 20 manual check; NVDA remains owner-gated on Windows.
+- Container dragging and saved manual layouts are not enabled; saved viewports
+  are restored per scene, but the board still uses the deterministic layout.
+- Touch-target and real-device pinch checks remain manual Phase 20 checks.
