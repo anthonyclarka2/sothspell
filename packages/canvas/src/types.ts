@@ -108,6 +108,47 @@ export interface CanvasLayout {
   bounds: CanvasRect;
 }
 
+/** Where a relation request starts: a definition, callers, or callees. */
+export type CanvasRelationDirection = 'definition' | 'incoming' | 'outgoing';
+
+/** The identity of one analyzer symbol. */
+export interface CanvasSymbolRef {
+  id: string;
+  name: string;
+  qualifiedName: string;
+  kind: string;
+  path: string;
+  startLine: number;
+  endLine: number;
+  language: string;
+}
+
+/** One exact identifier the excerpt can link without sending the snapshot. */
+export interface CanvasIdentifierTarget {
+  text: string;
+  symbolId: string;
+  path: string;
+}
+
+/** One related symbol and its bounded excerpt. */
+export interface CanvasRelationItem {
+  symbol: CanvasSymbolRef;
+  relation: CanvasRelationKind;
+  confidence: CanvasRelationConfidence;
+  container: CanvasCodeContainer;
+}
+
+/** The bounded payload behind a definition or relation expansion. */
+export interface CanvasRelationResponse {
+  available: true;
+  direction: CanvasRelationDirection;
+  symbol: CanvasSymbolRef;
+  container: CanvasCodeContainer;
+  relations: CanvasRelationItem[];
+  identifierTargets: CanvasIdentifierTarget[];
+  truncated: boolean;
+}
+
 export type CanvasDirection = 'up' | 'down' | 'left' | 'right';
 
 export type CanvasSelectionLevel = 'canvas' | 'container';
