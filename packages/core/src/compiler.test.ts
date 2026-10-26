@@ -44,7 +44,12 @@ function makeDocument(overrides?: {
             kind: 'architecture',
             title: 'One module',
             nodes: [
-              { id: 'node_module', label: 'Module', type: 'module' },
+              {
+                id: 'node_module',
+                label: 'Module',
+                type: 'module',
+                symbolId: 'symbol:src/module.ts#answer',
+              },
               { id: 'node_store', label: 'Store', type: 'store' },
             ],
             edges: [
@@ -68,6 +73,7 @@ function makeDocument(overrides?: {
                 id: 'anchor_module',
                 path: 'src/module.ts',
                 symbol: 'answer',
+                symbolId: 'symbol:src/module.ts#answer',
                 lines: { start: 1, end: 2 },
                 contentHash: overrides?.contentHash ?? hashText(excerpt),
                 language: 'typescript',
@@ -98,9 +104,11 @@ describe('compileSothspell', () => {
     expect(compiled.id).toBe('tour_compiler_test');
     expect(anchor?.html).toContain('shiki');
     expect(anchor?.excerpt).toContain('const answer = 42;');
+    expect(anchor?.symbolId).toBe('symbol:src/module.ts#answer');
     expect(beat?.durationMs).toBeGreaterThan(0);
     expect(diagram?.nodes[0]?.x).toBeTypeOf('number');
     expect(diagram?.nodes[0]?.y).toBeTypeOf('number');
+    expect(diagram?.nodes[0]?.symbolId).toBe('symbol:src/module.ts#answer');
     expect(diagram?.edges[0]?.from).toBe('node_module');
   });
 

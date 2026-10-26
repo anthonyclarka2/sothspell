@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { compileSothspell } from './compiler.js';
-import type { SothspellDocument } from './schema.js';
+import { parseSothspell, SCHEMA_VERSION, type SothspellDocument } from './schema.js';
 
 const tourUrl = new URL('../../../examples/bunbun-tour/tour.json', import.meta.url);
 const bunbunRoot = '/Users/ajc/Projects/codegens/bunbun';
@@ -41,6 +41,43 @@ describe('golden Bunbun tour', () => {
     }
 
     expect(compiled.estimatedDurationMs).toBeGreaterThan(8 * 60 * 1000);
+  });
+
+  it('keeps the golden tour evidence unchanged through the 1.2.0 migration', () => {
+    const raw = loadGoldenDocument();
+    const document = parseSothspell(raw);
+
+    expect(document.schemaVersion).toBe(SCHEMA_VERSION);
+
+    const rawAnchors = raw.chapters.flatMap((chapter) =>
+      chapter.beats.flatMap((beat) => beat.anchors),
+    );
+    const anchors = document.chapters.flatMap((chapter) =>
+      chapter.beats.flatMap((beat) => beat.anchors),
+    );
+
+    expect(anchors.map((anchor) => anchor.id)).toEqual(
+      rawAnchors.map((anchor) => anchor.id),
+    );
+    expect(anchors.map((anchor) => anchor.path)).toEqual(
+      rawAnchors.map((anchor) => anchor.path),
+    );
+    for (const anchor of anchors) {
+      expect(anchor.symbolId).toBeUndefined();
+    }
+
+    const rawNodes = raw.chapters.flatMap((chapter) =>
+      chapter.diagrams.flatMap((diagram) => diagram.nodes),
+    );
+    const nodes = document.chapters.flatMap((chapter) =>
+      chapter.diagrams.flatMap((diagram) => diagram.nodes),
+    );
+    expect(nodes.map((node) => node.anchorId)).toEqual(
+      rawNodes.map((node) => node.anchorId),
+    );
+    for (const node of nodes) {
+      expect(node.symbolId).toBeUndefined();
+    }
   });
 
   it('does not modify the pinned Bunbun checkout', () => {

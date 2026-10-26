@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { mkdir, stat, writeFile } from 'node:fs/promises';
+import { stat } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import {
@@ -13,6 +13,7 @@ import {
   buildContextPack,
   createAiSdkGuideModel,
   createFixtureGuideModel,
+  saveTourArtifacts,
   type AuthoringProgress,
   type ContextPack,
   type GuideModel,
@@ -379,21 +380,14 @@ export function createAuthoringService(
       if (!firstBeatId) {
         throw new Error('the authored tour has no beats');
       }
-      const tourDirectory = path.join(
-        options.home,
-        'projects',
-        snapshot.project.slug,
-        'tours',
-        result.document.id,
-      );
-      const tourPath = path.join(tourDirectory, 'tour.json');
-      await mkdir(tourDirectory, { recursive: true });
-      await writeFile(tourPath, `${JSON.stringify(result.document, null, 2)}\n`, 'utf8');
-      await writeFile(
-        path.join(tourDirectory, 'quality.json'),
-        `${JSON.stringify(result.quality, null, 2)}\n`,
-        'utf8',
-      );
+      const saved = await saveTourArtifacts({
+        home: options.home,
+        document: result.document,
+        quality: result.quality,
+        snapshot,
+        sourceRoot: root,
+        sourceKind: request.source.kind === 'local' ? 'local' : 'imported',
+      });
       setStep(job, 'save', 'done');
 
       job.result = {
@@ -401,7 +395,7 @@ export function createAuthoringService(
         title: result.document.title,
         firstBeatId,
         playerPath: firstBeatPath(result.document.id, firstBeatId),
-        tourPath,
+        tourPath: saved.tourPath,
         chapters: result.quality.chapters,
         beats: result.quality.beats,
         anchors: result.quality.anchors,

@@ -1,5 +1,78 @@
 # Release Notes
 
+## 0.3.1 — 2026-10-21 (canvas interaction patch)
+
+The canvas board is now directly manipulable.
+
+### Included
+
+- Resizable code containers with a 280×180 minimum.
+- Movable code and diagram cards, dragged by their headers.
+- Closable code containers, reopenable from their diagram object or relation
+  toggle.
+- Selectable diagram objects, including objects with no code target.
+- Selected containers highlight their connected evidence and flow edges.
+- Fullscreen re-fits and centres the board after the viewport resize.
+- Shiki inter-line whitespace removed, eliminating blank-line gaps in code
+  containers.
+- Close actions in the compact and outline views.
+
+### Verification
+
+- `pnpm test` → 127 files / 1064 tests.
+- `pnpm test:browser` → 121 passed, including 7 new interaction journeys.
+- Typecheck, lint, and build clean; Bunbun remains read-only.
+
+## 0.3.0 — 2026-10-21 (canvas era)
+
+The third stage adds an opt-in canvas playback view, symbol-level code
+relationships, accessible exploration, and export.
+
+### Included
+
+- **Canvas playback** — `?view=canvas` on the player route, a home diagram,
+  evidence links to exact code lines, multiple chapter diagrams, code
+  containers, zoom/fit/home/auto-arrange, fullscreen, and a minimal outline.
+- **Code relationships** — schema 1.2.0 with optional `symbolId` and a migration
+  that repairs generated tours; analyzer 0.4.0 with TS/JS call edges; a bounded
+  relation API; incoming/outgoing toggles with flow links; definition links;
+  shared-symbol bridges; and honest import/reference labels.
+- **Project records** — authored, imported, CLI, harness, and `analyze --save`
+  paths write `$SOTHSPELL_HOME/projects/<slug>/project.json` plus a snapshot, so
+  code pages and relations resolve source after restart. Source roots never
+  enter a tour or an export.
+- **Accessibility** — arrow/HJKL keyboard navigation, item/container/home
+  step-out, an outline, live announcements, local view preferences, auto-zoom
+  and auto-arrange notices with Undo/disable, high contrast, forced colours, a
+  colour-blind palette, 200% text, and a compact layout below 768 px.
+- **Export** — PNG/JPG current view or whole board via `modern-screenshot`, and
+  a separate `CanvasPrintView` for selectable-text print-to-PDF.
+- **Gates** — coverage for the pure canvas and relation modules, a Chrome
+  Playwright frame-budget spec, a bundle report, and CI browser/coverage/perf
+  steps.
+
+### Verification
+
+- `pnpm test` → 127 files / 1063 tests.
+- `pnpm test:browser` → 114 passed; `pnpm test:a11y` included in that run.
+- `pnpm test:canvas:perf` → p50 16.7 ms, p95 16.8 ms, 0 long tasks on the
+  golden two-diagram board.
+- `pnpm test:coverage` → 95.7% lines overall; canvas 96.16%, analyzer relations
+  97.91%, API relations 94.44%.
+- `pnpm build`, `pnpm typecheck`, `pnpm lint`, and `pnpm check:bundle` clean.
+- Bunbun remains read-only.
+
+### Known limitations
+
+- VoiceOver/NVDA, real-device touch, Firefox, and WebKit are manual/owner-gated.
+- In-text identifier links are deferred; diagram objects, container headers, and
+  the outline open definitions.
+- There is no canvas-specific code split yet; the bundle report records the total
+  instead of claiming the 60 KiB canvas budget.
+- The performance scene is the golden two-diagram board, not the planned
+  32-object synthetic board.
+- The canvas is not part of the embed player.
+
 ## 0.2.0 — 2026-10-17 (next stage)
 
 The second stage adds configuration, reach, collaboration, languages, review,

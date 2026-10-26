@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { bunbunAvailable } from './bunbun-root.js';
 
 test('plays the golden tour and opens code from a beat', async ({ page }) => {
   await page.goto('/');
@@ -41,6 +42,7 @@ test('opens code from a diagram node', async ({ page }) => {
 });
 
 test('renders a full file with the focused line mounted', async ({ page }) => {
+  test.skip(!bunbunAvailable, 'the read-only Bunbun checkout is absent');
   await page.goto(
     '/p/bunbun/source/apps/api/src/main.ts?anchor=anchor_main_bootstrap&beat=beat_request_01',
   );

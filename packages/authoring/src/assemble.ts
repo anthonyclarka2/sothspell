@@ -5,7 +5,7 @@ import {
   type CodeAnchor,
   type SothspellDocument,
 } from '@sothspell/core';
-import { DiagramInstructionSchema } from '@sothspell/diagram';
+import { DiagramInstructionSchema, type DiagramInstruction } from '@sothspell/diagram';
 import type { ProjectSnapshot } from '@sothspell/analyzer';
 import type { AnchorCandidate } from './context.js';
 import type { ChapterDraft, ChapterPlan, TourPlan } from './schemas.js';
@@ -33,11 +33,38 @@ function anchorFor(
     id: `${beatId}_anchor_${index + 1}`,
     path: candidate.path,
     ...(candidate.symbol.length > 0 ? { symbol: candidate.symbol } : {}),
+    // The candidate ID is the analyzer symbol ID; keeping it here lets the
+    // canvas open the definition even when the beat cites a line range.
+    symbolId: candidate.id,
     lines: candidate.lines,
     contentHash: candidate.contentHash,
     label: candidate.label,
     language: candidate.language,
     excerpt: candidate.excerpt,
+  };
+}
+
+/**
+ * Generated drafts cite anchor candidates from diagram nodes through
+ * `anchorId`. That value is a symbol ID, not an anchor ID, so it belongs in
+ * `symbolId`. A draft that cites a real anchor ID keeps it untouched.
+ */
+function attachSymbolTargets(
+  diagram: DiagramInstruction,
+  candidateById: Map<string, AnchorCandidate>,
+): DiagramInstruction {
+  return {
+    ...diagram,
+    nodes: diagram.nodes.map((node) => {
+      if (node.anchorId === undefined || !candidateById.has(node.anchorId)) {
+        return node;
+      }
+      const next = { ...node };
+      const candidateId = next.anchorId!;
+      delete next.anchorId;
+      next.symbolId ??= candidateId;
+      return next;
+    }),
   };
 }
 
@@ -62,11 +89,12 @@ export function assembleDocument(input: {
     const chapterId = `chapter_${chapterSlug}`;
     const diagramId = `diagram_${chapterSlug}`;
 
-    const diagram = DiagramInstructionSchema.parse({
+    const parsedDiagram = DiagramInstructionSchema.parse({
       ...entry.draft.diagram,
       id: diagramId,
       title: entry.draft.diagram.title || entry.draft.title,
     });
+    const diagram = attachSymbolTargets(parsedDiagram, candidateById);
 
     const beats = entry.draft.beats.map((beat, beatIndex) => {
       let beatId = `beat_${chapterSlug}_${beatIndex + 1}`;

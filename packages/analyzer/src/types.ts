@@ -129,6 +129,37 @@ export interface ImportBinding {
 export interface FileImport {
   specifier: string;
   bindings: ImportBinding[];
+  /** One-based line of the import statement; syntax adapters with offsets fill it. */
+  line?: number;
+}
+
+/**
+ * One unresolved call the TypeScript/JavaScript parser saw. Resolution happens
+ * after every file is parsed, because a callee may live in another file; the
+ * cache therefore stores syntax, not graph edges.
+ */
+export interface CallSite {
+  /** Qualified name of the enclosing function, method, or class; `''` is the module. */
+  fromQualifiedName: string;
+  /** The receiver expression (`this.store`) or the bare callee identifier (`greet`). */
+  callee: string;
+  /** The property being called when the callee is a member expression. */
+  member?: string;
+  /** One-based line of the call expression. */
+  line: number;
+}
+
+/**
+ * A declared type on a class member. Calls through `this.member` resolve only
+ * when the member has a type the analyzer can follow; a name alone is not
+ * enough, because a same-named method on another class is not proof.
+ */
+export interface ClassMemberType {
+  /** Qualified name of the declaring class. */
+  className: string;
+  member: string;
+  /** The declared type name, as written in the file. */
+  typeName: string;
 }
 
 /** The per-file parse result every adapter returns. */
@@ -139,19 +170,33 @@ export interface FileAnalysis {
   parseErrors: string[];
   /** Direct evidence that the file is an entry point (a `main` function and so on). */
   entryPoint: boolean;
+  /** Unresolved calls found in this file; the TypeScript/JavaScript adapter fills it. */
+  callSites?: CallSite[];
+  /** Class member type annotations that `this.member` resolution may follow. */
+  memberTypes?: ClassMemberType[];
 }
 
-export type GraphEdgeKind = 'imports' | 'references' | 'package-imports' | 'contains';
+export type GraphEdgeKind =
+  'imports' | 'references' | 'calls' | 'package-imports' | 'contains';
 
 export interface GraphEdge {
   from: string;
   to: string;
   kind: GraphEdgeKind;
   confidence: 'syntax' | 'import';
+  /** One-based call-site line for a `calls` edge. */
+  atLine?: number;
+  /** One-based import statement line for `imports` and `references` edges. */
+  line?: number;
 }
 
 export interface ProjectGraph {
-  fileImports: Array<{ from: string; to: string; specifier: string }>;
+  fileImports: Array<{
+    from: string;
+    to: string;
+    specifier: string;
+    line?: number;
+  }>;
   packageImports: Array<{ from: string; packageName: string; specifier: string }>;
   edges: GraphEdge[];
   entryPoints: string[];
@@ -209,6 +254,11 @@ export interface AnalysisStats {
   durationMs: number;
   cacheHits: number;
   cacheMisses: number;
+  /**
+   * Call sites the analyzer could not resolve with syntax evidence. They are
+   * dropped from the graph; the count keeps the omission visible.
+   */
+  unresolvedCalls: number;
   /** Per-language parser runtime cost, recorded only for detected languages. */
   languageRuntimes: LanguageRuntimeStat[];
 }
