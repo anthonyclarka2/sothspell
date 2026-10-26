@@ -1,12 +1,14 @@
 {
   "name": "@sothspell/api",
-  "version": "0.1.0",
+  "version": "0.3.1",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
     "./app": "./src/app.ts",
-    "./runs": "./src/runs.ts"
+    "./runs": "./src/runs.ts",
+    "./version": "./src/version.ts"
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",

@@ -67,6 +67,7 @@ import {
   type TranslationStore,
 } from './translations.js';
 import { createAuthoringService, type AuthoringService } from './authoring-service.js';
+import { SOTHSPELL_VERSION } from './version.js';
 import { registerAuthoringRoutes } from './authoring.js';
 import { createApiSecurityMiddleware } from './security.js';
 import { resolveProjectSource } from './project-record.js';
@@ -547,7 +548,7 @@ export function createApp(options: AppOptions = {}): Hono {
     context.json({
       ok: true,
       service: 'sothspell',
-      version: '0.2.0',
+      version: SOTHSPELL_VERSION,
     }),
   );
 

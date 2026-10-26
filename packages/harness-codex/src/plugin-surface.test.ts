@@ -17,11 +17,18 @@ async function readJson(relative: string): Promise<Record<string, unknown>> {
   >;
 }
 
+async function packageVersion(): Promise<string> {
+  const manifest = JSON.parse(
+    await readFile(path.join(pluginRoot, '..', 'package.json'), 'utf8'),
+  ) as { version: string };
+  return manifest.version;
+}
+
 describe('Codex plugin surface', () => {
   it('ships a portable Agent Plugins manifest with the OpenAI overlay', async () => {
     const manifest = await readJson('plugin.json');
     expect(manifest.name).toBe('sothspell');
-    expect(manifest.version).toBe('0.1.0');
+    expect(manifest.version).toBe(await packageVersion());
     expect(String(manifest.$schema)).toContain('agent-plugins.org');
     const openai = (manifest.extensions as Record<string, unknown>)['com.openai'] as {
       hooks?: string;

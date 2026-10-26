@@ -1,7 +1,8 @@
 {
   "name": "sothspell",
-  "version": "0.1.0",
+  "version": "0.3.1",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@12.14.0",
   "engines": {
@@ -23,6 +24,7 @@
     "test:canvas:perf": "playwright test apps/web/e2e/canvas-perf.spec.ts --project=browser",
     "check:bundle": "node scripts/check-bundle-budget.mjs",
     "check:toolchain": "node scripts/check-toolchain.mjs",
+    "check:version": "node scripts/set-version.mjs --check",
     "check:secrets": "node scripts/check-secrets.mjs",
     "schema:json": "pnpm --filter @sothspell/core schema:json",
     "sothspell": "tsx apps/cli/src/index.ts",

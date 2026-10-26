@@ -136,9 +136,9 @@ Do not claim completion without fresh verification output.
 - Test at public seams. Each phase plan lists its proposed seams; confirm them
   before writing the first test for a phase.
 - Run the smallest relevant command first, then the full gate:
-  `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`,
-  `pnpm test:browser`, `pnpm test:a11y`. Once Phase 20 lands, add
-  `pnpm test:canvas:perf` and `pnpm test:coverage`.
+  `pnpm check:version`, `pnpm typecheck`, `pnpm lint`, `pnpm test`,
+  `pnpm build`, `pnpm test:browser`, `pnpm test:a11y`,
+  `pnpm test:canvas:perf`, and `pnpm test:coverage`.
 - Verify every user-facing change in a real browser, not only happy-dom.
 - For canvas changes, verify the keyboard-only path, the outline path, forced
   colours, 200% text, and 375 px; axe alone is not an accessibility pass.
@@ -173,7 +173,8 @@ Do not claim completion without fresh verification output.
 - `$SOTHSPELL_HOME/projects/<slug>/snapshot.json` and `project.json` — the local
   analysis snapshot and project source record.
 - `docs/` — development, architecture, analysis, authoring, player, narration,
-  guide, plugin, self-hosting, privacy, accessibility, and troubleshooting.
+  guide, plugin, self-hosting, releasing, privacy, accessibility, and
+  troubleshooting.
 - `plans/` — the current roadmap and phase plans (canvas era, Phases 17–20).
 - `plans/archive/v1/` — the v1 roadmap and Phases 1–8.
 - `plans/archive/v2/` — the next-stage roadmap and Phases 9–16.
@@ -193,6 +194,7 @@ pnpm test:browser
 pnpm test:a11y
 pnpm build
 pnpm check:toolchain
+pnpm check:version
 pnpm schema:json
 pnpm tour:build
 pnpm sothspell doctor

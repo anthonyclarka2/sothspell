@@ -17,11 +17,18 @@ async function readJson(relative: string): Promise<Record<string, unknown>> {
   >;
 }
 
+async function packageVersion(): Promise<string> {
+  const manifest = JSON.parse(
+    await readFile(path.join(pluginRoot, '..', 'package.json'), 'utf8'),
+  ) as { version: string };
+  return manifest.version;
+}
+
 describe('Claude Code plugin surface', () => {
   it('ships a valid plugin manifest', async () => {
     const manifest = await readJson('.claude-plugin/plugin.json');
     expect(manifest.name).toBe('sothspell');
-    expect(manifest.version).toBe('0.1.0');
+    expect(manifest.version).toBe(await packageVersion());
     expect(String(manifest.description)).toContain('walkthrough');
   });
 

@@ -31,13 +31,17 @@ function appFor(projectRoot: string | null = null) {
 }
 
 describe('API', () => {
-  it('reports health', async () => {
+  it('reports health with the root package version', async () => {
     const response = await appFor().request('/api/health');
+    const rootPackage = JSON.parse(
+      await readFile(new URL('../../../package.json', import.meta.url), 'utf8'),
+    ) as { version: string };
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toMatchObject({
+    await expect(response.json()).resolves.toEqual({
       ok: true,
       service: 'sothspell',
+      version: rootPackage.version,
     });
   });
 
