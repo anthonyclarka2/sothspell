@@ -26,6 +26,7 @@ jobs:
           cache: pnpm
       - run: pnpm check:secrets
       - run: pnpm install --frozen-lockfile
+      - run: pnpm check:version
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm audit --prod --audit-level high
       - run: pnpm typecheck

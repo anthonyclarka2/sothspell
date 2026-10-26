@@ -10,9 +10,16 @@
 
 ## Install
 
+Install a tagged GitHub release (replace `v0.3.1` with the newest tag), or clone
+`main` for the latest unreleased changes:
+
 ```bash
+git clone --branch v0.3.1 --depth 1 https://github.com/anthonyclarka2/sothspell.git
+cd sothspell
+corepack enable
 pnpm install --frozen-lockfile
 pnpm build
+pnpm sothspell --version
 pnpm sothspell doctor
 ```
 
@@ -53,10 +60,11 @@ and audio cannot be regenerated without model/TTS calls.
 
 ## Upgrade
 
-1. Pull the new version.
+1. Fetch tags and check out the new release (`git fetch --tags`, then
+   `git switch --detach v0.3.2`).
 2. `pnpm install --frozen-lockfile`.
 3. `pnpm build`.
-4. `pnpm sothspell doctor`.
+4. `pnpm sothspell --version` and `pnpm sothspell doctor`.
 5. Restart `serve`.
 
 SQLite migrations are idempotent (`CREATE TABLE IF NOT EXISTS`) for the current
@@ -64,9 +72,9 @@ schema. Back up `sothspell.db` before upgrading across a schema change.
 
 ## Docker
 
-There is no bundled Dockerfile yet. The local server is a Node process with a
-host-mounted `SOTHSPELL_HOME` and a read-only project mount; add a Dockerfile in
-Phase 8 if containerized deployment is required.
+There is no bundled Dockerfile. The local server is a Node process with a
+host-mounted `SOTHSPELL_HOME` and a read-only project mount. Containerized
+deployment remains a follow-up, not part of the source release.
 
 ## Security posture
 

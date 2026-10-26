@@ -23,6 +23,7 @@ import {
   type SettingsService,
 } from '@sothspell/settings';
 import type { ReviewService } from '@sothspell/review';
+import { SOTHSPELL_VERSION } from '@sothspell/api/version';
 import { runDoctor } from './doctor.js';
 import { parseImportArgs, runImport } from './import.js';
 import { parseExportArgs, runExport } from './export.js';
@@ -46,6 +47,7 @@ export interface CliDependencies {
 }
 
 const USAGE = `Usage:
+  sothspell --version
   sothspell analyze <path> [--json | --brief] [--out <file>] [--save] [--no-cache]
   sothspell author <path> [--model <provider/model>] [--out <dir>]
                           [--audience new-contributor|technical-evaluator|maintainer]
@@ -68,6 +70,7 @@ Commands:
   review            List, show, approve, or reject a stored review session.
 
 Options:
+  --version         Print the Sóþspell version.
   --json            Print the snapshot JSON (analyze), or the import record (import).
   --brief           Print the project brief as Markdown (analyze).
   --out <file|dir>  Write the snapshot JSON, the authored tour directory, or the
@@ -396,6 +399,11 @@ export async function runCli(
   io: CliIO,
   dependencies: CliDependencies = {},
 ): Promise<number> {
+  if (argv[0] === '--version') {
+    io.stdout(`sothspell ${SOTHSPELL_VERSION}`);
+    return 0;
+  }
+
   if (argv.length === 0 || argv[0] === '--help' || argv[0] === 'help') {
     io.stdout(USAGE.trimEnd());
     return 0;
