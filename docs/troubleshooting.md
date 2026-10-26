@@ -45,7 +45,8 @@ Check `git -C /Users/ajc/Projects/codegens/bunbun status --porcelain`. Artifacts
 belong under `SOTHSPELL_HOME`; the golden tour is generated into this repository,
 not the Bunbun checkout.
 
-## Tests need Chrome
+## Browser tests need Chrome or bundled Chromium
 
-The browser tier uses `channel: 'chrome'`. Install Google Chrome or change the
-Playwright project channel.
+Local Playwright runs use `channel: 'chrome'`. Install Google Chrome, or set
+`PLAYWRIGHT_CHANNEL=''` to use Playwright's bundled Chromium. CI uses the
+bundled browser after `pnpm exec playwright install chromium`.

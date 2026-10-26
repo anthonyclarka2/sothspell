@@ -44,16 +44,14 @@ docs.
   or a public GitHub URL in the web UI.
 - [Self-hosting](./self-hosting.md) — install, serve, environment, storage, and
   upgrades.
+- [Releasing](./releasing.md) — version rules, preflight, tag, GitHub Release,
+  and rollback.
 - [Privacy](./privacy.md) — what stays local and what cloud choices send.
 - [Accessibility](./accessibility.md) — the axe gate, keyboard map, and known
   gaps.
 - [Troubleshooting](./troubleshooting.md) — common local runtime failures.
-- [Release notes](./release-notes.md) — the first local-first release and its
+- [Release notes](./release-notes.md) — the first public source release and its
   known limitations.
 
-## Planned guides
-
-Phase plans add per-area guides as the behavior ships: `architecture.md`,
-`authoring.md`, `tour-format.md`, `player.md`, `narration.md`,
-`opencode-plugin.md`, `self-hosting.md`, `privacy.md`, `accessibility.md`, and
-`troubleshooting.md`.
+New guides join this list when their behavior ships; phase plans are archived
+under [`plans/`](../plans/).

@@ -1,6 +1,9 @@
 # Release Notes
 
-## 0.3.1 — 2026-10-21 (canvas interaction patch)
+## 0.3.1 — 2026-10-26 (first public source release)
+
+This is the first public GitHub source release. It rolls up the v1, next-stage,
+and canvas eras and adds the canvas interaction patch.
 
 The canvas board is now directly manipulable.
 
@@ -19,9 +22,14 @@ The canvas board is now directly manipulable.
 
 ### Verification
 
-- `pnpm test` → 127 files / 1064 tests.
-- `pnpm test:browser` → 121 passed, including 7 new interaction journeys.
-- Typecheck, lint, and build clean; Bunbun remains read-only.
+- `pnpm test` → 128 files / 1066 tests.
+- `pnpm test:browser` → 121 passed, including 7 interaction journeys; CI runs
+  119 passed with the 2 live Bunbun specs skipped.
+- `pnpm test:coverage` → 95.7% lines overall; canvas 96.16%, analyzer relations
+  97.91%, API relations 94.44%.
+- `pnpm test:canvas:perf` → p50 16.7 ms, p95 16.8 ms, 0 long tasks.
+- Typecheck, lint, version check, build, bundle, toolchain, secrets, and audit
+  clean; Bunbun remains read-only.
 
 ## 0.3.0 — 2026-10-21 (canvas era)
 

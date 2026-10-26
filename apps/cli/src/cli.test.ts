@@ -122,6 +122,19 @@ describe('sothspell CLI', () => {
     }
   });
 
+  it('prints the root package version', async () => {
+    const output = capture();
+    const rootPackage = JSON.parse(
+      await readFile(new URL('../../../package.json', import.meta.url), 'utf8'),
+    ) as { version: string };
+
+    const code = await runCli(['--version'], output.io);
+
+    expect(code).toBe(0);
+    expect(output.stdout).toEqual([`sothspell ${rootPackage.version}`]);
+    expect(output.stderr).toEqual([]);
+  });
+
   it('returns usage for an unknown command', async () => {
     const output = capture();
     const code = await runCli(['unknown'], output.io);

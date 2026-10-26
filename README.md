@@ -26,9 +26,27 @@ looking for work.
 
 ## Quick start
 
-Prerequisites: If you want to use voice support other than browser-based speech,
-you will need an ElevenLabs API key. If you want to create your own narrations,
-or ask questions during an existing tour, you will need an LLM API key.
+Prerequisites:
+
+- Node.js 26 or newer
+- pnpm 12.14.0 (`corepack enable`, or `npm install -g pnpm@12.14.0`)
+- Optional: an ElevenLabs API key for cloud narration, and an LLM API key for
+  authoring or in-tour questions. Browser speech and the fixture model work
+  without either key.
+
+### Releases
+
+Tagged releases are source releases on
+[GitHub Releases](https://github.com/anthonyclarka2/sothspell/releases). There is
+no npm package and no hosted service. See the
+[release notes](docs/release-notes.md) for what changed and the
+[releasing guide](docs/releasing.md) for the maintainer checklist.
+
+To install a specific release, replace `v0.3.1` with the newest tag:
+
+```bash
+git clone --branch v0.3.1 --depth 1 https://github.com/anthonyclarka2/sothspell.git
+```
 
 ### Web
 
@@ -36,8 +54,10 @@ or ask questions during an existing tour, you will need an LLM API key.
 <in a suitable parent directory>
 git clone https://github.com/anthonyclarka2/sothspell.git
 cd sothspell
-pnpm install
+corepack enable
+pnpm install --frozen-lockfile
 pnpm build
+pnpm sothspell --version
 pnpm sothspell help
 pnpm sothspell serve
 ```
@@ -294,6 +314,7 @@ pnpm test:browser
 pnpm test:a11y
 pnpm build
 pnpm check:toolchain
+pnpm check:version
 pnpm check:secrets
 pnpm schema:json
 pnpm tour:build      # regenerate the golden tour from the pinned Bunbun checkout
@@ -321,7 +342,7 @@ and sources.
 
 ## License
 
-MIT
+[MIT](LICENSE) © 2026 Sóþspell contributors.
 
 ## Status
 
@@ -363,5 +384,6 @@ and live cloud narration remain owner-gated on provider credentials; fixture and
 browser paths are verified.
 
 The canvas era is complete in [`plans/ROADMAP.md`](plans/ROADMAP.md) as Phases
-17–20. The canvas is opt-in; manual VoiceOver/NVDA, real Save-as-PDF, and
-real-device touch checks remain owner-gated.
+17–20. The first public source release is `v0.3.1` (2026-10-26); manual
+VoiceOver/NVDA, real Save-as-PDF, and real-device touch checks remain
+owner-gated. The canvas is opt-in.
