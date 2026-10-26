@@ -69,8 +69,7 @@ export async function domToJpeg(node, options) {
 }
 `;
 
-const FAIL_ONCE_SCREENSHOT_MODULE = `
-const key = 'sothspell:canvas-export-failed-once';
+const FAIL_ONCE_SCREENSHOT_MODULE = `const key = 'sothspell:canvas-export-failed-once';
 
 function record(node, options) {
   const root = document.querySelector('.canvas-root');
@@ -124,6 +123,30 @@ async function installFakeScreenshot(
 async function openExport(page: Page): Promise<void> {
   await page.getByTestId('canvas-export-button').click();
   await expect(page.getByTestId('canvas-export-panel')).toBeVisible();
+}
+
+/**
+ * Read the unrounded viewport scale. A zoom button starts a 280 ms transition,
+ * so the percentage readout can be captured mid-animation; the transform is the
+ * only reliable way to know where the board actually settled.
+ */
+async function canvasZoom(page: Page): Promise<number> {
+  return page.locator('.react-flow__viewport').evaluate((element) => {
+    const match = /scale\(([-\d.eE+]+)\)/.exec((element as HTMLElement).style.transform);
+    return match ? Number(match[1]) : Number.NaN;
+  });
+}
+
+async function waitForStableZoom(page: Page): Promise<number> {
+  let previous = await canvasZoom(page);
+  let stableSamples = 0;
+  for (let attempt = 0; attempt < 30 && stableSamples < 3; attempt += 1) {
+    await page.waitForTimeout(50);
+    const current = await canvasZoom(page);
+    stableSamples = Math.abs(current - previous) < 0.0001 ? stableSamples + 1 : 0;
+    previous = current;
+  }
+  return previous;
 }
 
 async function imageDimensions(path: string): Promise<{ width: number; height: number }> {
@@ -252,7 +275,7 @@ test('a failed capture shows an inline error, restores the board, and retries', 
   await installFakeScreenshot(page, FAIL_ONCE_SCREENSHOT_MODULE);
   await page.goto('/t/tour_bunbun_golden/beat_purpose_01?view=canvas');
   await page.getByRole('button', { name: 'Zoom in' }).click();
-  const zoomBefore = await page.locator('.canvas-zoom-readout').innerText();
+  const zoomBefore = await waitForStableZoom(page);
 
   await openExport(page);
   await page.getByRole('button', { name: /PNG · whole board/i }).click();
@@ -267,9 +290,7 @@ test('a failed capture shows an inline error, restores the board, and retries', 
   );
   await expect(page.locator('.canvas-controls')).toBeVisible();
   await expect(page.locator('.canvas-tray')).toBeVisible();
-  await expect
-    .poll(async () => page.locator('.canvas-zoom-readout').innerText())
-    .toBe(zoomBefore);
+  await expect.poll(() => canvasZoom(page)).toBeCloseTo(zoomBefore, 4);
 
   const retryDownload = page.waitForEvent('download');
   await error.getByRole('button', { name: 'Retry' }).click();

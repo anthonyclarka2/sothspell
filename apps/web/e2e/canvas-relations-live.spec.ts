@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { bunbunAvailable } from './bunbun-root.js';
 
 /**
  * Live Bunbun acceptance for Phase 18. This spec deliberately uses the real
@@ -9,6 +10,7 @@ import { expect, test } from '@playwright/test';
 test('opens real CommentsService callers and callees from the canvas', async ({
   page,
 }) => {
+  test.skip(!bunbunAvailable, 'the read-only Bunbun checkout is absent');
   await page.goto('/t/tour_bunbun_golden/beat_write_02?view=canvas');
 
   const service = page.locator(
