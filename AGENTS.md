@@ -5,16 +5,19 @@
 - **Sóþspell** (ASCII slug `sothspell`) is an AI-guided project walkthrough
   application. It generates a cinematic, semi-interactive explanation of a
   codebase with synchronized narration, diagrams, and highlighted code anchors.
-  The website shipped first; the OpenCode V2 plugin is complete; Claude Code,
-  Codex, and other harness adapters are Phase 10 of the next stage.
+  The website shipped first; the OpenCode V2 plugin and the Claude Code and
+  Codex harness adapters are complete.
 - **Repository status: v1 release complete (2026-10-17); next stage complete
-  (2026-10-17).** Phases 9–16 are complete: preferences, harness plugins,
-  GitHub import, accounts and sync, language analyzers, translation, review UI,
-  and the embeddable player. The web authoring flow (`/new`) opens a local git
-  repository or a public GitHub URL and authors a tour; `examples/tiny-notes/`
-  is the demo repository. The v1 plans are archived in `plans/archive/`; the
-  next-stage roadmap and Phases 9–16 live in `plans/ROADMAP.md` and
-  `plans/PHASE-9.md` through `plans/PHASE-16.md`.
+  (2026-10-17); canvas era planned (2026-10-21).** Phases 9–16 are complete:
+  preferences, harness plugins, GitHub import, accounts and sync, language
+  analyzers, translation, review UI, and the embeddable player. The web
+  authoring flow (`/new`) opens a local git repository or a public GitHub URL
+  and authors a tour; `examples/tiny-notes/` is the demo repository. Both
+  completed eras are archived under `plans/archive/v1/` and
+  `plans/archive/v2/`. The canvas era is complete: Phases 17–20 shipped, with
+  the canvas opt-in and manual VoiceOver/NVDA plus real Save-as-PDF owner-gated.
+  The roadmap and phase plans remain in `plans/ROADMAP.md` and
+  `plans/PHASE-17.md` through `plans/PHASE-20.md`.
 - **Example project:** Bunbun at `/Users/ajc/Projects/codegens/bunbun`, pinned to
   commit `9fef24d`. It is **read-only**. No command may create, modify, or delete
   anything inside that tree. All snapshots, tours, audio, logs, and runs live
@@ -134,12 +137,16 @@ Do not claim completion without fresh verification output.
   before writing the first test for a phase.
 - Run the smallest relevant command first, then the full gate:
   `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`,
-  `pnpm test:browser`, `pnpm test:a11y`.
+  `pnpm test:browser`, `pnpm test:a11y`. Once Phase 20 lands, add
+  `pnpm test:canvas:perf` and `pnpm test:coverage`.
 - Verify every user-facing change in a real browser, not only happy-dom.
+- For canvas changes, verify the keyboard-only path, the outline path, forced
+  colours, 200% text, and 375 px; axe alone is not an accessibility pass.
 - After any Bunbun analysis, authoring, playback, or plugin run, verify:
   `git -C /Users/ajc/Projects/codegens/bunbun status --porcelain` prints nothing.
 - Record performance numbers (analysis time, bundle size, LCP, audio cache size)
-  when a phase plan requires them.
+  when a phase plan requires them. Canvas frame timings and bundle sizes are
+  required in Phase 20.
 
 ## Repository layout
 
@@ -156,15 +163,21 @@ Do not claim completion without fresh verification output.
 - `packages/player/` — framework-free playback state machine.
 - `packages/narration/` — browser and ElevenLabs adapters, alignment, cache.
 - `packages/diagram/` — diagram IR, validation, ELK layout.
-- `packages/harness/` — harness adapter contract; Phase 10 adds the shared
-  runtime and the Claude Code and Codex adapters.
+- `packages/harness/` — harness adapter contract; the shared runtime and the
+  Claude Code and Codex adapters.
 - `packages/opencode-plugin/` — OpenCode V2 plugin (Phase 7).
+- `packages/canvas/` — canvas scene, deterministic layout, selection, view
+  preferences, and export model. Phase 17 scene/layout/renderer are shipped.
 - `examples/bunbun-tour/` — checked-in golden tour pinned to Bunbun `9fef24d`.
+- `issues/` — the local text issue tracker, one numbered file per issue.
+- `$SOTHSPELL_HOME/projects/<slug>/snapshot.json` and `project.json` — the local
+  analysis snapshot and project source record.
 - `docs/` — development, architecture, analysis, authoring, player, narration,
   guide, plugin, self-hosting, privacy, accessibility, and troubleshooting.
-- `plans/ROADMAP.md` — the next-stage roadmap (Phases 9–16).
-- `plans/PHASE-9.md` … `plans/PHASE-16.md` — next-stage phase plans.
-- `plans/archive/` — the archived v1 roadmap and Phases 1–8.
+- `plans/` — the current roadmap and phase plans (canvas era, Phases 17–20).
+- `plans/archive/v1/` — the v1 roadmap and Phases 1–8.
+- `plans/archive/v2/` — the next-stage roadmap and Phases 9–16.
+- `plans/archive/README.md` — the archive index and binding constraints.
 - `CONTEXT.md` — domain glossary. Required reading before domain code.
 - `AGENTS.md` — this file.
 
@@ -207,18 +220,43 @@ or "chat" for these concepts in code, tests, or docs.
 
 ## Plans and phase docs
 
-- [`plans/ROADMAP.md`](plans/ROADMAP.md) is the hub for the next stage: feature
-  inventory, phase sequence, architecture changes, cross-cutting requirements,
-  testing standards, and risks.
-- `plans/PHASE-9.md` through `plans/PHASE-16.md` are the next-stage phase plans.
-  Each has a goal, scope, decisions, waves, test seams, Bunbun acceptance, exit
-  criteria, and risks.
-- `plans/archive/` holds the v1 roadmap and Phases 1–8, plus an archive index
-  that records the shipped baseline and the decisions that stay binding.
+- `plans/ROADMAP.md` and `plans/PHASE-*.md` hold the current era's roadmap and
+  phase plans. Each has a goal, scope, decisions, waves, test seams, Bunbun
+  acceptance, exit criteria, and risks. The canvas era is Phases 17–20.
+- [`plans/archive/`](plans/archive/README.md) holds completed eras: v1 (Phases
+  1–8) and v2 (Phases 9–16). Each era records its shipped baseline; the index
+  records the decisions that stay binding.
 - Status lines: `planned` → `in progress` → `complete (<date>)`, with shipped
   evidence under the phase.
 - Update the phase plan when a decision changes during implementation. Do not
   leave the roadmap and a phase plan disagreeing.
+
+## Canvas work
+
+- Read `plans/CANVAS-FEATURES.md`, `plans/ROADMAP.md`, and the active
+  `plans/PHASE-1*.md` before changing canvas code.
+- Canvas is opt-in. Keep the current Stage as the default and keep
+  `packages/embed` on the Stage unless an owner decision changes that.
+- `packages/canvas` is pure TypeScript: scene, layout, selection, preferences,
+  and export model. It imports no React and touches no DOM.
+- The canvas never reads project files. Relations come from the bounded API
+  route; the analyzer never executes project code. Resolve the local source root
+  from the project record, never from the tour, and respect redaction before
+  quoting a file.
+- A relation edge is labelled by what the analyzer proved. Do not call an import
+  or reference a call.
+- Local project records and snapshots live under
+  `SOTHSPELL_HOME/projects/<slug>/`; a source root never enters a tour or an
+  export.
+- Playwright is required for every canvas behaviour, including export, keyboard,
+  and the compact layout. Axe must stay at 0 critical / 0 serious.
+- The 60 fps budget is a gate for promotion, not a slogan. Record p95 frame time
+  and long tasks; do not claim smoothness from a visual check.
+- A spatial action without a keyboard path and an outline equivalent is
+  incomplete.
+- Use one worktree per wave and a non-overlapping file set; merge sequentially.
+  Phases 18 and 19 are sequential, so shared canvas files are owned by one phase
+  at a time.
 
 ## Bunbun demo rules
 

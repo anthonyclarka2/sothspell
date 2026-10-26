@@ -34,10 +34,11 @@ The default `SOTHSPELL_HOME` is `~/.sothspell`.
 - `prismaModels`: models and fields from a Prisma contract/schema.
 - `symbols`: modules, classes, methods, properties, functions, variables,
   interfaces, types, enums, namespaces, and objects with stable IDs.
-- `graph`: resolved file imports, package imports, approximate import-based
-  reference edges, and entry points.
+- `graph`: resolved file imports, package imports, import-based reference
+  edges, symbol-level `calls` edges with call-site lines, and entry points.
 - `warnings`: redacted, binary, large-file, and parse-error notes.
-- `analysis`: duration and cache hit/miss counts (not part of the snapshot ID).
+- `analysis`: duration, cache hit/miss counts, and unresolved-call count (not
+  part of the snapshot ID).
 
 ## Read-only guarantees
 
@@ -82,6 +83,27 @@ The ID is the anchor target for a tour. The resolver prefers a symbol's range,
 falls back to the anchor's line hint when the excerpt hash requires it, and
 verifies the content hash before a tour can cite the code.
 
+## Call and relation index
+
+`ANALYZER_VERSION` is `0.4.0`. The TypeScript/JavaScript adapter records
+unresolved call sites per file and the project pass resolves them into `calls`
+edges:
+
+- same-file functions and same-class methods;
+- typed `this` members, including constructor parameter properties such as
+  `private readonly service: CommentsService`;
+- imported and aliased exported bindings;
+- unresolved or ambiguous calls are dropped and counted in
+  `analysis.unresolvedCalls`.
+
+Import and reference edges carry the import statement line; call edges carry the
+call-site line. The canvas relation API uses these edges to open callers and
+callees, preferring calls, then references, then imports. Python, Go, Rust, and
+Java currently contribute imports/references only; the UI labels them as such.
+
+On Bunbun at `9fef24d`, the analyzer emits 6,642 call edges and 22,923 unresolved
+calls.
+
 ## Language support
 
 Language support is a `LanguageAnalyzer` port; the TypeScript/JavaScript
@@ -107,8 +129,8 @@ Notes:
   content hash still verifies the anchor.
 - Code pages highlight `.py`, `.pyi`, `.go`, `.rs`, and `.java` through Shiki;
   the four grammars add about 9.7 kB gzip to the web bundle.
-- `ANALYZER_VERSION` bumped to `0.3.0`, which invalidates the per-file cache and
-  changes snapshot ids.
+- `ANALYZER_VERSION` is `0.4.0`; version bumps invalidate the per-file cache and
+  change snapshot ids.
 
 ## Project brief
 

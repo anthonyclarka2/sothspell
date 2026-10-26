@@ -4,10 +4,11 @@ import type { CompiledBeat } from '@sothspell/core';
 
 export interface CodePaneProps {
   projectSlug: string;
+  tourId: string;
   beat: CompiledBeat;
 }
 
-export function CodePane({ projectSlug, beat }: CodePaneProps) {
+export function CodePane({ projectSlug, tourId, beat }: CodePaneProps) {
   const anchor = beat.anchors[0];
 
   if (!anchor) {
@@ -36,7 +37,7 @@ export function CodePane({ projectSlug, beat }: CodePaneProps) {
         <Link
           to="/p/$projectId/source/$"
           params={{ projectId: projectSlug, _splat: anchor.path }}
-          search={{ anchor: anchor.id, beat: beat.id }}
+          search={{ anchor: anchor.id, beat: beat.id, tourId }}
         >
           Open code page
         </Link>

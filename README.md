@@ -13,7 +13,6 @@ resume later.
 
 <img width="1611" height="1008" alt="Screenshot 2026-10-20 at 13 21 12" src="https://github.com/user-attachments/assets/158512de-98c1-4242-b06b-a21d1bb23ce5" />
 
-
 ## Contributors
 
 I welcome PRs and issues! I request that a human reads the whole bug report
@@ -28,7 +27,7 @@ looking for work.
 ## Quick start
 
 Prerequisites: If you want to use voice support other than browser-based speech,
-you will need an ElevenLabs API key. If you want to create your own narrations, 
+you will need an ElevenLabs API key. If you want to create your own narrations,
 or ask questions during an existing tour, you will need an LLM API key.
 
 ### Web
@@ -192,23 +191,44 @@ stores only small, attributed excerpts.
 
 ## Documentation
 
-- [Roadmap](plans/ROADMAP.md) — next-stage feature inventory, phase sequence,
-  architecture changes, security, testing standards, and risks.
-- [Archived v1 plans](plans/archive/README.md) — the first-release roadmap and
-  Phases 1–8, with the shipped baseline.
+- [Canvas roadmap](plans/ROADMAP.md) — the completed canvas era: scene, code
+  relationships, accessibility, export, performance, and risks.
+- [Phase 17](plans/PHASE-17.md) — canvas foundation, evidence links, multiple
+  diagrams, controls, and fullscreen.
+- [Phase 18](plans/PHASE-18.md) — symbol targets, call/reference index,
+  incoming/outgoing containers, definition links, and the shared-symbol bridge.
+- [Phase 19](plans/PHASE-19.md) — keyboard model, screen-reader outline,
+  preferences, contrast, large text, and compact layout.
+- [Phase 20](plans/PHASE-20.md) — PNG/JPG/PDF export, performance budget,
+  coverage, docs, and the final gate.
+- [Canvas feature brief](plans/CANVAS-FEATURES.md) — the original deliverables
+  and constraints.
+- [Archived plans](plans/archive/README.md) — the completed v1 and v2 eras, with
+  their shipped baselines and binding constraints.
+- [Archived v1 plans](plans/archive/v1/README.md) — the first-release roadmap
+  and Phases 1–8.
+- [Archived v2 roadmap](plans/archive/v2/ROADMAP.md) — the completed next-stage
+  feature inventory, phase sequence, architecture changes, security, testing
+  standards, and risks.
 - [Architecture](docs/architecture.md) — packages, pipeline, trust boundaries,
   and storage.
 - [Tour format](docs/tour-format.md) — the document, anchors, diagrams, and
   versioning.
-- [Phase 9](plans/PHASE-9.md) — preferences UI for authoring and narration
-  connections.
-- [Phase 10](plans/PHASE-10.md) — Claude Code and Codex harness plugins.
-- [Phase 11](plans/PHASE-11.md) — public GitHub import with sandboxed cloning.
-- [Phase 12](plans/PHASE-12.md) — GitHub OAuth accounts and cross-device sync.
-- [Phase 13](plans/PHASE-13.md) — Python, Go, Rust, and Java analyzers.
-- [Phase 14](plans/PHASE-14.md) — multi-language narration and translation.
-- [Phase 15](plans/PHASE-15.md) — human review UI for generated tours.
-- [Phase 16](plans/PHASE-16.md) — embeddable player for documentation sites.
+- [Phase 9](plans/archive/v2/PHASE-9.md) — preferences UI for authoring and
+  narration connections.
+- [Phase 10](plans/archive/v2/PHASE-10.md) — Claude Code and Codex harness
+  plugins.
+- [Phase 11](plans/archive/v2/PHASE-11.md) — public GitHub import with sandboxed
+  cloning.
+- [Phase 12](plans/archive/v2/PHASE-12.md) — GitHub OAuth accounts and
+  cross-device sync.
+- [Phase 13](plans/archive/v2/PHASE-13.md) — Python, Go, Rust, and Java
+  analyzers.
+- [Phase 14](plans/archive/v2/PHASE-14.md) — multi-language narration and
+  translation.
+- [Phase 15](plans/archive/v2/PHASE-15.md) — human review UI for generated tours.
+- [Phase 16](plans/archive/v2/PHASE-16.md) — embeddable player for documentation
+  sites.
 - [Development guide](docs/development.md) — workspace, commands, and the
   golden-tour workflow.
 - [Repository analysis](docs/analysis.md) — read-only snapshots, symbols, cache,
@@ -217,6 +237,8 @@ stores only small, attributed excerpts.
   validation, repair, quality reports, and the author CLI.
 - [Player and code browser](docs/player.md) — playback controls, keyboard map,
   virtualized code pages, stale badges, and progress.
+- [Canvas playback](docs/canvas.md) — the opt-in spatial board, evidence and
+  relation links, keyboard/preferences, export, and performance.
 - [Narration](docs/narration.md) — browser and cloud speech, synchronization,
   caching, and privacy.
 - [Guide and interludes](docs/guide.md) — in-tour questions, citations,
@@ -331,10 +353,15 @@ The repository contains:
 - unit, browser, accessibility, and plugin tests, including the Bunbun
   acceptance pass.
 
-The v1 plans are archived in [`plans/archive/`](plans/archive/README.md). The
-next stage is complete in [`plans/ROADMAP.md`](plans/ROADMAP.md): preferences
+The v1 and v2 plans are archived in
+[`plans/archive/`](plans/archive/README.md). The next stage completed in
+[`plans/archive/v2/ROADMAP.md`](plans/archive/v2/ROADMAP.md): preferences
 UI, Claude Code and Codex harness plugins, GitHub import, accounts and sync,
 Python/Go/Rust/Java analyzers, multi-language narration and translation, the
 human review UI, and the embeddable player. A reviewed real-model Bunbun tour
 and live cloud narration remain owner-gated on provider credentials; fixture and
 browser paths are verified.
+
+The canvas era is complete in [`plans/ROADMAP.md`](plans/ROADMAP.md) as Phases
+17–20. The canvas is opt-in; manual VoiceOver/NVDA, real Save-as-PDF, and
+real-device touch checks remain owner-gated.

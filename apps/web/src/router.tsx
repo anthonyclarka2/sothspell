@@ -61,6 +61,9 @@ const homeRoute = createRoute({
 const playerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/t/$tourId/$beatId',
+  validateSearch: (search: Record<string, unknown>) => ({
+    view: search.view === 'canvas' ? ('canvas' as const) : undefined,
+  }),
   component: PlayerPage,
 });
 
@@ -70,6 +73,7 @@ const codeRoute = createRoute({
   validateSearch: (search: Record<string, unknown>) => ({
     anchor: typeof search.anchor === 'string' ? search.anchor : undefined,
     beat: typeof search.beat === 'string' ? search.beat : undefined,
+    tourId: typeof search.tourId === 'string' ? search.tourId : undefined,
   }),
   component: CodePage,
 });

@@ -3,7 +3,12 @@ import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { hashText, parseSothspell, type SothspellDocument } from '@sothspell/core';
+import {
+  hashText,
+  parseSothspell,
+  SCHEMA_VERSION,
+  type SothspellDocument,
+} from '@sothspell/core';
 import { FakeGuideModel, createFixtureTranslationModel } from '@sothspell/authoring';
 import { createSettingsService } from '@sothspell/settings';
 import { runCli } from './cli.js';
@@ -145,7 +150,7 @@ describe('runTranslate', () => {
     const document = parseSothspell(
       JSON.parse(await readFile(outPath, 'utf8')) as unknown,
     ) as SothspellDocument;
-    expect(document.schemaVersion).toBe('1.1.0');
+    expect(document.schemaVersion).toBe(SCHEMA_VERSION);
     expect(document.locale).toBe('en');
     expect(document.translations?.es?.locale).toBe('es');
     expect(document.translations?.es?.chapters[0]?.beats[0]?.id).toBe('beat_one');

@@ -19,17 +19,18 @@ import {
 import {
   LocaleSchema,
   compileSothspell,
+  hashText,
   highlightCodeLines,
   isSafeTourId,
   languageForPath,
   parseSothspell,
   readSourceFile,
-  readSourceRange,
   sourceLocaleOf,
   withTranslation,
   type CompiledAnchor,
   type CompiledTour,
 } from '@sothspell/core';
+import { redactionReason } from '@sothspell/analyzer';
 import { createDeferredNarrationAssetStore, registerAudioRoutes } from './audio.js';
 import { registerImportRoutes } from './imports.js';
 import {
@@ -68,6 +69,16 @@ import {
 import { createAuthoringService, type AuthoringService } from './authoring-service.js';
 import { registerAuthoringRoutes } from './authoring.js';
 import { createApiSecurityMiddleware } from './security.js';
+import { resolveProjectSource } from './project-record.js';
+import {
+  MAX_RELATION_LIMIT,
+  RelationInputError,
+  RelationSourceRedactedError,
+  RelationSymbolNotFoundError,
+  RelationUnavailableError,
+  createRelationService,
+  type RelationService,
+} from './relations.js';
 
 const AskBodySchema = z.object({
   beatId: z.string().min(1).max(128),
@@ -81,6 +92,15 @@ const AskBodySchema = z.object({
     )
     .max(6)
     .optional(),
+});
+
+const CanvasSymbolQuerySchema = z.object({
+  symbolId: z.string().min(1).max(512).optional(),
+  path: z.string().min(1).max(1024).optional(),
+  symbol: z.string().min(1).max(256).optional(),
+  direction: z.enum(['definition', 'incoming', 'outgoing']).default('definition'),
+  limit: z.coerce.number().int().min(1).max(1000).optional(),
+  offset: z.coerce.number().int().min(0).max(100_000).optional(),
 });
 
 export interface AppOptions {
@@ -136,6 +156,8 @@ export interface AppOptions {
   translationService?: TranslationService | null;
   /** Authoring service; tests inject a fake job runner. */
   authoringService?: AuthoringService;
+  /** Canvas relation service; tests inject a fake or a counting wrapper. */
+  relationService?: RelationService;
 }
 
 const DEFAULT_TOUR_PATH = new URL(
@@ -145,7 +167,6 @@ const DEFAULT_TOUR_PATH = new URL(
 
 export const GOLDEN_TOUR_ID = 'tour_bunbun_golden';
 const GOLDEN_TOUR_ALIASES = new Set([GOLDEN_TOUR_ID, 'bunbun-golden']);
-const GOLDEN_PROJECT_ID = 'bunbun';
 
 const compiledCache = new Map<string, Promise<CompiledTour>>();
 
@@ -274,6 +295,18 @@ function outlineFor(tour: CompiledTour, filePath: string) {
   return outline;
 }
 
+/**
+ * A secret-like live file must never reach the player, even when the tour still
+ * cites it. The route maps this refusal to 409 instead of falling back to the
+ * embedded excerpt, because the file itself is the thing being refused.
+ */
+class RedactedSourceError extends Error {
+  constructor(sourcePath: string) {
+    super(`the source file is redacted: ${sourcePath}`);
+    this.name = 'RedactedSourceError';
+  }
+}
+
 async function sourcePayload(input: {
   projectRoot: string | null;
   location: AnchorLocation;
@@ -287,13 +320,16 @@ async function sourcePayload(input: {
   if (input.projectRoot && existsSync(path.join(input.projectRoot, anchor.path))) {
     try {
       const file = await readSourceFile(input.projectRoot, anchor.path);
-      const range = await readSourceRange(
-        input.projectRoot,
-        anchor.path,
-        anchor.startLine,
-        anchor.endLine,
-      );
-      const stale = range.contentHash !== anchor.contentHash;
+      if (redactionReason(file.text) !== null) {
+        throw new RedactedSourceError(anchor.path);
+      }
+      const lines = file.text.split('\n');
+      if (anchor.startLine > lines.length || anchor.endLine > lines.length) {
+        throw new Error('the anchor range is beyond the end of the live file');
+      }
+      const rangeText = lines.slice(anchor.startLine - 1, anchor.endLine).join('\n');
+      const liveContentHash = hashText(rangeText);
+      const stale = liveContentHash !== anchor.contentHash;
       const highlighted = await highlightCodeLines(file.text, language, {
         startLine: anchor.startLine,
         endLine: anchor.endLine,
@@ -309,7 +345,7 @@ async function sourcePayload(input: {
         endLine: anchor.endLine,
         language,
         contentHash: anchor.contentHash,
-        liveContentHash: range.contentHash,
+        liveContentHash,
         stale,
         totalLines: file.lineCount,
         excerpt: anchor.excerpt,
@@ -321,7 +357,10 @@ async function sourcePayload(input: {
         chapterTitle: input.location.chapterTitle,
         outline,
       };
-    } catch {
+    } catch (error) {
+      if (error instanceof RedactedSourceError) {
+        throw error;
+      }
       // Fall through to the embedded excerpt when the live file is unreadable.
     }
   }
@@ -448,6 +487,12 @@ export function createApp(options: AppOptions = {}): Hono {
       analysisCacheDirectory: path.join(sothspellHome(), 'cache', 'analysis'),
       authoringCacheDirectory: path.join(sothspellHome(), 'cache', 'authoring'),
     });
+  const relationService =
+    options.relationService ??
+    createRelationService({
+      home: sothspellHome(),
+      analysisCacheDirectory: path.join(sothspellHome(), 'cache', 'analysis'),
+    });
   // Reviews share the run database; the audit trail and progress are both
   // local-first records under SOTHSPELL_HOME.
   const reviewService =
@@ -521,12 +566,61 @@ export function createApp(options: AppOptions = {}): Hono {
     return context.json(tour);
   });
 
-  app.get('/api/projects/:projectId/source/:path{.+}', async (context) => {
-    const projectId = context.req.param('projectId');
-    if (projectId !== GOLDEN_PROJECT_ID) {
-      return context.json({ error: `unknown project: ${projectId}` }, 404);
+  app.get('/api/tours/:tourId/canvas/symbol', async (context) => {
+    const tourId = context.req.param('tourId');
+    const resolvedPath = await resolveTourJsonPath(tourJsonPath, tourId);
+    if (!resolvedPath) {
+      return context.json({ error: `unknown tour: ${tourId}` }, 404);
     }
 
+    const parsed = CanvasSymbolQuerySchema.safeParse(context.req.query());
+    if (!parsed.success) {
+      return context.json(
+        { error: 'invalid relation query', issues: parsed.error.issues },
+        400,
+      );
+    }
+
+    const tour = await loadCompiledTour(translationStore, resolvedPath, tourId);
+    const source = await resolveProjectSource(tour.project.slug, {
+      home: sothspellHome(),
+      // A configured checkout only stands in for the golden Bunbun project;
+      // every authored or imported project resolves through its own record.
+      configuredRoot: projectRoot,
+    });
+
+    try {
+      const response = await relationService.load({
+        slug: tour.project.slug,
+        root: source.root,
+        direction: parsed.data.direction,
+        ...(parsed.data.symbolId === undefined ? {} : { symbolId: parsed.data.symbolId }),
+        ...(parsed.data.path === undefined ? {} : { path: parsed.data.path }),
+        ...(parsed.data.symbol === undefined ? {} : { symbol: parsed.data.symbol }),
+        limit: parsed.data.limit ?? MAX_RELATION_LIMIT,
+        offset: parsed.data.offset ?? 0,
+      });
+      context.header('cache-control', 'no-store');
+      return context.json(response);
+    } catch (error) {
+      if (error instanceof RelationInputError) {
+        return context.json({ error: error.message }, 400);
+      }
+      if (error instanceof RelationSymbolNotFoundError) {
+        return context.json({ error: 'unknown symbol' }, 404);
+      }
+      if (
+        error instanceof RelationUnavailableError ||
+        error instanceof RelationSourceRedactedError
+      ) {
+        return context.json({ error: error.message }, 409);
+      }
+      throw error;
+    }
+  });
+
+  app.get('/api/projects/:projectId/source/:path{.+}', async (context) => {
+    const projectId = context.req.param('projectId');
     const anchorId = context.req.query('anchor');
     if (!anchorId) {
       return context.json({ error: 'anchor query parameter is required' }, 400);
@@ -538,6 +632,10 @@ export function createApp(options: AppOptions = {}): Hono {
       return context.json({ error: `unknown tour: ${requestedTourId}` }, 404);
     }
     const tour = await loadCompiledTour(translationStore, resolvedPath, requestedTourId);
+    if (projectId !== tour.project.slug) {
+      return context.json({ error: `unknown project: ${projectId}` }, 404);
+    }
+
     const location = findAnchor(tour, anchorId);
     if (!location) {
       return context.json({ error: `unknown anchor: ${anchorId}` }, 404);
@@ -548,8 +646,30 @@ export function createApp(options: AppOptions = {}): Hono {
       return context.json({ error: 'the requested path does not match the anchor' }, 404);
     }
 
+    const source = await resolveProjectSource(tour.project.slug, {
+      home: sothspellHome(),
+      configuredRoot: projectRoot,
+    });
+
     context.header('cache-control', 'no-store');
-    return context.json(await sourcePayload({ projectRoot, location, tour, projectId }));
+    try {
+      return context.json(
+        await sourcePayload({
+          projectRoot: source.root,
+          location,
+          tour,
+          projectId,
+        }),
+      );
+    } catch (error) {
+      if (error instanceof RedactedSourceError) {
+        return context.json(
+          { error: 'the source file is redacted and cannot be served' },
+          409,
+        );
+      }
+      throw error;
+    }
   });
 
   app.post('/api/tours/:tourId/ask', async (context) => {

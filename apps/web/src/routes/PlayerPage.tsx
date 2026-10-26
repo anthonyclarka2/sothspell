@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { createPlayback, type PlaybackSnapshot } from '@sothspell/player';
 import type { CompiledBeat, CompiledTour } from '@sothspell/core';
 import { fetchTour } from '../lib/api.js';
@@ -16,9 +16,9 @@ import {
   type StoredRun,
 } from '../lib/run-store.js';
 import { ChapterRail } from '../components/ChapterRail.js';
-import { CodePane } from '../components/CodePane.js';
-import { DiagramStage } from '../components/DiagramStage.js';
 import { NarrationRail } from '../components/NarrationRail.js';
+import { StageView } from '../components/StageView.js';
+import { CanvasView } from '../components/canvas/index.js';
 import { Transport } from '../components/Transport.js';
 import { AskPanel } from '../components/AskPanel.js';
 import { useNarration, type NarrationProviderChoice } from '../lib/use-narration.js';
@@ -26,6 +26,10 @@ import { useNarration, type NarrationProviderChoice } from '../lib/use-narration
 interface PlayerParams {
   tourId: string;
   beatId: string;
+}
+
+interface PlayerSearch {
+  view: 'canvas' | undefined;
 }
 
 function toPlaybackTour(tour: CompiledTour) {
@@ -56,9 +60,12 @@ function findBeat(tour: CompiledTour, beatId: string): CompiledBeat | null {
 
 export function PlayerPage() {
   const params = useParams({ strict: false }) as PlayerParams;
+  const search = useSearch({ strict: false }) as PlayerSearch;
   const navigate = useNavigate();
   const { locale, t } = useLocale();
   const clientId = useMemo(() => getOrCreateClientId(), []);
+  const canvasRequested = search.view === 'canvas';
+  const showCanvas = canvasRequested;
   const tourState = useAsync(
     () => fetchTour(params.tourId, locale),
     [params.tourId, locale],
@@ -149,11 +156,12 @@ export function PlayerPage() {
         void navigate({
           to: '/t/$tourId/$beatId',
           params: { tourId: params.tourId, beatId: current.beatId },
+          search: { view: search.view },
           replace: true,
         });
       }
     }
-  }, [navigate, params.beatId, params.tourId, playback]);
+  }, [navigate, params.beatId, params.tourId, playback, search.view]);
 
   useEffect(() => {
     if (!snapshot?.beatId) {
@@ -163,10 +171,11 @@ export function PlayerPage() {
       void navigate({
         to: '/t/$tourId/$beatId',
         params: { tourId: params.tourId, beatId: snapshot.beatId },
+        search: { view: search.view },
         replace: true,
       });
     }
-  }, [navigate, params.beatId, params.tourId, snapshot?.beatId]);
+  }, [navigate, params.beatId, params.tourId, search.view, snapshot?.beatId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -229,7 +238,15 @@ export function PlayerPage() {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       const tag = target?.tagName ?? '';
-      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') {
+      if (
+        event.defaultPrevented ||
+        target?.isContentEditable ||
+        tag === 'INPUT' ||
+        tag === 'SELECT' ||
+        tag === 'TEXTAREA' ||
+        tag === 'BUTTON' ||
+        tag === 'A'
+      ) {
         return;
       }
       switch (event.key) {
@@ -310,7 +327,7 @@ export function PlayerPage() {
     void navigate({
       to: '/p/$projectId/source/$',
       params: { projectId: tour.project.slug, _splat: anchor.path },
-      search: { anchor: anchorId, beat: beat.id },
+      search: { anchor: anchorId, beat: beat.id, tourId: tour.id },
     });
   };
 
@@ -347,6 +364,17 @@ export function PlayerPage() {
   const seek = (fraction: number) => {
     playback?.pause();
     playback?.seekProgress(fraction);
+  };
+
+  const selectView = (view: 'stage' | 'canvas') => {
+    const nextSearch: PlayerSearch =
+      view === 'canvas' ? { view: 'canvas' } : { view: undefined };
+    void navigate({
+      to: '/t/$tourId/$beatId',
+      params: { tourId: params.tourId, beatId: beat.id },
+      search: nextSearch,
+      replace: true,
+    });
   };
 
   const openAsk = () => {
@@ -409,23 +437,40 @@ export function PlayerPage() {
         />
 
         <div className="stage-column">
-          <div className="stage">
-            <section className="diagram-panel" aria-label={t('player.diagram')}>
-              <div className="panel-header">
-                <strong>{chapter.diagrams[0]?.title ?? t('player.diagram')}</strong>
-                <span>{chapter.title}</span>
-              </div>
-              <DiagramStage chapter={chapter} beat={beat} onOpenAnchor={openAnchor} />
-            </section>
-
-            <section className="code-panel" aria-label={t('player.codeEvidence')}>
-              <div className="panel-header">
-                <strong>{beat.anchors[0]?.label ?? t('player.codeEvidence')}</strong>
-                <span className="mono">{beat.anchors[0]?.language ?? 'text'}</span>
-              </div>
-              <CodePane projectSlug={tour.project.slug} beat={beat} />
-            </section>
+          <div className="player-viewbar">
+            <div
+              className="player-view-switch"
+              role="group"
+              aria-label={t('canvas.viewLabel')}
+            >
+              <button
+                type="button"
+                aria-pressed={!canvasRequested}
+                onClick={() => selectView('stage')}
+              >
+                {t('canvas.stage')}
+              </button>
+              <button
+                type="button"
+                aria-pressed={canvasRequested}
+                onClick={() => selectView('canvas')}
+              >
+                {t('canvas.canvasView')}
+              </button>
+            </div>
           </div>
+
+          {showCanvas ? (
+            <CanvasView tour={tour} chapter={chapter} beat={beat} />
+          ) : (
+            <StageView
+              chapter={chapter}
+              beat={beat}
+              projectSlug={tour.project.slug}
+              tourId={tour.id}
+              onOpenAnchor={openAnchor}
+            />
+          )}
 
           <NarrationRail
             chapter={chapter}

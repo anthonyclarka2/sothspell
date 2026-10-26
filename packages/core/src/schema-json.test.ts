@@ -16,4 +16,14 @@ describe('generated Sóþspell JSON Schema', () => {
     expect(schema.required).toContain('chapters');
     expect(schema.properties?.chapters).toBeDefined();
   });
+
+  it('reports schema 1.2.0 and the optional symbol target', () => {
+    const version = schema.properties?.schemaVersion as
+      { const?: string; enum?: string[] } | undefined;
+    expect(version?.const ?? version?.enum).toBeDefined();
+    expect(JSON.stringify(version)).toContain('1.2.0');
+
+    const serialized = JSON.stringify(schema);
+    expect(serialized).toContain('"symbolId"');
+  });
 });

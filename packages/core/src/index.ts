@@ -1,8 +1,10 @@
 export {
+  BASE_SCHEMA_VERSION,
   BeatSchema,
   ChapterSchema,
   CodeAnchorSchema,
   DEFAULT_LOCALE,
+  LOCALE_SCHEMA_VERSION,
   LocaleSchema,
   PREVIOUS_SCHEMA_VERSION,
   SCHEMA_VERSION,

@@ -80,13 +80,18 @@ export async function fetchAnchor(
   projectId: string,
   filePath: string,
   anchorId: string,
+  tourId?: string,
 ): Promise<AnchorResponse> {
   const encodedPath = filePath
     .split('/')
     .map((segment) => encodeURIComponent(segment))
     .join('/');
+  const params = new URLSearchParams({ anchor: anchorId });
+  if (tourId !== undefined) {
+    params.set('tourId', tourId);
+  }
   const response = await fetch(
-    `/api/projects/${encodeURIComponent(projectId)}/source/${encodedPath}?anchor=${encodeURIComponent(anchorId)}`,
+    `/api/projects/${encodeURIComponent(projectId)}/source/${encodedPath}?${params.toString()}`,
   );
   return readJson<AnchorResponse>(response);
 }
