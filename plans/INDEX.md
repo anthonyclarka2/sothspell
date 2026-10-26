@@ -2,6 +2,9 @@
 
 Current era: canvas playback (Phases 17–20). **Complete (automated gates;
 manual accessibility and PDF sign-off owner-gated).** Completed 2026-10-21.
+Phase 21 followed as an interaction patch on the same branch: container
+resize/move/close, object selection, fullscreen re-fit, and Shiki line-gap
+removal.
 
 ## Documents
 
@@ -13,7 +16,7 @@ manual accessibility and PDF sign-off owner-gated).** Completed 2026-10-21.
 | [`PHASE-18.md`](PHASE-18.md)               | **Complete:** relationships, schema 1.2.0, symbol targets, call edges, relation API, incoming/outgoing, definitions        |
 | [`PHASE-19.md`](PHASE-19.md)               | **Complete (automated):** keyboard, outline, preferences, contrast, large text, compact view; manual VoiceOver in Phase 20 |
 | [`PHASE-20.md`](PHASE-20.md)               | **Complete (automated):** export, performance, coverage, docs, final gate; manual SR/PDF owner-gated                       |
-| [`../issues/`](../issues/)                 | 18 numbered implementation issues in the Bunbun text format                                                                |
+| [`../issues/`](../issues/)                 | 19 numbered implementation issues in the Bunbun text format                                                                |
 
 ## Feature to phase
 

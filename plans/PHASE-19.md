@@ -1,6 +1,7 @@
 # Phase 19 — Accessible Interaction
 
-**Status: planned.** Planning baseline: 2026-10-21. Depends on: Phases 17 and 18.
+**Status: complete (2026-10-21; automated gates; manual VoiceOver owner-gated).**
+Planning baseline: 2026-10-21. Depends on: Phases 17 and 18.
 
 ## Goal
 

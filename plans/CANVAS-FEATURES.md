@@ -22,19 +22,19 @@ Deliverables:
     - large text sizes
   - Clicking a decision shape in the diagram will show a line that goes to a new container with the highlighted code.
   - Multiple diagrams can be displayed, showing relationships between 2 modules for example.
-  - Every code container will have "incoming links" and "outgoing links" buttons. 
+  - Every code container will have "incoming links" and "outgoing links" buttons.
   - Toggling these buttons will show the code that calls the current container for incoming, and for outgoing will show what this current container code calls.
   - A line is drawn from the diagram object to the specific code that it refers to, with a fainter, thicker line from container to container.
   - Lines are drawn straight horizontal and vertical with right angles that have small 90 degree curves. Unless HCI guidelines say to use something different.
   - Each object name, class, functions, etc, will allow the user to click on it to draw a new line to the definition of that object.
   - The canvas view will have a full screen button that allows the user to toggle between full screen and windowed view.
   - When going to full screen, the full screen button will be highlighted for a short period of time, with a message saying "click here to get back to windowed mode, or use the shortcut key <shortcut>". Shortcut key not yet defined, need to make one.
-  - When new containers are opened from diagrams or code, the canvas zoom will resize to show the diagram and the new containers. This will be a user preference that is explained to the user with a floating short lived message the first time it is performed, with an undo button to return to the previous view. The message will also have a "disable this for me" which toggles the zoom preference to OFF without leaving the view or showing preferences view. The message will confirm that the preference is disabled for the user. 
+  - When new containers are opened from diagrams or code, the canvas zoom will resize to show the diagram and the new containers. This will be a user preference that is explained to the user with a floating short lived message the first time it is performed, with an undo button to return to the previous view. The message will also have a "disable this for me" which toggles the zoom preference to OFF without leaving the view or showing preferences view. The message will confirm that the preference is disabled for the user.
   - The canvas view will have buttons that:
     - can fit all containers to screen
     - auto-arrange containers
     - return to home (the diagram).
-    - Zoom in and out buttons with a reset zoom level button. 
+    - Zoom in and out buttons with a reset zoom level button.
     - (more as we discover how the canvas looks)
   - The containers will auto-arrange, with a user preference controlling whether that happens. When the auto-arrange happens for the first time, a message will be shown explaining where in preferences that can be toggled, and have an undo button to go back to the previous arrangement. The message will also have a "disable this for me" which toggles the auto-layout preference to OFF without leaving the view or showing preferences view. The message will confirm that the preference is disabled for the user.
   - Keyboard navigation will work
