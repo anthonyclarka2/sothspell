@@ -62,14 +62,27 @@ view decision, not a new tour format and not a change to the canvas scene model.
    `.chapter-rail` stays a persistent column. Below 1081 px the rail is replaced
    by a disclosure drawer opened from the viewbar. The drawer contains the same
    chapter and beat list, the active-beat marker, completed markers, and the
-   same seek action.
+   same seek action. It unmounts its panel when closed and automatically closes
+   when the viewport widens to 1081 px or when theater mode starts, so duplicate
+   landmarks and hidden focus traps never occur.
 5. **Fullscreen keeps the player chrome.** Fullscreen targets `.player-page`,
    not `.canvas-root`. The viewbar, chapter rail or drawer, narration,
    transport, and Ask panel remain inside the fullscreen surface. The canvas
-   still re-fits when the viewport changes.
-6. **Theater is still the immersive mode.** Entering fullscreen clears theater
-   so the chrome is present by default. Pressing `t` in fullscreen may still
-   hide the rail and narration aside; that is an explicit choice.
+   re-fits both when entering and when exiting fullscreen. `PlayerPage` owns the
+   fullscreen keyboard shortcuts (`F` and `Escape`) at the page level so they
+   continue to work when focus is in the player chrome or in the compact layout
+   below 768 px. Switching to Stage while in fullscreen exits fullscreen first so
+   the viewer is never stranded without a fullscreen control.
+6. **Theater is still the immersive mode, with an explicit `Escape` hierarchy.**
+   Entering fullscreen clears theater synchronously before requesting fullscreen
+   so the chrome is present on the first fullscreen measurement. Pressing `t` in
+   fullscreen may still hide the rail/drawer and narration aside. `Escape`
+   follows a strict precedence chain:
+   1. open modal or popover (`CanvasShortcuts`, `CanvasDisplayMenu`,
+      `CanvasExportMenu`, `ChapterDrawer`, `AskPanel`, `CanvasOutline`);
+   2. canvas roving focus (`item` → `container` → `diagram`);
+   3. exit fullscreen (`fullscreenActive`);
+   4. exit theater mode (`theater`).
 7. **The Stage fallback is one constant.** `DEFAULT_PLAYER_VIEW` lives in a
    small pure module. Reverting the default is a one-line change; the Stage
    route, switch, and tests continue to work.
@@ -84,6 +97,10 @@ view decision, not a new tour format and not a change to the canvas scene model.
 
 ## Waves and tracks
 
+Waves 1 → 2 → 3 → 4 are sequential because they share `apps/web/src/routes/PlayerPage.tsx`
+and `apps/web/src/styles.css`. Every wave must leave `pnpm typecheck`,
+`pnpm lint`, `pnpm test`, `pnpm test:browser`, and `pnpm test:a11y` green.
+
 ### Wave 1 — Default view and link propagation (main)
 
 Branch: `phase-22-a-default-view` in the primary checkout.
@@ -94,25 +111,39 @@ Branch: `phase-22-a-default-view` in the primary checkout.
   - `parsePlayerView(value): PlayerView | undefined`;
   - `resolvePlayerView(search): PlayerView`.
 - Update `apps/web/src/router.tsx`:
-  - player search accepts `canvas` and `stage`;
-  - code-page search accepts `view` alongside `anchor`, `beat`, and `tourId`.
+  - player search validates `view: parsePlayerView(search.view)`;
+  - code-page search validates `view: parsePlayerView(search.view)` alongside
+    `anchor`, `beat`, and `tourId`.
 - Update `apps/web/src/routes/PlayerPage.tsx`:
-  - default resolves to Canvas;
-  - both switch buttons write an explicit view;
-  - beat changes and reloads preserve the current view;
-  - `openAnchor` carries the current view to the code page;
-  - pass the view to `StageView` and `AskPanel`.
+  - default resolves to Canvas via `resolvePlayerView(search)`;
+  - both switch buttons write an explicit view (`?view=stage` or `?view=canvas`);
+  - beat changes and reloads preserve `search.view`;
+  - `openAnchor` carries the resolved view to the code page;
+  - pass `view` to `AskPanel` (`StageView` needs no `view` prop because it only
+    mounts when the active view is `'stage'`).
 - Update `apps/web/src/routes/CodePage.tsx`:
-  - validate `view`;
-  - the back link carries the current view;
-  - the anchor outline carries the current view.
-- Carry `view: 'stage'` through `CodePane` and `StageView`.
-- Carry `view: 'canvas'` through `CanvasCodeContainer`, `CanvasCompact`, and
-  `CanvasOutline`.
+  - validate `view` via `parsePlayerView(search.view)`;
+  - the back link carries `search={{ view: search.view }}` (and is also rendered
+    on the error state when `search.beat` and `search.tourId` are present);
+  - the anchor outline `navigate()` call carries `view: search.view`.
+- Carry `view: 'stage'` in `CodePane`.
+- Carry `view: 'canvas'` in `CanvasCodeContainer`, `CanvasCompact`, and
+  `CanvasOutline`, and only render the code-page link when the container cites a
+  tour beat anchor (`!container.id.startsWith('relation:')`) so relation-only
+  symbol containers do not link to a 404 source route.
+- Update existing Playwright specs affected by the default-view flip so Wave 1
+  stays green:
+  - `apps/web/e2e/tour.spec.ts`: keep Stage-specific diagram-node coverage
+    behind `?view=stage`, and check both default Canvas and `?view=stage` in the
+    mobile/tablet overflow test;
+  - `apps/web/e2e/a11y.spec.ts`: keep both `/t/tour_bunbun_golden/beat_purpose_01`
+    (default Canvas) and `/t/tour_bunbun_golden/beat_purpose_01?view=stage`;
+  - `apps/web/e2e/canvas.spec.ts`: update the stage-switch URL assertion from
+    `not view=canvas` to `view=stage`.
 - Add `apps/web/src/lib/player-view.test.ts`.
 - Add `apps/web/e2e/player-view.spec.ts`.
 
-### Wave 2 — Chapter navigation parity (subagent A, parallel with main docs)
+### Wave 2 — Chapter navigation parity (subagent A, after Wave 1)
 
 Worktree: `.worktrees/phase-22-b-chapter-nav`  
 Branch: `phase-22-b-chapter-nav`  
@@ -124,22 +155,36 @@ Base: the Wave 1 commit.
   - keep the existing heading, chapter labels, beat buttons, `aria-current`,
     completed markers, and current-chapter metadata.
 - `apps/web/src/components/ChapterDrawer.tsx` (new):
-  - trigger in `.player-viewbar` with `aria-expanded` and `aria-controls`;
-  - fixed-position panel inside the player tree, never portalled to `body`, so
-    it remains inside the fullscreen element;
-  - panel repositions from the trigger rect on open and on resize;
-  - Escape and outside pointerdown close it;
-  - focus moves into the panel on open and returns to the trigger on close;
+  - trigger in `.player-viewbar` with `aria-expanded={open}` and
+    `aria-controls={open ? panelId : undefined}` (no dangling ID when closed);
+  - only mount the panel when `open === true` so `.chapter-rail` selectors and
+    `<aside>` landmarks never duplicate while closed;
+  - automatically close (`setOpen(false)`) when `useMediaQuery('(min-width: 1081px)')`
+    matches or when `theater` becomes `true`, preventing duplicate landmarks and
+    focus loss on hidden elements;
+  - position the panel inside the `.player-viewbar` subtree (never portalled to
+    `body` so it stays inside the fullscreen element) using either CSS
+    `position: absolute; top: calc(100% + 6px); inset-inline-start: 0;` on a
+    `position: relative` wrapper or `position: fixed` updated on `open`,
+    `resize`, and capture-phase `scroll` with LTR/RTL horizontal clamping
+    (`dir="rtl"` safe at 375 px);
+  - Escape (`preventDefault` + `stopPropagation`) and outside `pointerdown`
+    close it without triggering fullscreen or theater exit;
+  - focus moves to the active beat button (`[aria-current="true"]`, falling back
+    to the first beat button) on open and returns to the trigger on close;
   - selecting a beat seeks and closes the panel.
 - `apps/web/src/routes/PlayerPage.tsx`:
-  - wire `ChapterDrawer` into the viewbar;
+  - wire `ChapterDrawer` into the viewbar (passing `theater` so it closes on
+    theater entry);
   - keep the persistent `ChapterRail` as the wide-screen path.
 - `apps/web/src/styles.css`:
   - change the 1080 px rule from hiding `.chapter-rail` to hiding
     `.chapter-rail:not(.chapter-rail--drawer)`;
-  - hide the drawer at 1081 px and wider;
-  - keep theater hiding chapter navigation;
-  - drawer panel width, max-height, scroll, z-index, and 375 px reflow.
+  - hide `.chapter-drawer` at 1081 px and wider;
+  - hide `.player-page--theater .chapter-drawer` alongside
+    `.player-page--theater .chapter-rail`;
+  - drawer panel width, max-height, scroll, z-index, RTL alignment, and 375 px
+    reflow.
 - `apps/web/src/i18n/messages.ts`:
   - drawer labels in English, Spanish, and Arabic.
 - `apps/web/e2e/chapter-nav.spec.ts` (new).
@@ -156,51 +201,77 @@ Base: the Wave 2 merge commit.
 - `apps/web/src/routes/PlayerPage.tsx`:
   - own `pageRef` and `useFullscreen(pageRef)`;
   - add `player-page--fullscreen` while active;
-  - clear theater when fullscreen starts;
+  - clear `theater` synchronously inside `toggleFullscreen` before requesting
+    fullscreen (and in a `fullscreen.active` effect as fallback);
+  - exit fullscreen if the viewer switches to `Stage` (`selectView('stage')`)
+    while fullscreen is active;
+  - handle `f`/`F` and `Escape` (when `fullscreen.active` is true and no inner
+    overlay/drawer/roving focus consumed the event) in `PlayerPage`'s `window`
+    `keydown` listener, and narrow the `tag === 'BUTTON' || tag === 'A'` guard
+    to `Space` only so `F`, `T`, and `Escape` work when focus is on player
+    chrome buttons or in the compact canvas;
   - pass `fullscreenSupported`, `fullscreenActive`, and `onToggleFullscreen` to
     `CanvasView`.
 - `apps/web/src/components/canvas/CanvasView.tsx`:
   - remove the internal `useFullscreen` and its import;
   - accept the three fullscreen props;
-  - keep the existing fullscreen hint, pulse, announcement, and fit effect;
+  - in `onKeyDown`, order `Escape` so `outlineOpen` and roving focus
+    (`focus.level === 'item' || focus.level === 'container'`) step out before
+    `fullscreenActive` exits fullscreen;
+  - re-fit the board (`flow.fitView`) both on fullscreen entry and on fullscreen
+    exit (`wasFullscreen.current && !fullscreenActive`);
+  - keep the existing fullscreen hint, pulse, and announcement;
   - keep `rootRef` for focus and DOM selection only.
 - `apps/web/src/styles.css`:
   - `.player-page:fullscreen` and `.player-page--fullscreen` size to `100dvh`;
   - layout fills the remaining height;
-  - canvas `min-height: 0` in fullscreen;
-  - narration capped and scrollable;
-  - transport static;
-  - resume banner hidden in fullscreen;
+  - canvas `min-height: 0` in fullscreen, and `.canvas-root--compact` gets
+    `overflow-y: auto; min-height: 0;` in fullscreen so compact cards remain
+    scrollable at 375 px;
+  - narration capped (`max-height: 160px`) and scrollable in fullscreen; when
+    `.player-page:has(.ask-panel)` is active in fullscreen or short viewports,
+    cap `.narration` (`max-height: 110px`), cap `.ask-panel`
+    (`max-height: 28dvh`), and hide `.canvas-relation-legend` when height is
+    constrained so canvas overlays never collide at 1024×768;
+  - transport static in fullscreen;
+  - `.resume-banner` styled as a compact single-row bar in fullscreen (never
+    `display: none` while `hasResumed === false`, so run persistence can still
+    be resumed or reset);
   - 1024, 768, and 375 px fullscreen reflow.
-- `apps/web/e2e/canvas.spec.ts`:
-  - fullscreen mock targets `.player-page`;
-  - stage-switch URL assertions move from `not view=canvas` to `view=stage`.
+- `apps/web/e2e/canvas.spec.ts` and `apps/web/e2e/canvas-interactions.spec.ts`:
+  - fullscreen mocks use `async function (this: Element) { active = this; ... }`
+    so `document.fullscreenElement` records the actual element requested, and
+    assert `.player-page` is the fullscreen element;
+  - remove the manual `.canvas-root` fixed-fullscreen style override in
+    `canvas-interactions.spec.ts`.
 - `apps/web/e2e/canvas-fullscreen.spec.ts` (new).
 
 Subagent B must not touch `ChapterRail.tsx` or `ChapterDrawer.tsx`. If the
 drawer needs a fullscreen-specific fix, B reports it; A already closed.
 
-### Wave 4 — Test migration, docs, and final gate (main)
+### Wave 4 — Suite verification, docs, and final gate (main)
 
-- Update existing Playwright specs that assume the Stage is the default:
-  - `apps/web/e2e/a11y.spec.ts`: keep one Stage URL and one Canvas URL;
-  - `apps/web/e2e/tour.spec.ts`: keep Stage-specific diagram-node coverage
-    behind `?view=stage`;
-  - `apps/web/e2e/translation.spec.ts`, `account.spec.ts`, and
-    `new-tour.spec.ts`: verify they still pass with Canvas as the default;
+- Verify all Playwright specs with Canvas as default:
+  - `apps/web/e2e/translation.spec.ts`, `account.spec.ts`, `review.spec.ts`, and
+    `new-tour.spec.ts`: verify they pass with Canvas as the default;
   - `canvas-*.spec.ts`: keep explicit `?view=canvas` URLs where the test is
     canvas-specific.
 - Update docs:
   - `docs/canvas.md`: default view, Stage fallback, drawer, fullscreen chrome;
   - `docs/player.md`: Stage is the fallback and the embed layout;
-  - `docs/accessibility.md`: drawer and fullscreen keyboard paths;
+  - `docs/accessibility.md`: drawer and fullscreen keyboard paths and `Escape`
+    precedence;
   - `docs/release-notes.md`, `README.md`, `docs/README.md`;
   - `AGENTS.md`: remove the "canvas is opt-in" rule and record the new default;
-  - `CONTEXT.md`: Canvas view is the default; add the Stage view fallback term;
-  - `plans/ROADMAP.md`: owner decision 1 is superseded by Phase 22;
+  - `CONTEXT.md`: update `Canvas view` to default, add the `Stage view` fallback
+    term, and update Invariant 21 so it no longer calls Canvas opt-in;
+  - `plans/ROADMAP.md`: update the intro paragraph, Owner decision 1, Feature 2,
+    the Phase 17 status row, Section 2 (`Canvas view`), and Section 5 (`Bundle`)
+    to record promotion in Phase 22;
   - `plans/PHASE-20.md`: record that the deferred promotion landed here;
   - `plans/INDEX.md`: add Phase 22.
-- Record the bundle and performance numbers. Run `pnpm test:canvas:perf` and
+- Record the bundle and performance numbers. Run `CI=1 pnpm test:canvas:perf`
+  (with `CI=1` so the p95 and long-task thresholds are enforced) and
   `pnpm check:bundle`; do not claim the 60 KiB canvas budget passed.
 - Record the manual accessibility follow-ups in `docs/canvas.md`.
 - Run the final gate and Bunbun read-only check.
@@ -211,7 +282,7 @@ drawer needs a fullscreen-specific fix, B reports it; A already closed.
 
 ```ts
 export type PlayerView = 'canvas' | 'stage';
-export const DEFAULT_PLAYER_VIEW: PlayerView = 'canvas';
+export const DEFAULT_PLAYER_VIEW = 'canvas';
 
 export function parsePlayerView(value: unknown): PlayerView | undefined;
 export function resolvePlayerView(search: { view?: unknown }): PlayerView;
@@ -226,7 +297,11 @@ Resolution:
 | `?view=stage`           | Stage  |
 | `?view=<anything else>` | Canvas |
 
-The switch writes an explicit value. The code page accepts and returns it.
+The switch writes an explicit value (`?view=stage` or `?view=canvas`). The code
+page validates `view: parsePlayerView(search.view)` and forwards `view: search.view`
+on both the back link and anchor-outline navigation, so an explicit `'stage'` or
+`'canvas'` survives round trips while a bare code-page URL returns to the
+default view.
 
 ### Canvas fullscreen
 
@@ -241,14 +316,17 @@ export interface CanvasViewProps {
 }
 ```
 
-`PlayerPage` owns the fullscreen target and state. `CanvasView` owns only the
-canvas-specific reaction to that state.
+`PlayerPage` owns the fullscreen target (`.player-page`), the `F`/`Escape`
+page-level fullscreen shortcuts, and clearing `theater` on entry. `CanvasView`
+owns the canvas-specific reaction (hint, pulse, announcement, and entry/exit
+`fitView`).
 
 ### Chapter drawer
 
 `ChapterDrawer` receives the same chapter data and `onSeekBeat` callback as
-`ChapterRail`. It owns only the disclosure state, positioning, focus return,
-and close behaviour. It renders `ChapterRail` with `variant="drawer"`.
+`ChapterRail`, plus `theater: boolean`. It owns the disclosure state, positioning,
+breakpoint/theater auto-close, active-beat initial focus, focus return, and
+close behaviour. When open, it renders `ChapterRail` with `variant="drawer"`.
 
 ## Test seams
 
@@ -258,17 +336,21 @@ and close behaviour. It renders `ChapterRail` with `variant="drawer"`.
 - **Player route through Playwright.** Bare route, explicit Stage, explicit
   Canvas, reload, next/previous beat, and code-page round trips. Catches view
   loss at the route seam. Does not prove visual layout.
-- **Chapter drawer through Playwright.** Widths 1440, 1024, 768, and 375; open,
-  select, Escape, outside click, focus return, active and completed markers.
-  Catches the accessibility-tree and focus path. Does not prove manual screen
-  reader output.
-- **Fullscreen through Playwright with a fake Fullscreen API.** Assert the
-  requested element is `.player-page`, chrome remains visible, canvas re-fits,
-  and `F`/`Esc` exit. Catches the API target and layout regression. Does not
-  prove real browser fullscreen on every engine.
-- **Axe through the existing a11y spec.** Default Canvas, drawer open, fullscreen,
-  compact layout, and 200% text. Catches critical and serious violations, not
-  manual usability.
+- **Chapter drawer through Playwright.** Widths 1440, 1024, 768, and 375 (in LTR
+  and RTL); open, active-beat initial focus, select, Escape, outside click,
+  resize across 1081 px, theater mode, focus return, active and completed
+  markers. Catches the accessibility-tree and focus path. Does not prove manual
+  screen reader output.
+- **Fullscreen through Playwright with a fake Fullscreen API.** Use
+  `function (this: Element) { active = this; ... }` to assert the requested
+  element is `.player-page`, chrome remains visible, canvas re-fits on entry and
+  exit, `Escape` steps out of overlays/items before exiting fullscreen, and
+  `F`/`Esc` exit even when focus is on player chrome buttons or in compact view.
+  Catches the API target and layout regression. Does not prove real browser
+  fullscreen on every engine.
+- **Axe through the existing a11y spec.** Default Canvas, explicit Stage, drawer
+  open, fullscreen, compact layout, and 200% text. Catches critical and serious
+  violations, not manual usability.
 - **Existing player and canvas suites.** Catch Chrome, narration, Ask, resume,
   code-page, export, relation, and compact regressions.
 
@@ -290,10 +372,10 @@ in this repository.
 5. Switch to Canvas, open a code container's code page, and return. The player
    returns to Canvas with the same beat.
 6. Enter fullscreen from Canvas. Confirm the view switch, chapter navigation,
-   narration, and transport remain visible, the board re-fits, and `F`/`Esc`
-   return.
-7. Run axe at 0 critical / 0 serious for the default Canvas, drawer open, and
-   fullscreen states.
+   narration, and transport remain visible, the board re-fits on entry and exit,
+   and `F`/`Esc` return even after interacting with player chrome.
+7. Run axe at 0 critical / 0 serious for the default Canvas, explicit Stage,
+   drawer open, and fullscreen states.
 8. Confirm the Bunbun tree is unchanged:
    `git -C /Users/ajc/Projects/codegens/bunbun status --porcelain` prints
    nothing.
@@ -305,44 +387,61 @@ in this repository.
 - The switch writes an explicit view; reloads and beat navigation preserve it.
 - Stage and Canvas both survive a code-page round trip.
 - The chapter rail is present at 1440 px; the drawer is present and keyboard
-  operable at 1024, 768, and 375 px.
+  operable at 1024, 768, and 375 px (including RTL), and closes when widening
+  to 1081 px or entering theater mode.
 - Fullscreen keeps the view switch, chapter navigation, narration, and
-  transport visible at 1440 and 1024 px, with the drawer path at 1024 px.
+  transport visible at 1440, 1024, 768, and 375 px, with the drawer path below
+  1081 px and a scrollable compact canvas at 375 px.
 - Theater, print, export, and compact canvas keep their existing behaviour.
 - The embed player still opens Stage.
 - Axe stays at 0 critical / 0 serious for every new state.
-- Docs, AGENTS, CONTEXT, README, roadmap, phase status, and the plans index are
-  current and no longer call Canvas opt-in.
+- Docs, AGENTS, CONTEXT (including Invariant 21), README, roadmap, phase status,
+  and the plans index are current and no longer call Canvas opt-in.
 - Manual VoiceOver/NVDA, Firefox/WebKit, and real-device touch are recorded as
   owner-gated follow-ups, not claimed as passed.
 - `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`,
-  `pnpm test:browser`, `pnpm test:a11y`, `pnpm test:canvas:perf`,
+  `pnpm test:browser`, `pnpm test:a11y`, `CI=1 pnpm test:canvas:perf`,
   `pnpm test:coverage`, `pnpm check:version`, `pnpm check:toolchain`,
   `pnpm check:bundle`, and `pnpm check:secrets` pass.
 - Bunbun remains read-only.
 
 ## Risks
 
-- **Fullscreen target change.** Mocking `.canvas-root` hides the change. Update
-  every mock and assert `.player-page` explicitly. Test the real browser path
-  once by hand.
-- **Fixed drawer inside fullscreen.** A portal to `document.body` would vanish
-  in fullscreen because it sits outside the fullscreen element. Keep the panel
-  inside the player subtree and use fixed positioning from the trigger rect.
-- **Narrow-height layout.** At 1024×768 the player already scrolls. Fullscreen
-  must switch to a fixed grid and cap narration, or the canvas collapses.
+- **Fullscreen target change.** Mocking `.canvas-root` or ignoring `this` in
+  `Element.prototype.requestFullscreen` hides the change. Update every mock
+  (`canvas.spec.ts`, `canvas-interactions.spec.ts`, and `canvas-fullscreen.spec.ts`)
+  to set `active = this` and assert `.player-page` explicitly. Test the real
+  browser path once by hand.
+- **Fullscreen keyboard reach and `Escape` hierarchy.** Once player chrome sits
+  inside fullscreen, focus can move outside `.canvas-root`, or the viewer can
+  use the compact layout (`< 768 px`). `PlayerPage` must own the fullscreen `F`
+  and `Escape` fallback keys, and `Escape` must close open overlays/drawers and
+  step out of canvas items before exiting fullscreen.
+- **Drawer inside fullscreen, scroll, and RTL.** A portal to `document.body`
+  would vanish in fullscreen because it sits outside the fullscreen element.
+  Keep the panel inside `.player-viewbar`, unmount it when closed, close it on
+  `(min-width: 1081px)` or theater mode, and keep positioning anchored on page
+  scroll and in RTL (`dir="rtl"`).
+- **Narrow-height and compact fullscreen layout.** At 1024×768 with `AskPanel`
+  open, or at 375 px in compact mode, an uncapped flex column crushes or clips
+  the canvas. Fullscreen must cap `.narration` and `.ask-panel`, make
+  `.canvas-root--compact` vertically scrollable, and keep `.resume-banner`
+  compact rather than `display: none` so `hasResumed` can still be resolved.
 - **View propagation gaps.** Every player-to-code path must carry the view:
   anchor links, container links, compact links, outline links, Ask citations,
-  and the code-page outline. The Stage round-trip test is the guard.
-- **Test migration.** Several specs silently assume Stage. Audit every
-  `/t/` navigation and keep explicit Stage coverage where the assertion is
-  Stage-specific.
+  and the code-page outline. Relation-only containers without a tour beat anchor
+  must not render a dead code-page link. The Stage round-trip test is the guard.
+- **Test migration.** Several specs silently assume Stage. Update them in Wave 1
+  when the default flips so no intermediate wave breaks `pnpm test:browser` or
+  `pnpm test:a11y`.
 - **Default bundle and performance.** Canvas is already statically imported, so
-  promotion makes the existing web bundle the default cost. Record the current
-  bundle and p95; code splitting and the 60 KiB canvas budget stay out of scope.
-- **Theater and fullscreen.** Entering fullscreen clears theater; pressing `t`
-  in fullscreen may still hide chrome. Document that as intentional immersion,
-  not a bug.
+  promotion makes the existing web bundle the default cost. Run
+  `CI=1 pnpm test:canvas:perf` so the budget assertions execute, and record the
+  current bundle and p95; code splitting and the 60 KiB canvas budget stay out
+  of scope.
+- **Theater and fullscreen.** Entering fullscreen clears theater synchronously;
+  pressing `t` in fullscreen may still hide chrome. Document that as intentional
+  immersion, not a bug.
 - **Manual accessibility.** Automated gates do not prove screen-reader
   equivalence. Record the owner-gated follow-ups and do not claim VoiceOver or
   NVDA passed.
