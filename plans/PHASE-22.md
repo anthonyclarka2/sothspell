@@ -505,6 +505,7 @@ migration is needed.
 ### Closure verification (fresh, 2026-11-02)
 
 - `pnpm test` → 129 files / 1069 tests.
+- `pnpm typecheck` and `pnpm exec oxlint apps packages scripts` clean.
 - `pnpm test:browser` → 149 passed.
 - `pnpm test:a11y` → 37 passed; 0 critical / 0 serious.
 - `CI=1 pnpm test:canvas:perf` → 173 frames, p50 16.7 ms, p95 16.8 ms, max
