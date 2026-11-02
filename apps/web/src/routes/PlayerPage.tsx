@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { createPlayback, type PlaybackSnapshot } from '@sothspell/player';
 import type { CompiledBeat, CompiledTour } from '@sothspell/core';
@@ -23,6 +23,7 @@ import { CanvasView } from '../components/canvas/index.js';
 import { Transport } from '../components/Transport.js';
 import { AskPanel } from '../components/AskPanel.js';
 import { useNarration, type NarrationProviderChoice } from '../lib/use-narration.js';
+import { useFullscreen } from '../lib/use-fullscreen.js';
 import { resolvePlayerView, type PlayerView } from '../lib/player-view.js';
 
 interface PlayerParams {
@@ -102,6 +103,33 @@ export function PlayerPage() {
     useState<NarrationProviderChoice>('browser');
   const [askOpen, setAskOpen] = useState(false);
   const resumeAfterAskRef = useRef(false);
+  const pageRef = useRef<HTMLDivElement>(null);
+  // The player page, not the canvas, is the fullscreen surface: the viewbar,
+  // chapter navigation, narration, and transport must stay reachable while the
+  // viewer is in fullscreen.
+  const {
+    supported: fullscreenSupported,
+    active: fullscreenActive,
+    toggle: fullscreenToggle,
+  } = useFullscreen(pageRef);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!fullscreenSupported) {
+      return;
+    }
+    // Entering fullscreen with theater active would hide the chrome on the
+    // first measurement; clear it before the browser reads the layout.
+    setTheater(false);
+    fullscreenToggle();
+  }, [fullscreenSupported, fullscreenToggle]);
+
+  // A browser-initiated entry (for example the platform shortcut) does not go
+  // through `toggleFullscreen`, so clear theater on the state change too.
+  useEffect(() => {
+    if (fullscreenActive) {
+      setTheater(false);
+    }
+  }, [fullscreenActive]);
 
   const currentChapter =
     tour && snapshot
@@ -246,10 +274,14 @@ export function PlayerPage() {
         target?.isContentEditable ||
         tag === 'INPUT' ||
         tag === 'SELECT' ||
-        tag === 'TEXTAREA' ||
-        tag === 'BUTTON' ||
-        tag === 'A'
+        tag === 'TEXTAREA'
       ) {
+        return;
+      }
+      // Space activates the focused control. Every other player shortcut still
+      // works from the chrome buttons and the compact canvas, where focus is
+      // outside the spatial board's key handler.
+      if (event.key === ' ' && (tag === 'BUTTON' || tag === 'A')) {
         return;
       }
       switch (event.key) {
@@ -273,11 +305,26 @@ export function PlayerPage() {
             playback?.previous();
           }
           break;
+        case 'f':
+        case 'F':
+          if (!fullscreenSupported) {
+            break;
+          }
+          event.preventDefault();
+          toggleFullscreen();
+          break;
         case 't':
         case 'T':
           setTheater((current) => !current);
           break;
         case 'Escape':
+          // Overlays and canvas roving focus consume Escape before it reaches
+          // the window; exiting fullscreen is the next rung of the chain.
+          if (fullscreenActive) {
+            event.preventDefault();
+            fullscreenToggle();
+            break;
+          }
           setTheater(false);
           break;
         default:
@@ -286,7 +333,13 @@ export function PlayerPage() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [playback]);
+  }, [
+    fullscreenActive,
+    fullscreenSupported,
+    fullscreenToggle,
+    playback,
+    toggleFullscreen,
+  ]);
 
   if (!tour) {
     return (
@@ -370,6 +423,11 @@ export function PlayerPage() {
   };
 
   const selectView = (nextView: PlayerView) => {
+    // Stage has no fullscreen control, so a viewer who switches while
+    // fullscreen would be stranded. Leave fullscreen first.
+    if (nextView === 'stage' && fullscreenActive) {
+      fullscreenToggle();
+    }
     const nextSearch: PlayerSearch = { view: nextView };
     void navigate({
       to: '/t/$tourId/$beatId',
@@ -405,7 +463,12 @@ export function PlayerPage() {
   };
 
   return (
-    <div className={`player-page${theater ? ' player-page--theater' : ''}`}>
+    <div
+      ref={pageRef}
+      className={`player-page${theater ? ' player-page--theater' : ''}${
+        fullscreenActive ? ' player-page--fullscreen' : ''
+      }`}
+    >
       {resume && !hasResumed ? (
         <div className="page" style={{ paddingBottom: 0 }}>
           <div className="notice resume-banner">
@@ -471,7 +534,14 @@ export function PlayerPage() {
           </div>
 
           {showCanvas ? (
-            <CanvasView tour={tour} chapter={chapter} beat={beat} />
+            <CanvasView
+              tour={tour}
+              chapter={chapter}
+              beat={beat}
+              fullscreenSupported={fullscreenSupported}
+              fullscreenActive={fullscreenActive}
+              onToggleFullscreen={toggleFullscreen}
+            />
           ) : (
             <StageView
               chapter={chapter}

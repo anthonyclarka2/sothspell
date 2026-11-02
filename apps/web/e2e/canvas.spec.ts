@@ -128,8 +128,9 @@ test('pulses and hints after fullscreen, then returns with Escape and F', async 
     });
     Object.defineProperty(Element.prototype, 'requestFullscreen', {
       configurable: true,
-      value: async () => {
-        active = document.querySelector('.canvas-root');
+      value: async function (this: Element) {
+        // oxlint-disable-next-line typescript/no-this-alias -- the fake API must record the requested element.
+        active = this;
         document.dispatchEvent(new Event('fullscreenchange'));
       },
     });
@@ -146,6 +147,12 @@ test('pulses and hints after fullscreen, then returns with Escape and F', async 
   const enter = page.getByRole('button', { name: 'Enter fullscreen' });
   await enter.click();
 
+  expect(
+    await page.evaluate(() =>
+      document.fullscreenElement?.classList.contains('player-page'),
+    ),
+  ).toBe(true);
+  await expect(page.locator('.player-page')).toHaveClass(/player-page--fullscreen/);
   await expect(page.getByText('Press F or Esc to return')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Exit fullscreen' })).toHaveClass(
     /canvas-control--pulse/,
