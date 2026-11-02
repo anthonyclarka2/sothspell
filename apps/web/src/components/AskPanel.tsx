@@ -3,11 +3,13 @@ import { Link } from '@tanstack/react-router';
 import { PaperPlaneTilt, X } from '@phosphor-icons/react';
 import { askQuestion, type AskResponse } from '../lib/api.js';
 import { useLocale } from '../i18n/locale.js';
+import type { PlayerView } from '../lib/player-view.js';
 
 export interface AskPanelProps {
   tourId: string;
   beatId: string;
   projectSlug: string;
+  view: PlayerView;
   onClose: () => void;
   onContinue: () => void;
 }
@@ -16,6 +18,7 @@ export function AskPanel({
   tourId,
   beatId,
   projectSlug,
+  view,
   onClose,
   onContinue,
 }: AskPanelProps) {
@@ -119,7 +122,7 @@ export function AskPanel({
                     <Link
                       to="/p/$projectId/source/$"
                       params={{ projectId: projectSlug, _splat: citation.path }}
-                      search={{ anchor: citation.id, beat: beatId, tourId }}
+                      search={{ anchor: citation.id, beat: beatId, tourId, view }}
                       target="_blank"
                       rel="noreferrer"
                     >

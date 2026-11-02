@@ -37,7 +37,7 @@ export function CodePane({ projectSlug, tourId, beat }: CodePaneProps) {
         <Link
           to="/p/$projectId/source/$"
           params={{ projectId: projectSlug, _splat: anchor.path }}
-          search={{ anchor: anchor.id, beat: beat.id, tourId }}
+          search={{ anchor: anchor.id, beat: beat.id, tourId, view: 'stage' }}
         >
           Open code page
         </Link>

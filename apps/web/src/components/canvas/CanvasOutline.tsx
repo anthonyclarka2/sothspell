@@ -279,14 +279,21 @@ export function CanvasOutline({
                             : t('canvas.collapse')}
                         </button>
                       ) : null}
-                      <Link
-                        to="/p/$projectId/source/$"
-                        params={{ projectId: projectSlug, _splat: container.path }}
-                        search={{ anchor: container.anchorId, beat: beatId, tourId }}
-                        className="canvas-outline-action"
-                      >
-                        {t('canvas.openCodePage')}
-                      </Link>
+                      {container.id.startsWith('relation:') ? null : (
+                        <Link
+                          to="/p/$projectId/source/$"
+                          params={{ projectId: projectSlug, _splat: container.path }}
+                          search={{
+                            anchor: container.anchorId,
+                            beat: beatId,
+                            tourId,
+                            view: 'canvas',
+                          }}
+                          className="canvas-outline-action"
+                        >
+                          {t('canvas.openCodePage')}
+                        </Link>
+                      )}
                     </div>
                   </li>
                 );

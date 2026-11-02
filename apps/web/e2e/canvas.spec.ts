@@ -48,7 +48,7 @@ test('opens the canvas, follows evidence, and returns to the stage with the beat
     page.getByRole('heading', { name: 'Two sources, one conversation' }),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
-  await expect(page).not.toHaveURL(/view=canvas/);
+  await expect(page).toHaveURL(/view=stage/);
 });
 
 test('adds a second chapter diagram from the tray', async ({ page }) => {

@@ -22,6 +22,7 @@ import { CanvasView } from '../components/canvas/index.js';
 import { Transport } from '../components/Transport.js';
 import { AskPanel } from '../components/AskPanel.js';
 import { useNarration, type NarrationProviderChoice } from '../lib/use-narration.js';
+import { resolvePlayerView, type PlayerView } from '../lib/player-view.js';
 
 interface PlayerParams {
   tourId: string;
@@ -29,7 +30,7 @@ interface PlayerParams {
 }
 
 interface PlayerSearch {
-  view: 'canvas' | undefined;
+  view: PlayerView | undefined;
 }
 
 function toPlaybackTour(tour: CompiledTour) {
@@ -64,7 +65,8 @@ export function PlayerPage() {
   const navigate = useNavigate();
   const { locale, t } = useLocale();
   const clientId = useMemo(() => getOrCreateClientId(), []);
-  const canvasRequested = search.view === 'canvas';
+  const playerView = resolvePlayerView(search);
+  const canvasRequested = playerView === 'canvas';
   const showCanvas = canvasRequested;
   const tourState = useAsync(
     () => fetchTour(params.tourId, locale),
@@ -327,7 +329,7 @@ export function PlayerPage() {
     void navigate({
       to: '/p/$projectId/source/$',
       params: { projectId: tour.project.slug, _splat: anchor.path },
-      search: { anchor: anchorId, beat: beat.id, tourId: tour.id },
+      search: { anchor: anchorId, beat: beat.id, tourId: tour.id, view: playerView },
     });
   };
 
@@ -366,9 +368,8 @@ export function PlayerPage() {
     playback?.seekProgress(fraction);
   };
 
-  const selectView = (view: 'stage' | 'canvas') => {
-    const nextSearch: PlayerSearch =
-      view === 'canvas' ? { view: 'canvas' } : { view: undefined };
+  const selectView = (nextView: PlayerView) => {
+    const nextSearch: PlayerSearch = { view: nextView };
     void navigate({
       to: '/t/$tourId/$beatId',
       params: { tourId: params.tourId, beatId: beat.id },
@@ -500,6 +501,7 @@ export function PlayerPage() {
           tourId={params.tourId}
           beatId={beat.id}
           projectSlug={tour.project.slug}
+          view={playerView}
           onClose={() => closeAsk(false)}
           onContinue={() => closeAsk(true)}
         />
