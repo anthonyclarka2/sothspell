@@ -372,6 +372,85 @@ pre,
   background: var(--accent);
 }
 
+/* Phase 22: below 1081 px the rail becomes a disclosure in the viewbar. The
+   panel is absolutely positioned inside that viewbar so it travels with the
+   page and stays inside a fullscreen `.player-page`. */
+
+.chapter-drawer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 12;
+}
+
+.chapter-drawer-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--panel-strong);
+  color: var(--muted);
+  padding: 5px 10px;
+  font-size: 13px;
+  font-weight: 540;
+  cursor: pointer;
+}
+
+.chapter-drawer-toggle:hover,
+.chapter-drawer-toggle[aria-expanded='true'] {
+  color: var(--ink);
+}
+
+.chapter-drawer-toggle[aria-expanded='true'] {
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.chapter-drawer-caret {
+  transition: transform 120ms ease;
+}
+
+.chapter-drawer-toggle[aria-expanded='true'] .chapter-drawer-caret {
+  transform: rotate(180deg);
+}
+
+.chapter-drawer-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  inset-inline-start: 0;
+  z-index: 60;
+  width: min(360px, calc(100vw - 32px));
+  max-height: min(70dvh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.chapter-rail--drawer {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+@media (min-width: 1081px) {
+  .chapter-drawer {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter-drawer-caret {
+    transition: none;
+  }
+}
+
 .stage-column {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
@@ -924,7 +1003,8 @@ pre,
   vertical-align: -1px;
 }
 
-.player-page--theater .chapter-rail {
+.player-page--theater .chapter-rail,
+.player-page--theater .chapter-drawer {
   display: none;
 }
 
@@ -1169,7 +1249,7 @@ pre,
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .chapter-rail {
+  .chapter-rail:not(.chapter-rail--drawer) {
     display: none;
   }
 
