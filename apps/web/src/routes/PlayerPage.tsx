@@ -16,6 +16,7 @@ import {
   type StoredRun,
 } from '../lib/run-store.js';
 import { ChapterRail } from '../components/ChapterRail.js';
+import { ChapterDrawer } from '../components/ChapterDrawer.js';
 import { NarrationRail } from '../components/NarrationRail.js';
 import { StageView } from '../components/StageView.js';
 import { CanvasView } from '../components/canvas/index.js';
@@ -439,6 +440,14 @@ export function PlayerPage() {
 
         <div className="stage-column">
           <div className="player-viewbar">
+            <ChapterDrawer
+              chapters={tour.chapters}
+              activeChapterId={chapter.id}
+              activeBeatId={beat.id}
+              completedBeatIds={completedBeatIds}
+              onSeekBeat={(beatId) => playback?.seekBeat(beatId)}
+              theater={theater}
+            />
             <div
               className="player-view-switch"
               role="group"

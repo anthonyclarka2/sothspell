@@ -8,6 +8,8 @@ export interface ChapterRailProps {
   activeBeatId: string;
   completedBeatIds: string[];
   onSeekBeat: (beatId: string) => void;
+  /** The drawer reuses the rail content but supplies its own surface and scroll. */
+  variant?: 'rail' | 'drawer';
 }
 
 export function ChapterRail({
@@ -16,12 +18,14 @@ export function ChapterRail({
   activeBeatId,
   completedBeatIds,
   onSeekBeat,
+  variant = 'rail',
 }: ChapterRailProps) {
   const { t } = useLocale();
   const completed = new Set(completedBeatIds);
+  const className = `chapter-rail${variant === 'drawer' ? ' chapter-rail--drawer' : ''}`;
 
   return (
-    <aside className="chapter-rail" aria-label={t('rail.label')}>
+    <aside className={className} aria-label={t('rail.label')}>
       <h2>{t('rail.chapters')}</h2>
       <ol>
         {chapters.map((chapter) => (

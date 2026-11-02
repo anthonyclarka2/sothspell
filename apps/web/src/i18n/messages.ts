@@ -282,6 +282,7 @@ const en = {
 
   'rail.label': 'Chapters and beats',
   'rail.chapters': 'Chapters',
+  'rail.drawerTrigger': 'Chapters',
   'rail.empty': 'No chapters yet.',
   'rail.current': 'Current chapter: {id}',
   'rail.completed': 'completed',
@@ -641,6 +642,7 @@ const es: Catalog = {
 
   'rail.label': 'Capítulos y beats',
   'rail.chapters': 'Capítulos',
+  'rail.drawerTrigger': 'Capítulos',
   'rail.empty': 'Aún no hay capítulos.',
   'rail.current': 'Capítulo actual: {id}',
   'rail.completed': 'completado',
@@ -993,6 +995,7 @@ const ar: Catalog = {
 
   'rail.label': 'الفصول والمقاطع',
   'rail.chapters': 'الفصول',
+  'rail.drawerTrigger': 'الفصول',
   'rail.empty': 'لا توجد فصول بعد.',
   'rail.current': 'الفصل الحالي: {id}',
   'rail.completed': 'مكتمل',
