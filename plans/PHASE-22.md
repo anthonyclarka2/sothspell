@@ -1,8 +1,9 @@
 # Phase 22 — Canvas by Default
 
-**Status: planned (2026-11-02).** Planning baseline: 2026-11-02. Depends on:
-Phases 17–20 and the Phase 21 interaction patch (container move, resize, close,
-selection, and fullscreen re-fit).
+**Status: complete (2026-11-02; automated gates; manual VoiceOver/NVDA
+owner-gated).** Planning baseline: 2026-11-02. Depends on: Phases 17–20 and the
+Phase 21 interaction patch (container move, resize, close, selection, and
+fullscreen re-fit).
 
 ## Goal
 
@@ -474,3 +475,53 @@ migration is needed.
   in favour of the agreed contract, deletes each worktree only after the merge
   is verified, and runs the final gate from the merged tree.
 - Record every number. Do not summarize a miss as a pass.
+
+## Shipped (closure, 2026-11-02)
+
+- **Default view** — `apps/web/src/lib/player-view.ts` resolves a bare beat to
+  Canvas, accepts `?view=stage` and `?view=canvas`, and falls back to Canvas for
+  unknown values. The router validates the choice on the player and code routes.
+- **View preservation** — anchors, Stage code links, canvas container/compact/
+  outline links, Ask citations, code-page back links, and code-page outline
+  navigation carry the resolved view. Relation-only containers do not render a
+  code-page link.
+- **Chapter navigation** — `ChapterRail` gained a drawer variant and
+  `ChapterDrawer` adds the trigger, panel, active-beat focus, Escape and outside
+  close, breakpoint/theater auto-close, focus return, RTL clamping, and
+  English/Spanish/Arabic labels. The persistent rail stays at 1081 px and wider.
+- **Fullscreen chrome** — `PlayerPage` owns the `.player-page` fullscreen target,
+  clears theater, exits fullscreen on a Stage switch, and owns the `F`/`Escape`
+  fallback. `CanvasView` accepts the fullscreen props, re-fits on entry and exit,
+  and orders Escape behind the overlays and roving focus. `AskPanel` consumes
+  Escape before the page handler.
+- **Layout** — fullscreen sizes the player to `100dvh`, keeps the canvas
+  scrollable in compact mode, caps narration and Ask at short heights, hides the
+  relation legend when constrained, and keeps the resume banner usable. Windowed
+  narrow layouts keep canvas, narration, and transport in flow.
+- **Tests** — 6 player-view journeys, 10 chapter-navigation journeys, and 12
+  fullscreen journeys. The a11y suite covers default Canvas, explicit Stage,
+  compact, 200% text, and the existing canvas states.
+
+### Closure verification (fresh, 2026-11-02)
+
+- `pnpm test` → 129 files / 1069 tests.
+- `pnpm typecheck` and `pnpm exec oxlint apps packages scripts` clean.
+- `pnpm test:browser` → 149 passed.
+- `pnpm test:a11y` → 37 passed; 0 critical / 0 serious.
+- `CI=1 pnpm test:canvas:perf` → 173 frames, p50 16.7 ms, p95 16.8 ms, max
+  33.4 ms, 0 long tasks, heap ≈74.4 MB.
+- `pnpm test:coverage` → 95.7% lines overall; canvas 96.16%, analyzer relations
+  97.91%, API relations 94.44%.
+- `pnpm build` clean; `pnpm check:bundle` → 848.30 KiB raw / 247.87 KiB gzip
+  total, no canvas-specific chunk.
+- `pnpm check:version`, `pnpm check:toolchain`, and `pnpm check:secrets` clean.
+- Bunbun read-only check passed.
+
+### Owner-gated / follow-ups
+
+- VoiceOver on macOS and NVDA on Windows were not run. The owner accepted
+  promotion before that manual pass; it remains the next accessibility gate.
+- Real-device touch, Firefox, and WebKit remain outside the browser matrix.
+- A real Save-as-PDF check remains manual.
+- The canvas is still part of the main app bundle; code splitting and the 60 KiB
+  canvas sub-budget remain follow-ups.

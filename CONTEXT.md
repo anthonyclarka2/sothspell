@@ -287,14 +287,19 @@ secrets.
 
 ## Canvas terms (v3)
 
-These terms describe the planned canvas era (Phases 17–20) and are binding once
-the phase lands.
+These terms describe the canvas era (Phases 17–20) and the promotion in Phase 22.
+They are binding once the phase lands.
+
+### Stage view
+
+The diagram-and-code playback layout. It remains available from the view switch
+and at `?view=stage`, and it is the embed player's layout.
 
 ### Canvas view
 
-An opt-in playback layout that places the home diagram, code containers, and
-their links on one pannable, zoomable board. A canvas view presents one beat; it
-does not change the sóþspell or the run.
+The default playback layout for the web player. It places the home diagram, code
+containers, and their links on one pannable, zoomable board. A canvas view
+presents one beat; it does not change the sóþspell or the run.
 
 ### Canvas scene
 
@@ -449,7 +454,7 @@ Auto-arrange is undoable and can be disabled from its first-run message.
     through the bounded API.
 20. A canvas export contains only the visible tour excerpts and narration, never
     the full repository or a secret.
-21. Canvas is opt-in until the performance and accessibility gates pass; the
-    embed stays on the Stage.
+21. Canvas is the default web player view; the Stage remains the fallback and
+    the embed stays on the Stage.
 22. A project record's source root never enters a snapshot, a sóþspell, or an
     export.

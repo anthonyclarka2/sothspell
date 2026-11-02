@@ -17,6 +17,7 @@ import { ReviewPage } from './routes/ReviewPage.js';
 import { NewTourPage } from './routes/NewTourPage.js';
 import { LocaleSwitcher } from './components/LocaleSwitcher.js';
 import { useLocale } from './i18n/locale.js';
+import { parsePlayerView } from './lib/player-view.js';
 
 function RootLayout() {
   const { t } = useLocale();
@@ -62,7 +63,7 @@ const playerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/t/$tourId/$beatId',
   validateSearch: (search: Record<string, unknown>) => ({
-    view: search.view === 'canvas' ? ('canvas' as const) : undefined,
+    view: parsePlayerView(search.view),
   }),
   component: PlayerPage,
 });
@@ -74,6 +75,7 @@ const codeRoute = createRoute({
     anchor: typeof search.anchor === 'string' ? search.anchor : undefined,
     beat: typeof search.beat === 'string' ? search.beat : undefined,
     tourId: typeof search.tourId === 'string' ? search.tourId : undefined,
+    view: parsePlayerView(search.view),
   }),
   component: CodePage,
 });

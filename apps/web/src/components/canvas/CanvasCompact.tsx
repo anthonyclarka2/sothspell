@@ -335,18 +335,21 @@ export function CanvasCompact({
                       : t('canvas.collapse')}
                   </button>
                 ) : null}
-                <Link
-                  to="/p/$projectId/source/$"
-                  params={{ projectId: tour.project.slug, _splat: container.path }}
-                  search={{
-                    anchor: container.anchorId,
-                    beat: beat.id,
-                    tourId: tour.id,
-                  }}
-                  className="canvas-outline-action"
-                >
-                  {t('canvas.openCodePage')}
-                </Link>
+                {container.id.startsWith('relation:') ? null : (
+                  <Link
+                    to="/p/$projectId/source/$"
+                    params={{ projectId: tour.project.slug, _splat: container.path }}
+                    search={{
+                      anchor: container.anchorId,
+                      beat: beat.id,
+                      tourId: tour.id,
+                      view: 'canvas',
+                    }}
+                    className="canvas-outline-action"
+                  >
+                    {t('canvas.openCodePage')}
+                  </Link>
+                )}
                 <button
                   type="button"
                   className="canvas-relation-toggle"

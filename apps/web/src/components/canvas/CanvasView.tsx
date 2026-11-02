@@ -33,7 +33,6 @@ import {
   fetchCanvasSymbol,
 } from '../../lib/canvas-api.js';
 import { useLocale } from '../../i18n/locale.js';
-import { useFullscreen } from '../../lib/use-fullscreen.js';
 import { useMediaQuery } from '../../lib/use-media-query.js';
 import { captureCanvasImage, waitForCanvasPaint } from '../../lib/canvas-export.js';
 import { CanvasCodeContainer } from './CanvasCodeContainer.js';
@@ -167,6 +166,9 @@ export interface CanvasViewProps {
   tour: CompiledTour;
   chapter: CompiledChapter;
   beat: CompiledBeat;
+  fullscreenSupported: boolean;
+  fullscreenActive: boolean;
+  onToggleFullscreen: () => void;
 }
 
 /** React Flow state is scoped to one canvas view, never to the player route. */
@@ -178,16 +180,18 @@ export function CanvasView(props: CanvasViewProps) {
   );
 }
 
-function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
+function CanvasBoard({
+  tour,
+  chapter,
+  beat,
+  fullscreenSupported,
+  fullscreenActive,
+  onToggleFullscreen,
+}: CanvasViewProps) {
   const { t } = useLocale();
   const rootRef = useRef<HTMLElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const flow = useReactFlow<CanvasFlowNode, CanvasFlowEdge>();
-  const {
-    supported: fullscreenSupported,
-    active: fullscreenActive,
-    toggle: fullscreenToggle,
-  } = useFullscreen(rootRef);
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const compact = useMediaQuery('(max-width: 767px)');
   const preferenceStore = useMemo(() => createCanvasPreferenceStore(), []);
@@ -230,6 +234,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
   const [hintVisible, setHintVisible] = useState(false);
   const [fullscreenPulse, setFullscreenPulse] = useState(false);
   const wasFullscreen = useRef(false);
+  const wasFullscreenFit = useRef(false);
   const shortcutsReturnFocus = useRef<HTMLElement | null>(null);
   const [arranged, setArranged] = useState(false);
   const arrangeTimeout = useRef<number | undefined>(undefined);
@@ -1521,13 +1526,6 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
     announce(t('canvas.announce.preferencesReset'));
   }, [announce, preferenceStore, t]);
 
-  const toggleFullscreen = useCallback(() => {
-    if (!fullscreenSupported) {
-      return;
-    }
-    fullscreenToggle();
-  }, [fullscreenSupported, fullscreenToggle]);
-
   const showAll = useCallback(() => {
     setShowAllAnchors(true);
     announce(t('canvas.announce.showAll'));
@@ -1621,11 +1619,9 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       }
 
       if (event.key === 'Escape') {
-        if (fullscreenActive) {
-          handled();
-          fullscreenToggle();
-          return;
-        }
+        // Escape steps out of the most local context first: an open outline,
+        // then canvas roving focus, and only then fullscreen. The player page
+        // owns the same fallback for focus outside this board.
         if (outlineOpen) {
           handled();
           closeOutline();
@@ -1659,6 +1655,11 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
           if (homeId !== null) {
             focusDiagramElement(homeId);
           }
+          return;
+        }
+        if (fullscreenActive) {
+          handled();
+          onToggleFullscreen();
           return;
         }
         return;
@@ -1756,8 +1757,11 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       switch (event.key) {
         case 'f':
         case 'F':
+          if (!fullscreenSupported) {
+            break;
+          }
           handled();
-          toggleFullscreen();
+          onToggleFullscreen();
           break;
         case '+':
         case '=':
@@ -1809,16 +1813,16 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       focusDiagramElement,
       focusDiagramForKeyboard,
       fullscreenActive,
-      fullscreenToggle,
+      fullscreenSupported,
       home,
       itemElements,
+      onToggleFullscreen,
       openShortcuts,
       outlineOpen,
       resetZoom,
       scene,
       shortcutsOpen,
       toggleFollowBeat,
-      toggleFullscreen,
       toggleOutline,
       zoomIn,
       zoomOut,
@@ -2061,12 +2065,13 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
   }, [announce, fullscreenActive, t]);
 
   // Fullscreen changes the board's measured size. Fit after the browser has
-  // committed that resize, otherwise the previous windowed viewport leaves
-  // cards off-centre or off-screen.
+  // committed that resize on the way in and again on the way out, otherwise
+  // the previous viewport leaves cards off-centre or off-screen.
   useEffect(() => {
-    if (!fullscreenActive) {
+    if (!fullscreenActive && !wasFullscreenFit.current) {
       return;
     }
+    wasFullscreenFit.current = fullscreenActive;
     let cancelled = false;
     const frame = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -2245,7 +2250,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       home,
       autoArrange,
       toggleFollowBeat,
-      toggleFullscreen,
+      toggleFullscreen: onToggleFullscreen,
       toggleRelation,
       openDefinition,
       close: closeOutline,
@@ -2261,12 +2266,12 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
       focusDiagram,
       home,
       openDefinition,
+      onToggleFullscreen,
       removeDiagram,
       resetZoom,
       showAll,
       toggleContainer,
       toggleFollowBeat,
-      toggleFullscreen,
       toggleRelation,
       zoomIn,
       zoomOut,
@@ -2329,7 +2334,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
           onResetLayouts={resetLayouts}
           fullscreenSupported={fullscreenSupported}
           fullscreenActive={fullscreenActive}
-          onToggleFullscreen={toggleFullscreen}
+          onToggleFullscreen={onToggleFullscreen}
           onShowShortcuts={openShortcuts}
           onRetryRelation={retryRelation}
           actions={outlineActions}
@@ -2531,7 +2536,7 @@ function CanvasBoard({ tour, chapter, beat }: CanvasViewProps) {
         onAutoArrange={autoArrange}
         onToggleOutline={toggleOutline}
         onToggleFollowBeat={toggleFollowBeat}
-        onToggleFullscreen={toggleFullscreen}
+        onToggleFullscreen={onToggleFullscreen}
         onShowShortcuts={openShortcuts}
       />
 

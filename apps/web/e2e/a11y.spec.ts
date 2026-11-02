@@ -13,7 +13,7 @@ import {
 const pages = [
   '/',
   '/t/tour_bunbun_golden/beat_purpose_01',
-  '/t/tour_bunbun_golden/beat_purpose_01?view=canvas',
+  '/t/tour_bunbun_golden/beat_purpose_01?view=stage',
   '/p/bunbun/source/apps/api/src/main.ts?anchor=anchor_main_bootstrap&beat=beat_request_01',
   '/import',
   '/new',

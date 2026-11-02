@@ -156,20 +156,23 @@ export const CanvasCodeContainer = memo(function CanvasCodeContainer({
                 : t('canvas.collapse')}
             </button>
           ) : null}
-          <Link
-            to="/p/$projectId/source/$"
-            params={{ projectId: data.projectSlug, _splat: container.path }}
-            search={{
-              anchor: container.anchorId,
-              beat: data.beatId,
-              tourId: data.tourId,
-            }}
-            tabIndex={-1}
-            data-canvas-item="code-page"
-            className="canvas-text-action canvas-code-link nodrag"
-          >
-            {t('canvas.openCodePage')}
-          </Link>
+          {container.id.startsWith('relation:') ? null : (
+            <Link
+              to="/p/$projectId/source/$"
+              params={{ projectId: data.projectSlug, _splat: container.path }}
+              search={{
+                anchor: container.anchorId,
+                beat: data.beatId,
+                tourId: data.tourId,
+                view: 'canvas',
+              }}
+              tabIndex={-1}
+              data-canvas-item="code-page"
+              className="canvas-text-action canvas-code-link nodrag"
+            >
+              {t('canvas.openCodePage')}
+            </Link>
+          )}
         </div>
       </header>
       <div className="canvas-code-toolbar">

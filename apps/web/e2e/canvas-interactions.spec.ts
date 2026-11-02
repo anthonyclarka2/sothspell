@@ -126,8 +126,9 @@ test('fits and centres the board when entering fullscreen', async ({ page }) => 
     });
     Object.defineProperty(Element.prototype, 'requestFullscreen', {
       configurable: true,
-      value: async () => {
-        active = document.querySelector('.canvas-root');
+      value: async function (this: Element) {
+        // oxlint-disable-next-line typescript/no-this-alias -- the fake API must record the requested element.
+        active = this;
         window.dispatchEvent(new Event('resize'));
         document.dispatchEvent(new Event('fullscreenchange'));
       },
@@ -144,17 +145,13 @@ test('fits and centres the board when entering fullscreen', async ({ page }) => 
 
   await page.goto(BEAT);
   await page.getByRole('button', { name: 'Add Repository map' }).click();
-  await page.evaluate(() => {
-    const root = document.querySelector<HTMLElement>('.canvas-root');
-    if (root) {
-      root.style.position = 'fixed';
-      root.style.inset = '0';
-      root.style.width = '100vw';
-      root.style.height = '100vh';
-    }
-  });
   await page.getByTestId('canvas-view').focus();
   await page.keyboard.press('f');
+  expect(
+    await page.evaluate(() =>
+      document.fullscreenElement?.classList.contains('player-page'),
+    ),
+  ).toBe(true);
   await expect(page.getByText('Press F or Esc to return')).toBeVisible();
 
   const root = await page.getByTestId('canvas-view').boundingBox();

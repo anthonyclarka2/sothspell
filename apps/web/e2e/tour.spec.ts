@@ -31,7 +31,7 @@ test('plays the golden tour and opens code from a beat', async ({ page }) => {
 });
 
 test('opens code from a diagram node', async ({ page }) => {
-  await page.goto('/t/tour_bunbun_golden/beat_purpose_01');
+  await page.goto('/t/tour_bunbun_golden/beat_purpose_01?view=stage');
   await expect(
     page.getByRole('heading', { name: 'Two sources, one conversation' }),
   ).toBeVisible();
@@ -202,15 +202,18 @@ test('remembers a paused position across a reload', async ({ page }) => {
 });
 
 test('does not overflow at mobile and tablet widths', async ({ page }) => {
-  for (const width of [375, 768, 1440]) {
-    await page.setViewportSize({ width, height: 900 });
-    await page.goto('/t/tour_bunbun_golden/beat_purpose_01');
-    await expect(
-      page.getByRole('heading', { name: 'Two sources, one conversation' }),
-    ).toBeVisible();
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth - window.innerWidth,
-    );
-    expect(overflow, `overflow at ${width}px`).toBeLessThanOrEqual(1);
+  for (const path of [
+    '/t/tour_bunbun_golden/beat_purpose_01',
+    '/t/tour_bunbun_golden/beat_purpose_01?view=stage',
+  ]) {
+    for (const width of [375, 768, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(path);
+      await expect(page.locator('.narration h2')).toBeVisible();
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - window.innerWidth,
+      );
+      expect(overflow, `overflow at ${width}px for ${path}`).toBeLessThanOrEqual(1);
+    }
   }
 });

@@ -5,6 +5,7 @@ import { ArrowLeft, Code, Warning } from '@phosphor-icons/react';
 import { fetchAnchor, type AnchorLine } from '../lib/api.js';
 import { useAsync } from '../lib/use-async.js';
 import { useLocale } from '../i18n/locale.js';
+import type { PlayerView } from '../lib/player-view.js';
 
 interface CodeParams {
   projectId: string;
@@ -15,6 +16,7 @@ interface CodeSearch {
   anchor?: string;
   beat?: string;
   tourId?: string;
+  view?: PlayerView;
 }
 
 function VirtualCode({ lines, startLine }: { lines: AnchorLine[]; startLine: number }) {
@@ -76,6 +78,29 @@ function VirtualCode({ lines, startLine }: { lines: AnchorLine[]; startLine: num
   );
 }
 
+function BackToBeat({
+  tourId,
+  beatId,
+  view,
+}: {
+  tourId: string;
+  beatId: string;
+  view?: PlayerView;
+}) {
+  const { t } = useLocale();
+  return (
+    <Link
+      className="secondary-action"
+      to="/t/$tourId/$beatId"
+      params={{ tourId, beatId }}
+      search={{ view }}
+    >
+      <ArrowLeft size={16} weight="bold" className="rtl-flip" />
+      {t('code.backToBeat')}
+    </Link>
+  );
+}
+
 export function CodePage() {
   const params = useParams({ strict: false }) as CodeParams;
   const search = useSearch({ strict: false }) as CodeSearch;
@@ -111,6 +136,13 @@ export function CodePage() {
         <div className="notice">
           <strong>{t('code.loadError')}</strong> {anchor.error?.message}
         </div>
+        {search.beat && search.tourId ? (
+          <BackToBeat
+            tourId={search.tourId}
+            beatId={search.beat}
+            view={search.view}
+          />
+        ) : null}
       </div>
     );
   }
@@ -147,15 +179,11 @@ export function CodePage() {
             </span>
           )}
           {search.beat ? (
-            <Link
-              className="secondary-action"
-              to="/t/$tourId/$beatId"
-              params={{ tourId: data.tourId, beatId: search.beat }}
-              search={{ view: undefined }}
-            >
-              <ArrowLeft size={16} weight="bold" className="rtl-flip" />
-              {t('code.backToBeat')}
-            </Link>
+            <BackToBeat
+              tourId={data.tourId}
+              beatId={search.beat}
+              view={search.view}
+            />
           ) : null}
         </div>
       </header>
@@ -180,6 +208,7 @@ export function CodePage() {
                           anchor: entry.anchorId,
                           beat: entry.beatId,
                           tourId: search.tourId,
+                          view: search.view,
                         },
                       })
                     }

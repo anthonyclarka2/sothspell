@@ -12,9 +12,11 @@ The player has three modes:
 - **Explore** — paused; the user controls chapters, beats, code, and diagrams.
 - **Listen** — speech, synchronized text, and diagrams.
 
-The Stage remains the default layout. An opt-in **Canvas** view replaces the
-stage with a spatial board for the current beat; the chapter rail, narration,
-transport, and run progress stay in place. See [`canvas.md`](./canvas.md).
+The Canvas is the default layout in the web player. A beat opens on the spatial
+board for that beat; the **Stage** switch, or `?view=stage`, returns to the
+diagram-and-code layout. The chapter rail, narration, transport, and run progress
+stay in place in both views. The embed player keeps the Stage. See
+[`canvas.md`](./canvas.md).
 
 Controls:
 
@@ -36,7 +38,8 @@ scrubbing. Resume returns to the saved offset.
 | Left/Right       | Previous/next beat                                 |
 | Shift+Left/Right | Seek 5 seconds                                     |
 | T                | Toggle theater mode                                |
-| Escape           | Exit theater mode                                  |
+| F                | Toggle fullscreen in the canvas view               |
+| Escape           | Close the local overlay, then step out, then exit  |
 | Tab              | Move through controls, chapters, and diagram nodes |
 
 Diagram nodes are buttons: Enter or Space opens their code anchor. React Flow
@@ -44,7 +47,9 @@ keeps pan and zoom on its own controls so the page never hijacks scrolling.
 
 In the canvas view, arrows/HJKL move selection, Enter enters a container, and
 Escape steps item → container → home. The canvas handles only the keys it owns;
-Space and `T` keep their player meaning on the board. See
+Space and `T` keep their player meaning on the board. Escape closes an open
+shortcut sheet, display or export menu, chapter drawer, Ask panel, or outline
+before it exits fullscreen, then theater. See
 [`canvas.md`](./canvas.md#controls-and-shortcuts).
 
 ## Code browser
