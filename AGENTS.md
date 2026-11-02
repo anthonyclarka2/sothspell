@@ -54,7 +54,7 @@
   the git log for examples of good long commit messages.
 - End every commit message with exactly this trailer on its own line, preceded by
   a blank line:
-  `Co-Authored-By: OpenCode v2 <5565189+anthonyclarka2@users.noreply.github.com>`
+  `Co-authored-by: OpenCode v2 <5565189+anthonyclarka2@users.noreply.github.com>`
 
 ## Working style
 
