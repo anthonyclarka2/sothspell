@@ -1,5 +1,45 @@
 # Release Notes
 
+## Unreleased — canvas by default (2026-11-02)
+
+Canvas is now the web player default. The Stage remains the fallback and the
+embed layout.
+
+### Included
+
+- **Default view** — a bare player URL opens Canvas; `?view=stage` opens the
+  Stage; `?view=canvas` remains valid; unknown values fall back to Canvas.
+- **View preservation** — the switch writes an explicit URL value and survives
+  reloads, beat navigation, code-page round trips, and Ask citations.
+- **Chapter navigation** — the persistent chapter rail remains at 1081 px and
+  wider; a **Chapters** drawer provides the same list, focus, and seek actions
+  below 1081 px, including RTL and theater auto-close.
+- **Fullscreen chrome** — fullscreen targets the player page, keeping the view
+  switch, chapter navigation, narration, transport, and Ask panel available. The
+  canvas re-fits on entry and exit; `F` and `Escape` work from player chrome and
+  the compact layout.
+- **Escape hierarchy** — close an open overlay or drawer, step out of canvas
+  roving focus, exit fullscreen, then exit theater.
+- **Code links** — relation-only containers no longer render a dead code-page
+  link.
+
+### Verification
+
+- `pnpm test` → 129 files / 1069 tests.
+- `pnpm test:browser` → 149 passed, including 12 fullscreen and 10 chapter
+  navigation journeys.
+- `pnpm test:a11y` → 37 passed; axe at 0 critical / 0 serious.
+- `CI=1 pnpm test:canvas:perf` → 173 frames, p50 16.7 ms, p95 16.8 ms, max
+  33.4 ms, 0 long tasks.
+- `pnpm test:coverage` → 95.7% lines overall; canvas 96.16%, analyzer relations
+  97.91%, API relations 94.44%.
+- `pnpm check:bundle` → 848.30 KiB raw / 247.87 KiB gzip total; no canvas-specific
+  chunk yet.
+- Typecheck, lint, build, version, toolchain, and secrets clean; Bunbun remains
+  read-only.
+- Manual VoiceOver/NVDA, real-device touch, and Firefox/WebKit remain
+  owner-gated.
+
 ## 0.3.1 — 2026-10-26 (first public source release)
 
 This is the first public GitHub source release. It rolls up the v1, next-stage,
@@ -33,7 +73,7 @@ The canvas board is now directly manipulable.
 
 ## 0.3.0 — 2026-10-21 (canvas era)
 
-The third stage adds an opt-in canvas playback view, symbol-level code
+The third stage adds a canvas playback view, symbol-level code
 relationships, accessible exploration, and export.
 
 ### Included

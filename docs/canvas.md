@@ -1,19 +1,39 @@
 # Canvas Playback
 
-The canvas is an opt-in playback view for a beat. It places the beat diagram,
-code containers, and their links on one pannable board. The Stage remains the
-default and the embed player is unchanged.
+The canvas is the default playback view for a beat in the web player. It places
+the beat diagram, code containers, and their links on one pannable board. The
+Stage remains available from the view switch and at `?view=stage`; the embed
+player keeps its Stage layout.
 
 ## Entering and leaving
 
-- Open any beat with `?view=canvas`, or use the **Canvas** switch above the
-  player stage.
+- Open any beat in the web player. Canvas is the default.
+- Use the **Stage** switch, or `?view=stage`, to return to the diagram-and-code
+  Stage. Use the **Canvas** switch, or `?view=canvas`, to return to the board.
 - The switch preserves the beat, playback position, narration mode, and run
   progress.
-- `?view=canvas` survives a reload and can be shared on the same machine or
+- The chosen view survives a reload, beat navigation, code-page round trips, and
+  Ask-panel citations, and the URL can be shared on the same machine or
   deployment.
 - Below 768 px the board becomes a compact vertical reading layout, not a
   shrunken canvas.
+- Below 1081 px the persistent chapter rail becomes a **Chapters** disclosure in
+  the viewbar. The drawer contains the same chapter and beat list, active and
+  completed markers, and seek action. It closes on selection, Escape, outside
+  click, theater mode, or when the viewport widens past 1080 px.
+
+## Fullscreen and player chrome
+
+Fullscreen targets the whole player page, not only the board. The view switch,
+chapter rail or drawer, narration, transport, and Ask panel remain inside the
+fullscreen surface. The board re-fits on entry and exit.
+
+- `F` toggles fullscreen from the board or from player chrome.
+- `Escape` follows one chain: close an open canvas overlay, drawer, or Ask
+  panel; step out of canvas roving focus; exit fullscreen; exit theater.
+- Entering fullscreen clears theater so the chrome is visible on the first
+  measurement. Pressing `t` in fullscreen still toggles the immersive layout.
+- Switching to Stage while fullscreen exits fullscreen first.
 
 ## The board
 
@@ -94,29 +114,31 @@ plays. The source route refuses redacted files.
 Bottom-left controls: zoom out, zoom percentage, zoom in, reset, fit all, home,
 auto-arrange, follow beat, outline, fullscreen, shortcuts, export.
 
-| Key       | Action                                          |
-| --------- | ----------------------------------------------- |
-| `F`       | Toggle fullscreen                               |
-| `0`       | Fit all cards                                   |
-| `1`       | Reset zoom to 100%                              |
-| `+` / `-` | Zoom in / out                                   |
-| `Shift+A` | Auto-arrange                                    |
-| `Shift+H` | Home diagram                                    |
-| `O`       | Toggle outline                                  |
-| `B`       | Toggle follow beat                              |
-| `?`       | Shortcut sheet                                  |
-| Arrows    | Move selection between cards                    |
-| `H/J/K/L` | Move selection left/down/up/right               |
-| `Enter`   | Enter a container or activate the item          |
-| `Escape`  | Item → container → home; exits fullscreen first |
+| Key       | Action                                         |
+| --------- | ---------------------------------------------- |
+| `F`       | Toggle fullscreen                              |
+| `0`       | Fit all cards                                  |
+| `1`       | Reset zoom to 100%                             |
+| `+` / `-` | Zoom in / out                                  |
+| `Shift+A` | Auto-arrange                                   |
+| `Shift+H` | Home diagram                                   |
+| `O`       | Toggle outline                                 |
+| `B`       | Toggle follow beat                             |
+| `?`       | Shortcut sheet                                 |
+| Arrows    | Move selection between cards                   |
+| `H/J/K/L` | Move selection left/down/up/right              |
+| `Enter`   | Enter a container or activate the item         |
+| `Escape`  | Overlay → item → container → home → fullscreen |
 
 Keys handled by the canvas stop before the player's global handlers. Space on a
 button activates it; Space on the board background and `T` remain the player's
-playback and theater keys.
+playback and theater keys. `Escape` closes an open overlay or drawer before it
+steps out of the canvas and exits fullscreen.
 
-Entering fullscreen re-fits the board to the new viewport and centres the
-cards. The fullscreen button pulses for two seconds and the return hint stays
-visible until dismissed.
+Entering fullscreen re-fits the board to the new viewport and centres the cards;
+leaving fullscreen re-fits again so the windowed layout is not left off-centre.
+The fullscreen button pulses for two seconds and the return hint stays visible
+until dismissed.
 
 Code lines are rendered as adjacent blocks with no blank-line gap: the whitespace
 Shiki emits between line spans is removed before the excerpt enters the DOM.
@@ -165,10 +187,11 @@ canvas preferences.
 
 ### Manual checklist status
 
-Automated coverage is recorded above. The following manual checks are still
-owner-gated:
+Automated coverage is recorded above. Canvas became the web player default in
+Phase 22 with owner approval before the manual screen-reader run. These checks
+remain owner-gated:
 
-- VoiceOver on macOS (required before promotion from opt-in).
+- VoiceOver on macOS.
 - NVDA on Windows (requires a Windows VM or remote machine).
 - Real-device pinch/touch targets.
 - Firefox and WebKit.
@@ -203,8 +226,8 @@ and outgoing relations open:
 
 ```text
 nodes=18 edges=5 diagrams=2 objects=11 containers=5
-frames=176 p50=16.7ms p95=16.8ms max=33.4ms
-longTasks=0 maxLongTask=0ms heap≈72.5MB
+frames=173 p50=16.7ms p95=16.8ms max=33.4ms
+longTasks=0 maxLongTask=0ms heap≈74.4MB
 ```
 
 The standalone `pnpm test:canvas:perf` run meets the 60 fps p95 target. A full
@@ -213,11 +236,13 @@ enforces the threshold in CI (`CI=1`). The plan's separate 32-object /
 8-container / 40-link synthetic scene is not built; this is the current
 representative board.
 
-Bundle after Phase 20: the web app has one JavaScript chunk at 835.28 kB /
-244.36 kB gzip, plus a 23.97 kB / 9.38 kB gzip export chunk from the dynamic
-`modern-screenshot` import. There is no canvas-specific chunk, so the planned
-60 KiB canvas budget is not measurable until code splitting. `pnpm check:bundle`
-reports the total and the unmeasured budgets instead of claiming a pass.
+Bundle after Phase 22: `pnpm check:bundle` reports 848.30 KiB total JavaScript
+raw / 247.87 KiB gzip. The web app has one main JavaScript chunk at 844.68 kB
+(246.63 kB gzip) plus the 23.97 kB (9.38 kB gzip) export chunk from the dynamic
+`modern-screenshot` import. Canvas is part of the default app bundle, so no
+canvas-specific chunk exists and the planned 60 KiB canvas budget is not
+measurable until code splitting. `pnpm check:bundle` records the total and the
+unmeasured budgets instead of claiming a pass.
 
 ## Known limitations
 

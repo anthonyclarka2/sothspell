@@ -221,6 +221,8 @@ stores only small, attributed excerpts.
   preferences, contrast, large text, and compact layout.
 - [Phase 20](plans/PHASE-20.md) — PNG/JPG/PDF export, performance budget,
   coverage, docs, and the final gate.
+- [Phase 22](plans/PHASE-22.md) — Canvas default, Stage fallback, chapter
+  drawer, and fullscreen player chrome.
 - [Canvas feature brief](plans/CANVAS-FEATURES.md) — the original deliverables
   and constraints.
 - [Archived plans](plans/archive/README.md) — the completed v1 and v2 eras, with
@@ -257,8 +259,9 @@ stores only small, attributed excerpts.
   validation, repair, quality reports, and the author CLI.
 - [Player and code browser](docs/player.md) — playback controls, keyboard map,
   virtualized code pages, stale badges, and progress.
-- [Canvas playback](docs/canvas.md) — the opt-in spatial board, evidence and
-  relation links, keyboard/preferences, export, and performance.
+- [Canvas playback](docs/canvas.md) — the default spatial board, evidence and
+  relation links, chapter drawer, fullscreen chrome, keyboard/preferences,
+  export, and performance.
 - [Narration](docs/narration.md) — browser and cloud speech, synchronization,
   caching, and privacy.
 - [Guide and interludes](docs/guide.md) — in-tour questions, citations,
@@ -384,6 +387,7 @@ and live cloud narration remain owner-gated on provider credentials; fixture and
 browser paths are verified.
 
 The canvas era is complete in [`plans/ROADMAP.md`](plans/ROADMAP.md) as Phases
-17–20. The first public source release is `v0.3.1` (2026-10-26); manual
-VoiceOver/NVDA, real Save-as-PDF, and real-device touch checks remain
-owner-gated. The canvas is opt-in.
+17–20, and [Phase 22](plans/PHASE-22.md) makes Canvas the web player default.
+The first public source release is `v0.3.1` (2026-10-26); manual VoiceOver/NVDA,
+real Save-as-PDF, and real-device touch checks remain owner-gated. The Stage
+remains the fallback and the embed layout.

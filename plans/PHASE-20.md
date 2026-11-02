@@ -339,7 +339,9 @@ player layout.
   patch.
 - Firefox/WebKit, real-device touch, and a 40-node synthetic perf scene remain
   follow-ups.
-- Canvas is still opt-in. No promotion decision was made; the evidence supports
-  keeping it opt-in until manual accessibility is signed off.
+- Canvas is still opt-in at the close of Phase 20. No promotion decision was made;
+  the evidence supported keeping it opt-in until manual accessibility is signed
+  off. Phase 22 later promoted Canvas to the web player default with owner
+  approval; VoiceOver/NVDA remain owner-gated follow-ups.
 - Bundle is still one large app chunk; code splitting is required before the
   60 KiB canvas budget can be measured.

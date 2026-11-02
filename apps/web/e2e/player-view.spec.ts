@@ -97,3 +97,22 @@ test('carries the stage view into ask citations', async ({ page }) => {
   await expect(popup).toHaveURL(/view=stage/);
   await popup.close();
 });
+
+test('keeps canvas, narration, and transport in flow at every width', async ({
+  page,
+}) => {
+  for (const width of [1440, 1024, 768, 375]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(BEAT);
+    await expect(page.getByTestId('canvas-view')).toBeVisible();
+
+    const canvas = await page.getByTestId('canvas-view').boundingBox();
+    const narration = await page.locator('.narration').boundingBox();
+    const transport = await page.locator('.transport').boundingBox();
+    expect(canvas, `canvas at ${width}`).not.toBeNull();
+    expect(narration, `narration at ${width}`).not.toBeNull();
+    expect(transport, `transport at ${width}`).not.toBeNull();
+    expect(canvas!.y + canvas!.height).toBeLessThanOrEqual(narration!.y + 1);
+    expect(narration!.y + narration!.height).toBeLessThanOrEqual(transport!.y + 1);
+  }
+});

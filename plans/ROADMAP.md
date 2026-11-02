@@ -1,24 +1,27 @@
 # Sóþspell — Canvas Playback Roadmap (v3)
 
 **Status: complete (2026-10-21; automated gates; manual accessibility and PDF
-checks owner-gated).** Planning baseline: 2026-10-21. Source brief:
+checks owner-gated). Canvas promotion complete (2026-11-02).** Planning baseline:
+2026-10-21. Source brief:
 [`CANVAS-FEATURES.md`](CANVAS-FEATURES.md). The spatial reference image was
 supplied in the planning session; it is not checked in.
 
 The v1 and v2 eras are archived in [`archive/`](archive/README.md). This
-roadmap covers the canvas era: an opt-in playback layout that places the tour
-diagram and its code evidence on one spatial canvas, with explicit links,
-multiple diagrams, code relationships, full keyboard and screen-reader access,
-and export. The canvas remains opt-in pending manual accessibility sign-off.
+roadmap covers the canvas era: a playback layout that places the tour diagram and
+its code evidence on one spatial canvas, with explicit links, multiple diagrams,
+code relationships, full keyboard and screen-reader access, and export. Phase 22
+promoted Canvas to the web player default; the Stage remains the fallback and
+the embed layout.
 
 The canvas is a viewer feature. It does not change authoring prompts, narration,
 the tour format's meaning, or the embed player.
 
 ## Owner decisions (2026-10-21)
 
-1. Canvas is an **opt-in playback mode**. The current diagram-and-code stage
-   stays the default and remains the embed layout. Canvas can become the default
-   only after the performance and accessibility gates pass.
+1. Canvas is the **default playback mode** for the web player. The diagram-and-code
+   Stage stays available from the switch and at `?view=stage`, and remains the
+   embed layout. Phase 22 promoted Canvas after the performance and accessibility
+   gates ran; manual screen-reader sign-off remains owner-gated.
 2. Incoming and outgoing links use **symbol-level calls for TypeScript and
    JavaScript**, with import and reference edges for the other analyzers. The UI
    labels the relation kind and confidence; it never presents an import edge as
@@ -41,7 +44,7 @@ the tour format's meaning, or the embed player.
 | #   | Feature                                                                    | Phase    |
 | --- | -------------------------------------------------------------------------- | -------- |
 | 1   | Canvas scene model and deterministic layout                                | Phase 17 |
-| 2   | Opt-in canvas view with diagram-to-code evidence links                     | Phase 17 |
+| 2   | Canvas view with diagram-to-code evidence links                            | Phase 17 |
 | 3   | Multiple diagrams on one canvas                                            | Phase 17 |
 | 4   | Canvas controls, fullscreen, and shortcut                                  | Phase 17 |
 | 5   | Symbol-aware tour targets and generated-tour repair                        | Phase 18 |
@@ -83,12 +86,13 @@ axe gate at 0 critical / 0 serious for the states it introduces.
 
 ## Status
 
-| Phase | Status                           | Primary outcome                                                          |
-| ----- | -------------------------------- | ------------------------------------------------------------------------ |
-| 17    | complete (2026-10-21)            | Opt-in canvas, scene layout, evidence links, multiple diagrams, controls |
-| 18    | complete (2026-10-21)            | Symbol targets, call/reference index, incoming/outgoing containers       |
-| 19    | complete (2026-10-21, automated) | Keyboard model, screen-reader outline, preferences, contrast and text    |
-| 20    | complete (2026-10-21, automated) | PNG/JPG/PDF export, performance budget, coverage, docs, final gate       |
+| Phase | Status                           | Primary outcome                                                       |
+| ----- | -------------------------------- | --------------------------------------------------------------------- |
+| 17    | complete (2026-10-21)            | Canvas, scene layout, evidence links, multiple diagrams, controls     |
+| 18    | complete (2026-10-21)            | Symbol targets, call/reference index, incoming/outgoing containers    |
+| 19    | complete (2026-10-21, automated) | Keyboard model, screen-reader outline, preferences, contrast and text |
+| 20    | complete (2026-10-21, automated) | PNG/JPG/PDF export, performance budget, coverage, docs, final gate    |
+| 22    | complete (2026-11-02)            | Canvas default, Stage fallback, chapter drawer, fullscreen chrome     |
 
 ## 1. Product direction
 
@@ -120,9 +124,9 @@ it, and the board can always return to a deterministic arrangement.
 
 These terms are added to [`CONTEXT.md`](../CONTEXT.md) as Phases 17–18 land.
 
-- **Canvas view** — an opt-in playback layout that places the home diagram, code
-  containers, and their links on one pannable, zoomable board. It is a view of a
-  beat, not a second tour format.
+- **Canvas view** — the default playback layout for the web player. It places
+  the home diagram, code containers, and their links on one pannable, zoomable
+  board. It is a view of a beat, not a second tour format.
 - **Canvas scene** — the pure data model of a canvas view: diagram cards, code
   containers, links, selection, and viewport. It contains no DOM and no React.
 - **Diagram card** — a movable container that renders one positioned diagram.
@@ -304,11 +308,16 @@ schema field and migration:
   approved.
 - **Accessibility.** Every canvas state passes axe at 0 critical / 0 serious,
   has a keyboard path, and has a text equivalent in the outline. VoiceOver
-  results are required; NVDA is owner-gated on a Windows VM or remote machine.
+  results are the next manual check; NVDA is owner-gated on a Windows VM or
+  remote machine. Phase 22 promoted Canvas with the owner accepting that
+  follow-up.
 - **Performance.** The canvas meets the budget in section 7 on the reference
-  scene. A failure blocks promotion from opt-in to default.
-- **Bundle.** Canvas code is loaded only when the canvas view opens. PNG/JPG
-  capture code is loaded only when export opens.
+  scene. Phase 22 recorded the promoted default's p95 and long tasks; a
+  regression remains a gate for later canvas work.
+- **Bundle.** The web player loads Canvas with the app bundle; there is no
+  canvas-specific chunk yet. PNG/JPG capture code is still loaded only when
+  export opens. The 60 KiB canvas sub-budget stays unmeasured until code
+  splitting.
 - **No telemetry.** Canvas interactions add no network calls. The relation
   request is the only new API call and it is local.
 - **Bunbun read-only.** No command writes into
@@ -526,7 +535,7 @@ phase has spare capacity.
    results and treats NVDA as owner-gated on a Windows VM or remote machine.
 7. **60 fps in CI.** Headless timings vary. The CI gate is deliberately looser;
    the real budget is recorded on the reference machine. A regression blocks
-   promotion, not the opt-in ship.
+   later canvas work; Phase 22 recorded the promoted default's numbers.
 8. **Fullscreen variance.** The Fullscreen API is not available in every
    embedding context. The control hides or falls back to theater mode when
    `document.fullscreenEnabled` is false.
@@ -567,3 +576,4 @@ phase has spare capacity.
 - [Phase 18 — Code Relationships](PHASE-18.md)
 - [Phase 19 — Accessible Interaction](PHASE-19.md)
 - [Phase 20 — Export, Performance, Hardening](PHASE-20.md)
+- [Phase 22 — Canvas by Default](PHASE-22.md)

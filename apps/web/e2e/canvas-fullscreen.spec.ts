@@ -350,6 +350,20 @@ test('keeps canvas, narration, and Ask from colliding at 1024x768', async ({ pag
   await expectNoHorizontalOverflow(page);
 });
 
+test('closes Ask with Escape before leaving fullscreen', async ({ page }) => {
+  await installFullscreenMock(page);
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.goto(PLAYER);
+  await enterFullscreen(page);
+
+  await page.getByRole('button', { name: 'Ask about this beat' }).click();
+  await expect(page.locator('.ask-panel')).toBeVisible();
+
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.ask-panel')).toBeHidden();
+  await expectFullscreenPage(page);
+});
+
 test('has no horizontal overflow in fullscreen at every supported width', async ({
   page,
 }) => {

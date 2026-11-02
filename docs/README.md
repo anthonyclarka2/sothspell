@@ -8,8 +8,9 @@ docs.
 
 - [Development](./development.md) — workspace layout, commands, the golden-tour
   workflow, and the TypeScript 7 constraints.
-- [Canvas playback](./canvas.md) — the opt-in spatial board, evidence and
-  relation links, keyboard/preferences, export, and performance.
+- [Canvas playback](./canvas.md) — the default spatial board, evidence and
+  relation links, chapter drawer, fullscreen chrome, keyboard/preferences,
+  export, and performance.
 - [Architecture](./architecture.md) — packages, pipeline, trust boundaries, and
   storage.
 - [Tour format](./tour-format.md) — the document, anchors, diagrams, and

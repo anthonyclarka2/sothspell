@@ -320,6 +320,12 @@ export function PlayerPage() {
         case 'Escape':
           // Overlays and canvas roving focus consume Escape before it reaches
           // the window; exiting fullscreen is the next rung of the chain.
+          if (askOpen) {
+            event.preventDefault();
+            resumeAfterAskRef.current = false;
+            setAskOpen(false);
+            break;
+          }
           if (fullscreenActive) {
             event.preventDefault();
             fullscreenToggle();
@@ -334,6 +340,7 @@ export function PlayerPage() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [
+    askOpen,
     fullscreenActive,
     fullscreenSupported,
     fullscreenToggle,

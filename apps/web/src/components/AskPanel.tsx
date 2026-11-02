@@ -57,7 +57,19 @@ export function AskPanel({
   };
 
   return (
-    <section className="ask-panel" aria-label={t('ask.label')}>
+    <section
+      className="ask-panel"
+      aria-label={t('ask.label')}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          // Ask is an overlay above the player: consume Escape before the
+          // page-level handler can exit fullscreen or theater.
+          event.preventDefault();
+          event.stopPropagation();
+          onClose();
+        }
+      }}
+    >
       <div className="ask-header">
         <div>
           <h2>{t('ask.title')}</h2>

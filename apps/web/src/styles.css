@@ -1274,8 +1274,7 @@ pre,
   }
 
   .transport {
-    position: sticky;
-    bottom: 0;
+    position: static;
   }
 }
 
