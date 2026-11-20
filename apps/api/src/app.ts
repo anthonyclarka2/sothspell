@@ -169,7 +169,9 @@ const DEFAULT_TOUR_PATH = new URL(
 export const GOLDEN_TOUR_ID = 'tour_bunbun_golden';
 const GOLDEN_TOUR_ALIASES = new Set([GOLDEN_TOUR_ID, 'bunbun-golden']);
 
-const compiledCache = new Map<string, Promise<CompiledTour>>();
+// Keep the last source compile bounded. Requests still read the current file
+// because authoring and review can replace an artifact at the same path.
+let lastSourceCompile: { raw: string; compiled: Promise<CompiledTour> } | undefined;
 
 function sothspellHome(): string {
   return process.env.SOTHSPELL_HOME ?? path.join(os.homedir(), '.sothspell');
@@ -208,38 +210,38 @@ async function resolveTourJsonPath(
   return null;
 }
 
-function loadCompiledTour(
+async function loadCompiledTour(
   store: TranslationStore,
   tourJsonPath: string,
   tourId: string,
   locale?: string,
 ): Promise<CompiledTour> {
+  const raw = await readFile(tourJsonPath, 'utf8');
   if (locale === undefined) {
-    const cached = compiledCache.get(tourJsonPath);
-    if (cached) {
-      return cached;
+    if (lastSourceCompile?.raw === raw) {
+      return lastSourceCompile.compiled;
     }
-
-    const compiled = readFile(tourJsonPath, 'utf8').then((raw) =>
-      compileSothspell(JSON.parse(raw) as unknown),
-    );
-    compiledCache.set(tourJsonPath, compiled);
-    return compiled;
+    const compiled = compileSothspell(JSON.parse(raw) as unknown);
+    lastSourceCompile = { raw, compiled };
+    try {
+      return await compiled;
+    } catch (error) {
+      if (lastSourceCompile?.compiled === compiled) {
+        lastSourceCompile = undefined;
+      }
+      throw error;
+    }
   }
 
-  // A translated compile is never cached: a translation can be stored at any
-  // moment, and recompiling one tour is cheaper than invalidating every key.
-  return readFile(tourJsonPath, 'utf8').then(async (raw) => {
-    const document = parseSothspell(JSON.parse(raw) as unknown);
-    if (locale === sourceLocaleOf(document)) {
-      return compileSothspell(document);
-    }
-    const translation = await store.read(tourId, locale);
-    if (!translation) {
-      return compileSothspell(document);
-    }
-    return compileSothspell(withTranslation(document, translation), { locale });
-  });
+  const document = parseSothspell(JSON.parse(raw) as unknown);
+  if (locale === sourceLocaleOf(document)) {
+    return compileSothspell(document);
+  }
+  const translation = await store.read(tourId, locale);
+  if (!translation) {
+    return compileSothspell(document);
+  }
+  return compileSothspell(withTranslation(document, translation), { locale });
 }
 
 interface AnchorLocation {

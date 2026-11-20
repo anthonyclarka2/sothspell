@@ -577,3 +577,4 @@ phase has spare capacity.
 - [Phase 19 — Accessible Interaction](PHASE-19.md)
 - [Phase 20 — Export, Performance, Hardening](PHASE-20.md)
 - [Phase 22 — Canvas by Default](PHASE-22.md)
+- [Phase 23 — Reader Access, First-run Demo, and Learning Checks](PHASE-23.md)
