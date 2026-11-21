@@ -77,6 +77,22 @@ export function validateChapterDraft(
         issues.push(`beat ${beat.title} cites unknown anchor ${anchorId}`);
       }
     }
+    const check = beat.learningCheck;
+    if (check) {
+      if (beat !== draft.beats.at(-1)) {
+        issues.push(`beat ${beat.title} has a learning check before the chapter end`);
+      }
+      if (
+        new Set(check.anchorIds).size !== check.anchorIds.length ||
+        check.anchorIds.some(
+          (id) => !candidateIds.has(id) || !beat.anchorIds.includes(id),
+        )
+      ) {
+        issues.push(
+          `beat ${beat.title} learning check must cite distinct anchor candidates from its beat`,
+        );
+      }
+    }
     for (const nodeId of beat.nodeIds ?? []) {
       if (!nodeIds.has(nodeId)) {
         issues.push(`beat ${beat.title} focuses unknown node ${nodeId}`);

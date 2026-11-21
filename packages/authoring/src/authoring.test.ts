@@ -108,6 +108,10 @@ describe('authorTour', () => {
     const compiled = await compileSothspell(result.document);
     expect(compiled.chapters).toHaveLength(4);
     expect(compiled.chapters[0]?.beats[0]?.anchors[0]?.html).toContain('shiki');
+    const checked = compiled.chapters[0]?.beats.at(-1);
+    expect(checked?.learningCheck?.prompt).toMatch(/Which file/);
+    expect(checked?.learningCheck?.anchorIds).toEqual([checked?.anchors[0]?.id]);
+    expect(checked?.learningCheck?.explanation).toContain(checked!.anchors[0]!.path);
   });
 
   it('reuses model calls from the authoring cache', async () => {
@@ -136,7 +140,7 @@ describe('authorTour', () => {
     expect(second.document.id).toBe(first.document.id);
   });
 
-  it('repairs an invalid chapter before assembling it', async () => {
+  it('repairs learning check evidence before assembling the chapter', async () => {
     const { root, snapshot, context } = await buildInput();
     const plan: TourPlan = {
       title: 'Repair fixture',
@@ -204,13 +208,26 @@ describe('authorTour', () => {
           anchorIds: [second.id],
           nodeIds: ['node_two'],
           edgeIds: ['edge_one'],
+          learningCheck: {
+            prompt: 'Which declaration is cited by this beat?',
+            explanation: `This beat cites ${second.label} in ${second.path}.`,
+            anchorIds: [second.id],
+          },
         },
       ],
     };
     const invalidChapter: ChapterDraft = {
       ...validChapter,
       beats: validChapter.beats.map((beat, index) =>
-        index === 0 ? { ...beat, anchorIds: ['symbol:not-a-candidate'] } : beat,
+        index === 1 && beat.learningCheck
+          ? {
+              ...beat,
+              learningCheck: {
+                ...beat.learningCheck,
+                anchorIds: ['symbol:not-a-candidate'],
+              },
+            }
+          : beat,
       ),
     };
 
@@ -239,6 +256,8 @@ describe('authorTour', () => {
     });
 
     expect(result.quality.modelCalls).toBeGreaterThan(5);
+    const checked = result.document.chapters[0]?.beats[1];
+    expect(checked?.learningCheck?.anchorIds).toEqual([checked?.anchors[0]?.id]);
     expect(result.quality.droppedChapters).toBe(0);
     expect(result.document.chapters).toHaveLength(4);
   });

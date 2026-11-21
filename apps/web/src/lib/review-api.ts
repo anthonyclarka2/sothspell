@@ -1,4 +1,4 @@
-import type { CompiledTour } from '@sothspell/core';
+import type { CompiledTour, LearningCheck } from '@sothspell/core';
 
 /**
  * The browser-side review client. It speaks only to `/api/reviews`; the review
@@ -18,6 +18,8 @@ export interface DiagramFocus {
   edgeIds: string[];
 }
 
+type LearningCheckEdit = Pick<LearningCheck, 'prompt' | 'explanation'> | null;
+
 export interface BeatEdit {
   id: string;
   beatId: string;
@@ -28,6 +30,7 @@ export interface BeatEdit {
   narration: string;
   suggestedQuestions: string[];
   diagramFocus: DiagramFocus;
+  learningCheck?: LearningCheckEdit;
 }
 
 export interface BeatSnapshot {
@@ -35,6 +38,7 @@ export interface BeatSnapshot {
   narration: string;
   suggestedQuestions: string[];
   diagramFocus: DiagramFocus;
+  learningCheck?: LearningCheckEdit;
 }
 
 export interface BeatRegeneration {
@@ -122,6 +126,7 @@ export interface BeatEditPatch {
   narration?: string;
   suggestedQuestions?: string[];
   diagramFocus?: DiagramFocus;
+  learningCheck?: LearningCheckEdit;
 }
 
 export class ReviewApiError extends Error {

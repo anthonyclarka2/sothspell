@@ -17,7 +17,7 @@ describe('generated Sóþspell JSON Schema', () => {
     expect(schema.properties?.chapters).toBeDefined();
   });
 
-  it('reports schema 1.2.0 and the optional symbol target', () => {
+  it('reports schema 1.2.0 and its optional symbol target and learning check', () => {
     const version = schema.properties?.schemaVersion as
       { const?: string; enum?: string[] } | undefined;
     expect(version?.const ?? version?.enum).toBeDefined();
@@ -25,5 +25,6 @@ describe('generated Sóþspell JSON Schema', () => {
 
     const serialized = JSON.stringify(schema);
     expect(serialized).toContain('"symbolId"');
+    expect(serialized).toContain('"learningCheck"');
   });
 });

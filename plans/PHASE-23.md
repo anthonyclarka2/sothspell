@@ -45,6 +45,17 @@ in that evidence. Review the shipped paths for correctness and regression risk.
   Both are fixed. Independent project identity remains tracked in
   [#11](https://github.com/anthonyclarka2/sothspell/issues/11).
 
+- Tiny Notes contains two optional authored checks for repository structure and
+  observable behavior. The player offers checks on natural chapter completion
+  and preserves control during manual navigation. The same interaction works
+  in Canvas, Stage and Reading view. The browser tests cover private answers,
+  cited evidence, read and Listen continuation and low-vision settings.
+- The integrated clean-home unit and coverage runs passed 1,076 tests, with
+  four optional Bunbun cases skipped. Coverage was 95.34% lines across
+  the configured modules. All six focused learning browser checks passed.
+- Manual VoiceOver/Safari and NVDA journeys, the whole-product WCAG criterion
+  matrix, and first-time learner observations remain open under #7 and #9.
+
 ## Exit criteria
 
 Run the repository gate with local servers and record environment and skips.

@@ -1,4 +1,4 @@
-import type { SothspellDocument } from '@sothspell/core';
+import type { LearningCheck, SothspellDocument } from '@sothspell/core';
 import { effectiveBeat, findBeat } from './edits.js';
 import { type AnchorCheck, type ReviewQuality, type ReviewSession } from './schemas.js';
 
@@ -109,6 +109,35 @@ export function renderReviewReportMarkdown(
     context.anchors ?? session.decisions.at(-1)?.anchorVerification?.checks ?? [];
   lines.push(...anchorSection(checks), '');
 
+  const checkedBeats = document.chapters
+    .flatMap((chapter) => chapter.beats)
+    .map((beat) => effectiveBeat(document, session.edits, beat.id) ?? beat)
+    .filter((beat) => beat.learningCheck);
+  if (checkedBeats.length > 0) {
+    lines.push('## Learning checks', '');
+    for (const beat of checkedBeats) {
+      const check = beat.learningCheck!;
+      lines.push(
+        `### ${beat.title} (${beat.id})`,
+        '',
+        check.prompt,
+        '',
+        check.explanation,
+        '',
+      );
+      for (const anchor of beat.anchors) {
+        if (check.anchorIds.includes(anchor.id)) {
+          lines.push(`- \`${anchor.path}:${anchor.lines.start}–${anchor.lines.end}\``);
+        }
+      }
+      lines.push('');
+    }
+    lines.push(
+      'Use the beat comments to record whether a first-time learner explained the feature and located the responsible module.',
+      '',
+    );
+  }
+
   lines.push('## Comments', '');
   if (session.comments.length === 0) {
     lines.push('No comments were recorded.');
@@ -183,6 +212,7 @@ export interface ReviewReportJson {
     title: string;
     narration: string;
     suggestedQuestions: string[];
+    learningCheck?: LearningCheck;
     diagramFocus: {
       diagramId: string | null;
       nodeIds: string[];
@@ -207,6 +237,7 @@ export function renderReviewReportJson(
         title: current.title,
         narration: current.narration,
         suggestedQuestions: [...(current.suggestedQuestions ?? [])],
+        ...(current.learningCheck ? { learningCheck: current.learningCheck } : {}),
         diagramFocus: {
           diagramId: current.stage.diagramId ?? null,
           nodeIds: [...(current.stage.nodeIds ?? [])],

@@ -40,6 +40,7 @@ interface ActiveNarration {
   pause: () => void;
   resume: () => void;
   stop: () => void;
+  currentTimeMs: () => number;
 }
 
 /** The best installed browser voice for the locale, when the API exposes one. */
@@ -136,6 +137,7 @@ export function useNarration(options: UseNarrationOptions): NarrationController 
         pause: () => narration.pause(),
         resume: () => narration.resume(),
         stop: () => narration.stop(),
+        currentTimeMs: () => narration.currentTimeMs(),
       };
 
       narration.play();
@@ -196,6 +198,7 @@ export function useNarration(options: UseNarrationOptions): NarrationController 
         activeRef.current = {
           pause: () => audio.pause(),
           resume: () => void audio.play(),
+          currentTimeMs: () => audio.currentTime * 1000,
           stop: () => {
             audio.pause();
             audio.removeAttribute('src');
@@ -289,7 +292,11 @@ export function useNarration(options: UseNarrationOptions): NarrationController 
       }
     },
     pause: () => {
-      activeRef.current?.pause();
+      const active = activeRef.current;
+      active?.pause();
+      if (active) {
+        callbacksRef.current.onProgress?.(active.currentTimeMs());
+      }
       setState((current) => ({ ...current, status: 'paused' }));
     },
     resume: () => {

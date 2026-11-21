@@ -60,6 +60,33 @@ export function BeatReader({
         </section>
       )}
 
+      {beat.learningCheck ? (
+        <section className="review-questions" aria-labelledby="review-check-heading">
+          <h3 id="review-check-heading">Learning check</h3>
+          <p lang={beat.learningCheck.locale}>{beat.learningCheck.prompt}</p>
+          <p lang={beat.learningCheck.locale}>{beat.learningCheck.explanation}</p>
+          <ul>
+            {beat.anchors
+              .filter((anchor) => beat.learningCheck?.anchorIds.includes(anchor.id))
+              .map((anchor) => (
+                <li key={anchor.id}>
+                  <button
+                    type="button"
+                    className="secondary-action"
+                    onClick={() => onSelectAnchor(anchor.id)}
+                  >
+                    {anchor.label ?? anchor.symbol ?? anchor.path}
+                  </button>
+                  <span className="mono">
+                    {' '}
+                    {anchor.path}:{anchor.startLine}–{anchor.endLine}
+                  </span>
+                </li>
+              ))}
+          </ul>
+        </section>
+      ) : null}
+
       <section className="review-anchors" aria-labelledby="review-anchors-heading">
         <h3 id="review-anchors-heading">Code anchors</h3>
         {beat.anchors.map((anchor) => (

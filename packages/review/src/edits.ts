@@ -42,6 +42,14 @@ export function snapshotFromBeat(beat: Beat): BeatSnapshot {
     title: beat.title,
     narration: beat.narration,
     suggestedQuestions: [...(beat.suggestedQuestions ?? [])],
+    ...(beat.learningCheck
+      ? {
+          learningCheck: {
+            prompt: beat.learningCheck.prompt,
+            explanation: beat.learningCheck.explanation,
+          },
+        }
+      : {}),
     diagramFocus: {
       diagramId: beat.stage.diagramId ?? null,
       nodeIds: [...(beat.stage.nodeIds ?? [])],
@@ -89,6 +97,17 @@ function applyEdit(beat: Beat, edit: BeatEdit): Beat {
     },
     suggestedQuestions:
       edit.suggestedQuestions.length > 0 ? [...edit.suggestedQuestions] : undefined,
+    ...(edit.learningCheck === null
+      ? { learningCheck: undefined }
+      : edit.learningCheck && beat.learningCheck
+        ? {
+            learningCheck: {
+              ...beat.learningCheck,
+              prompt: edit.learningCheck.prompt,
+              explanation: edit.learningCheck.explanation,
+            },
+          }
+        : {}),
   };
 }
 
@@ -101,14 +120,40 @@ export function applyBeatEdits(
     return document;
   }
 
-  return {
-    ...document,
-    chapters: document.chapters.map((chapter) => ({
-      ...chapter,
-      beats: chapter.beats.map((beat) => {
-        const edit = latestEdit(edits, beat.id);
-        return edit ? applyEdit(beat, edit) : beat;
-      }),
-    })),
-  };
+  const checksChanged = new Set<string>();
+  const chapters = document.chapters.map((chapter) => ({
+    ...chapter,
+    beats: chapter.beats.map((beat) => {
+      const edit = latestEdit(edits, beat.id);
+      const updated = edit ? applyEdit(beat, edit) : beat;
+      if (
+        updated.learningCheck?.prompt !== beat.learningCheck?.prompt ||
+        updated.learningCheck?.explanation !== beat.learningCheck?.explanation
+      ) {
+        checksChanged.add(beat.id);
+      }
+      return updated;
+    }),
+  }));
+  if (!document.translations || checksChanged.size === 0) {
+    return { ...document, chapters };
+  }
+
+  // Edited or removed checks fall back to their current source text until
+  // translated again. Unrelated text keeps its existing translations.
+  const translations = Object.fromEntries(
+    Object.entries(document.translations).map(([locale, translation]) => [
+      locale,
+      {
+        ...translation,
+        chapters: translation.chapters.map((chapter) => ({
+          ...chapter,
+          beats: chapter.beats.map((beat) =>
+            checksChanged.has(beat.id) ? { ...beat, learningCheck: undefined } : beat,
+          ),
+        })),
+      },
+    ]),
+  );
+  return { ...document, chapters, translations };
 }

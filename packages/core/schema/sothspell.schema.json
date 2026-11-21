@@ -374,6 +374,42 @@
                   ],
                   "additionalProperties": false
                 },
+                "learningCheck": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128
+                    },
+                    "prompt": {
+                      "type": "string",
+                      "minLength": 4,
+                      "maxLength": 240
+                    },
+                    "explanation": {
+                      "type": "string",
+                      "minLength": 10,
+                      "maxLength": 640
+                    },
+                    "anchorIds": {
+                      "minItems": 1,
+                      "maxItems": 3,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "prompt",
+                    "explanation",
+                    "anchorIds"
+                  ],
+                  "additionalProperties": false
+                },
                 "suggestedQuestions": {
                   "maxItems": 3,
                   "type": "array",
@@ -525,6 +561,32 @@
                           "minLength": 4,
                           "maxLength": 240
                         }
+                      },
+                      "learningCheck": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "minLength": 4,
+                            "maxLength": 240
+                          },
+                          "explanation": {
+                            "type": "string",
+                            "minLength": 10,
+                            "maxLength": 640
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "prompt",
+                          "explanation"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "required": [

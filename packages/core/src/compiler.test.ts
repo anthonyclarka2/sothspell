@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { compileSothspell } from './compiler.js';
 import { hashText } from './source.js';
-import type { SothspellDocument } from './schema.js';
+import type { SothspellDocument, TourTranslation } from './schema.js';
 
 const roots: string[] = [];
 
@@ -110,6 +110,88 @@ describe('compileSothspell', () => {
     expect(diagram?.nodes[0]?.y).toBeTypeOf('number');
     expect(diagram?.nodes[0]?.symbolId).toBe('symbol:src/module.ts#answer');
     expect(diagram?.edges[0]?.from).toBe('node_module');
+  });
+
+  it('compiles an optional learning check with cited evidence and source locale fallback', async () => {
+    const document = makeDocument();
+    const beat = document.chapters[0]!.beats[0]!;
+    expect(
+      (await compileSothspell(document)).chapters[0]?.beats[0]?.learningCheck,
+    ).toBeUndefined();
+
+    beat.learningCheck = {
+      id: 'check_module',
+      prompt: 'What value does the module export?',
+      explanation: 'It exports answer, which the declaration sets to 42.',
+      anchorIds: ['anchor_module'],
+    };
+    const translatedBeat = {
+      id: beat.id,
+      title: 'Le module',
+      narration: 'Ce module exporte une réponse dont la valeur est visible dans le code.',
+    };
+    const translation: TourTranslation = {
+      locale: 'fr',
+      sourceLocale: 'en',
+      title: 'Le test',
+      subtitle: 'Une visite du module',
+      chapters: [
+        {
+          id: 'chapter_one',
+          title: 'Un module',
+          summary: 'La présentation du module.',
+          diagrams: [{ id: 'diagram_one', title: 'Un module' }],
+          beats: [translatedBeat],
+        },
+      ],
+    };
+    document.translations = { fr: translation };
+    const fallback = await compileSothspell(document, { locale: 'fr' });
+    expect(fallback.chapters[0]?.beats[0]?.learningCheck).toEqual({
+      ...beat.learningCheck,
+      locale: 'en',
+    });
+
+    translation.chapters[0]!.beats = [
+      {
+        ...translatedBeat,
+        learningCheck: {
+          id: 'check_module',
+          prompt: 'Quelle valeur le module exporte-t-il ?',
+          explanation: 'Le module exporte la réponse 42.',
+        },
+      },
+    ];
+    const localized = await compileSothspell(document, { locale: 'fr' });
+    expect(localized.chapters[0]?.beats[0]?.learningCheck).toMatchObject({
+      prompt: 'Quelle valeur le module exporte-t-il ?',
+      anchorIds: ['anchor_module'],
+      locale: 'fr',
+    });
+
+    translation.chapters[0]!.beats[0]!.learningCheck!.id = 'unknown_check';
+    await expect(compileSothspell(document, { locale: 'fr' })).rejects.toThrow(
+      /unknown learning check/,
+    );
+  });
+
+  it('rejects learning checks that cite missing or stale evidence', async () => {
+    const document = makeDocument({ contentHash: hashText('stale') });
+    const beat = document.chapters[0]!.beats[0]!;
+    beat.learningCheck = {
+      id: 'check_module',
+      prompt: 'What value does the module export?',
+      explanation: 'It exports answer, which the declaration sets to 42.',
+      anchorIds: ['missing_anchor'],
+    };
+
+    await expect(compileSothspell(document)).rejects.toThrow(
+      /check_module.*missing_anchor/,
+    );
+    beat.learningCheck.anchorIds = ['anchor_module'];
+    await expect(compileSothspell(document)).rejects.toThrow(
+      /anchor_module hash mismatch/,
+    );
   });
 
   it('refuses an excerpt whose hash does not match', async () => {

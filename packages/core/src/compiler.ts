@@ -5,6 +5,7 @@ import {
   sourceLocaleOf,
   type Beat,
   type CodeAnchor,
+  type LearningCheck,
   type SothspellDocument,
 } from './schema.js';
 import { hashText, languageForPath, readSourceRange } from './source.js';
@@ -40,6 +41,7 @@ export interface CompiledBeat {
   anchors: CompiledAnchor[];
   stage: CompiledStage;
   suggestedQuestions: string[];
+  learningCheck?: LearningCheck & { locale: string };
 }
 
 export interface CompiledChapter {
@@ -133,7 +135,11 @@ async function resolveAnchor(
   };
 }
 
-async function compileBeat(beat: Beat, options: CompileOptions): Promise<CompiledBeat> {
+async function compileBeat(
+  beat: Beat,
+  options: CompileOptions,
+  checkLocale: string,
+): Promise<CompiledBeat> {
   const anchors = await Promise.all(
     beat.anchors.map((anchor) => resolveAnchor(anchor, options)),
   );
@@ -151,6 +157,9 @@ async function compileBeat(beat: Beat, options: CompileOptions): Promise<Compile
       edgeIds: [...(beat.stage.edgeIds ?? [])],
     },
     suggestedQuestions: [...(beat.suggestedQuestions ?? [])],
+    ...(beat.learningCheck
+      ? { learningCheck: { ...beat.learningCheck, locale: checkLocale } }
+      : {}),
   };
 }
 
@@ -182,10 +191,21 @@ export async function compileSothspell(
     locale === sourceLocale ? document : applyTranslation(document, locale);
 
   const chapters = await Promise.all(
-    rendered.chapters.map(async (chapter) => {
+    rendered.chapters.map(async (chapter, chapterIndex) => {
       const [diagrams, beats] = await Promise.all([
         Promise.all(chapter.diagrams.map((diagram) => layoutDiagram(diagram))),
-        Promise.all(chapter.beats.map((beat) => compileBeat(beat, options))),
+        Promise.all(
+          chapter.beats.map((beat, beatIndex) =>
+            compileBeat(
+              beat,
+              options,
+              document.translations?.[locale]?.chapters[chapterIndex]?.beats[beatIndex]
+                ?.learningCheck
+                ? locale
+                : sourceLocale,
+            ),
+          ),
+        ),
       ]);
 
       return {

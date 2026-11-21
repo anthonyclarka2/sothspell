@@ -91,6 +91,16 @@ export const StageSchema = z
     { message: 'a beat stage must focus code, a diagram node, or an edge' },
   );
 
+export const LearningCheckTextSchema = z.object({
+  id: z.string().min(1).max(128),
+  prompt: z.string().trim().min(4).max(240),
+  explanation: z.string().trim().min(10).max(640),
+});
+
+export const LearningCheckSchema = LearningCheckTextSchema.extend({
+  anchorIds: z.array(z.string().min(1)).min(1).max(3),
+});
+
 export const BeatSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1).max(96),
@@ -98,6 +108,7 @@ export const BeatSchema = z.object({
   durationMs: z.number().int().min(4000).max(300000).optional(),
   anchors: z.array(CodeAnchorSchema).min(1),
   stage: StageSchema,
+  learningCheck: LearningCheckSchema.optional(),
   suggestedQuestions: z.array(z.string().min(4).max(240)).max(3).optional(),
 });
 
@@ -120,6 +131,7 @@ export const TranslationBeatSchema = z.object({
   title: z.string().min(1).max(96),
   narration: z.string().min(20).max(1200),
   suggestedQuestions: z.array(z.string().min(4).max(240)).max(3).optional(),
+  learningCheck: LearningCheckTextSchema.optional(),
 });
 
 export const TranslationDiagramSchema = z.object({
@@ -195,6 +207,20 @@ export const SothspellDocumentSchema = z
           anchorIds.add(anchor.id);
         }
 
+        if (beat.learningCheck) {
+          claimId('learning check', beat.learningCheck.id);
+          const cited = new Set<string>();
+          for (const anchorId of beat.learningCheck.anchorIds) {
+            if (!anchorIds.has(anchorId) || cited.has(anchorId)) {
+              context.addIssue({
+                code: 'custom',
+                message: `learning check ${beat.learningCheck.id} cites invalid or duplicate anchor ${anchorId} on beat ${beat.id}`,
+              });
+            }
+            cited.add(anchorId);
+          }
+        }
+
         for (const anchorId of beat.stage.anchorIds) {
           if (!anchorIds.has(anchorId)) {
             context.addIssue({
@@ -263,6 +289,7 @@ export type Revision = z.infer<typeof RevisionSchema>;
 export type ProjectRef = z.infer<typeof ProjectRefSchema>;
 export type CodeAnchor = z.infer<typeof CodeAnchorSchema>;
 export type Stage = z.infer<typeof StageSchema>;
+export type LearningCheck = z.infer<typeof LearningCheckSchema>;
 export type Beat = z.infer<typeof BeatSchema>;
 export type Chapter = z.infer<typeof ChapterSchema>;
 export type TranslationBeat = z.infer<typeof TranslationBeatSchema>;
@@ -379,6 +406,14 @@ export function translationIssues(
           `chapter ${sourceChapter.id} beat ${beatIndex + 1} is ${translatedBeat.id}; the tour has ${sourceBeat.id}`,
         );
         continue;
+      }
+      if (
+        translatedBeat.learningCheck &&
+        translatedBeat.learningCheck.id !== sourceBeat.learningCheck?.id
+      ) {
+        issues.push(
+          `beat ${sourceBeat.id} translation references an unknown learning check`,
+        );
       }
       const sourceQuestions = sourceBeat.suggestedQuestions ?? [];
       const translatedQuestions = translatedBeat.suggestedQuestions;
@@ -614,10 +649,20 @@ export function applyTranslation(
           if (!translatedBeat) {
             return beat;
           }
+          const translatedCheck = translatedBeat.learningCheck;
           return {
             ...beat,
             title: translatedBeat.title,
             narration: translatedBeat.narration,
+            ...(beat.learningCheck && translatedCheck?.id === beat.learningCheck.id
+              ? {
+                  learningCheck: {
+                    ...beat.learningCheck,
+                    prompt: translatedCheck.prompt,
+                    explanation: translatedCheck.explanation,
+                  },
+                }
+              : {}),
             ...(translatedBeat.suggestedQuestions === undefined
               ? {}
               : { suggestedQuestions: translatedBeat.suggestedQuestions }),

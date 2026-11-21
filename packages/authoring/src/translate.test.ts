@@ -151,6 +151,27 @@ function prefixStrings(value: unknown, prefix: string): unknown {
 }
 
 describe('translateTour', () => {
+  it('translates learning check text without sending its citations to the model', async () => {
+    const document = parseSothspell(fixtureDocument());
+    document.chapters[0]!.beats[1]!.learningCheck = {
+      id: 'check_flag',
+      prompt: 'What is the value of BOOTSTRAP_FLAG?',
+      explanation: 'The source declaration sets BOOTSTRAP_FLAG to true.',
+      anchorIds: ['anchor_flag'],
+    };
+    const model = createFixtureTranslationModel('es');
+    const result = await translateTour({ tour: document, targetLocale: 'es', model });
+
+    expect(model.calls.map((request) => request.prompt).join(' ')).not.toMatch(
+      /anchor_flag|src\/flags\.ts/,
+    );
+    expect(result.translation.chapters[0]?.beats[1]?.learningCheck).toEqual({
+      id: 'check_flag',
+      prompt: '«es» What is the value of BOOTSTRAP_FLAG?',
+      explanation: '«es» The source declaration sets BOOTSTRAP_FLAG to true.',
+    });
+  });
+
   it('translates every unit with the fixture model and keeps ids and evidence', async () => {
     const model = createFixtureTranslationModel('es');
     const { translation, quality } = await translateTour({

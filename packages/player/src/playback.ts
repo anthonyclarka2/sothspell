@@ -59,8 +59,8 @@ export interface Playback {
   seekProgress(fraction: number): void;
   /** Playback speed multiplier; 1 is normal. */
   setSpeed(speed: number): void;
-  /** Advances the clock. The UI owns the real timer; tests call this directly. */
-  tick(deltaMs: number): void;
+  /** Advances the clock, optionally holding at a beat boundary for an interlude. */
+  tick(deltaMs: number, pauseAtBeatEnd?: (beatId: string) => boolean): void;
   subscribe(listener: PlaybackListener): () => void;
   getSnapshot(): PlaybackSnapshot;
 }
@@ -251,15 +251,24 @@ export function createPlayback(tour: PlaybackTour): Playback {
       emit('status.changed');
     },
 
-    tick(deltaMs: number): void {
+    tick(deltaMs: number, pauseAtBeatEnd?: (beatId: string) => boolean): void {
       if (status !== 'playing' || deltaMs <= 0) {
         return;
       }
 
+      // A seek or a completed hold can put the playhead on a boundary.
+      // The next tick leaves that beat without prompting a second time.
+      let alreadyAtBoundary = offsetMs >= durationOf(current());
       offsetMs += deltaMs * speed;
 
       while (offsetMs >= durationOf(current())) {
-        const overflow = offsetMs - durationOf(current());
+        const durationMs = durationOf(current());
+        if (!alreadyAtBoundary && pauseAtBeatEnd?.(current().beat.id)) {
+          offsetMs = durationMs;
+          this.pause();
+          return;
+        }
+        const overflow = offsetMs - durationMs;
 
         if (index >= flat.length - 1) {
           complete();
@@ -269,6 +278,7 @@ export function createPlayback(tour: PlaybackTour): Playback {
         emit('beat.completed');
         seekIndex(index + 1);
         offsetMs = overflow;
+        alreadyAtBoundary = false;
 
         const previousChapter = flat[index - 1]?.chapterIndex;
         const nextChapter = current().chapterIndex;

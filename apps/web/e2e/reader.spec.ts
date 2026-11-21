@@ -41,17 +41,22 @@ test('browser Find reaches the browser on the board and player chrome', async ({
   ]) {
     await target.focus();
     for (const modifier of ['Control', 'Meta']) {
-      const prevented = page.evaluate(
-        () =>
-          new Promise<boolean>((resolve) => {
-            window.addEventListener('keydown', (event) => {
-              if (event.key === 'f')
-                queueMicrotask(() => resolve(event.defaultPrevented));
-            });
-          }),
-      );
+      await page.evaluate(() => {
+        const html = document.documentElement;
+        delete html.dataset.findPrevented;
+        const recordFind = (event: KeyboardEvent) => {
+          if (event.key.toLowerCase() !== 'f') {
+            return;
+          }
+          window.removeEventListener('keydown', recordFind);
+          queueMicrotask(() => {
+            html.dataset.findPrevented = String(event.defaultPrevented);
+          });
+        };
+        window.addEventListener('keydown', recordFind);
+      });
       await page.keyboard.press(`${modifier}+f`);
-      expect(await prevented).toBe(false);
+      await expect(page.locator('html')).toHaveAttribute('data-find-prevented', 'false');
     }
   }
 });

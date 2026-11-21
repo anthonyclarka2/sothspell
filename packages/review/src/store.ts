@@ -15,8 +15,8 @@ import {
 /**
  * The review store. Every mutation appends to the audit trail; the session row
  * carries only the state machine's state and timestamps. Migrations are
- * `CREATE TABLE IF NOT EXISTS` statements so opening an existing database — the
- * same file the run store uses — is idempotent.
+ * idempotent, so the review store can open the same existing SQLite file as
+ * the run store.
  */
 
 export interface ReviewStore {
@@ -66,6 +66,7 @@ interface EditRow {
   title: string;
   narration: string;
   suggested_questions: string;
+  learning_check: string | null;
   diagram_id: string | null;
   node_ids: string;
   edge_ids: string;
@@ -112,6 +113,11 @@ function readEdit(row: EditRow): BeatEdit {
     title: row.title,
     narration: row.narration,
     suggestedQuestions: JSON.parse(row.suggested_questions) as string[],
+    ...(row.learning_check === null
+      ? {}
+      : {
+          learningCheck: JSON.parse(row.learning_check) as BeatEdit['learningCheck'],
+        }),
     diagramFocus: {
       diagramId: row.diagram_id,
       nodeIds: JSON.parse(row.node_ids) as string[],
@@ -191,6 +197,7 @@ export function createReviewStore(databasePath: string): ReviewStore {
       title TEXT NOT NULL,
       narration TEXT NOT NULL,
       suggested_questions TEXT NOT NULL,
+      learning_check TEXT,
       diagram_id TEXT,
       node_ids TEXT NOT NULL,
       edge_ids TEXT NOT NULL,
@@ -228,6 +235,18 @@ export function createReviewStore(databasePath: string): ReviewStore {
     CREATE INDEX IF NOT EXISTS review_decisions_review
       ON review_decisions (review_id, decided_at);
   `);
+
+  // SQL NULL preserves older edits. JSON null records an explicit removal.
+  database
+    .transaction(() => {
+      const columns = database.pragma('table_info(review_edits)') as Array<{
+        name: string;
+      }>;
+      if (!columns.some((column) => column.name === 'learning_check')) {
+        database.exec('ALTER TABLE review_edits ADD COLUMN learning_check TEXT');
+      }
+    })
+    .immediate();
 
   function loadSession(id: string): ReviewSession | null {
     const row = database.prepare('SELECT * FROM review_sessions WHERE id = ?').get(id) as
@@ -357,9 +376,9 @@ export function createReviewStore(databasePath: string): ReviewStore {
       database
         .prepare(
           `INSERT INTO review_edits
-             (id, review_id, beat_id, title, narration, suggested_questions,
+             (id, review_id, beat_id, title, narration, suggested_questions, learning_check,
               diagram_id, node_ids, edge_ids, source, reviewer, created_at)
-           VALUES (@id, @reviewId, @beatId, @title, @narration, @suggestedQuestions,
+           VALUES (@id, @reviewId, @beatId, @title, @narration, @suggestedQuestions, @learningCheck,
                    @diagramId, @nodeIds, @edgeIds, @source, @reviewer, @createdAt)`,
         )
         .run({
@@ -369,6 +388,8 @@ export function createReviewStore(databasePath: string): ReviewStore {
           title: edit.title,
           narration: edit.narration,
           suggestedQuestions: JSON.stringify(edit.suggestedQuestions),
+          learningCheck:
+            edit.learningCheck === undefined ? null : JSON.stringify(edit.learningCheck),
           diagramId: edit.diagramFocus.diagramId,
           nodeIds: JSON.stringify(edit.diagramFocus.nodeIds),
           edgeIds: JSON.stringify(edit.diagramFocus.edgeIds),

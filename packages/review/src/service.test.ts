@@ -50,6 +50,7 @@ function harness(
     quality?: ReviewQuality | null;
     model?: FakeGuideModel | null;
     reviewer?: string;
+    document?: ReturnType<typeof makeReviewDocument>;
   } = {},
 ): Harness {
   const store = createReviewStore(':memory:');
@@ -89,7 +90,7 @@ function harness(
     store,
     tours: createMemoryTourSource({
       tour_fixture: {
-        document: makeReviewDocument(),
+        document: options.document ?? makeReviewDocument(),
         revision: 'sha256:fixture',
         quality: options.quality === undefined ? null : options.quality,
       },
@@ -163,6 +164,53 @@ describe('review service', () => {
     await expect(
       harnessed.service.addComment(id, { beatId: null, body: 'One more thought.' }),
     ).rejects.toMatchObject({ code: 'review_closed' });
+  });
+
+  it('keeps a check grounded through edits, regeneration and removal', async () => {
+    const document = makeReviewDocument();
+    const beat = document.chapters[0]!.beats[1]!;
+    beat.learningCheck = {
+      id: 'check_main',
+      prompt: 'What does bootstrap return?',
+      explanation: 'The function returns the string ready.',
+      anchorIds: ['anchor_main'],
+    };
+    const harnessed = harness({ document });
+    const id = await start(harnessed);
+    const check = () =>
+      harnessed.service
+        .detail(id)
+        .then((detail) => detail?.tour.chapters[0]?.beats[1]?.learningCheck);
+
+    await harnessed.service.editBeat(id, beat.id, {
+      learningCheck: {
+        prompt: 'Which string comes back from bootstrap?',
+        explanation: 'The return statement yields ready.',
+      },
+    });
+    await harnessed.service.regenerateBeat(id, beat.id);
+    expect(await check()).toMatchObject({
+      id: 'check_main',
+      prompt: 'Which string comes back from bootstrap?',
+      anchorIds: ['anchor_main'],
+    });
+
+    await harnessed.service.addComment(id, {
+      beatId: beat.id,
+      body: 'First-time learner explained the return value and located the entry point.',
+    });
+    const report = await harnessed.service.exportReport(id, 'markdown');
+    expect(report).toContain('## Learning checks');
+    expect(report).toContain('Which string comes back from bootstrap?');
+    expect(report).toContain('src/main.ts:1–3');
+    expect(report).toContain(
+      'First-time learner explained the return value and located the entry point.',
+    );
+
+    await harnessed.service.editBeat(id, beat.id, { learningCheck: null });
+    expect(await check()).toBeUndefined();
+    await harnessed.service.editBeat(id, beat.id, { title: 'The revised entry point' });
+    expect(await check()).toBeUndefined();
   });
 
   it('edits one beat, validates it, and reopens a decided review', async () => {

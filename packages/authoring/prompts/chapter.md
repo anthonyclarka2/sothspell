@@ -9,6 +9,12 @@ one diagram instruction and 2–5 beats. Each beat has:
 - optional node IDs and edge IDs from the chapter diagram that the beat focuses;
 - up to three suggested questions.
 
+On the final beat, include at most one optional learningCheck with a short
+recall prompt (4–240 characters), an explanation (10–640 characters), and
+1–3 distinct anchorIds already cited by that beat. Ask about project structure
+or observable feature behavior. Every part of the explanation must be supported
+by the cited excerpts. Omit the check when the excerpts do not support it.
+
 The diagram must use the controlled node and edge vocabulary and no more than
 16 nodes or 24 edges. Its nodes may carry an anchorId from the candidates. Do not
 include coordinates, colors, sizes, or raw code in the diagram. Use the same
