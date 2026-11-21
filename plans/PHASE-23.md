@@ -32,6 +32,19 @@ in that evidence. Review the shipped paths for correctness and regression risk.
 - Use WCAG 2.2 AA criteria and record manual VoiceOver and NVDA evidence before
   making a conformance claim.
 
+## Implemented decisions and verification
+
+- The default demo has six beats across three chapters and runs for 3 minutes
+  42 seconds. Its source, line ranges and diagram relations are pinned and
+  verified. The browser test follows the source and returns to the same beat
+  with an empty home and no model credentials.
+- Canvas remains the default view. The URL preserves Stage or Reading view
+  across beats and source navigation. See the
+  [manual accessibility matrix](../docs/accessibility.md).
+- The audit identified a stale source compile and a failed-read recovery bug.
+  Both are fixed. Independent project identity remains tracked in
+  [#11](https://github.com/anthonyclarka2/sothspell/issues/11).
+
 ## Exit criteria
 
 Run the repository gate with local servers and record environment and skips.

@@ -72,6 +72,8 @@ export interface RelationQuery {
   slug: string;
   /** Resolved local source root, or null when the project record is missing. */
   root: string | null;
+  /** A built-in tour must use its pinned source, even if a saved slug matches. */
+  useSavedSnapshot?: boolean;
   direction: CanvasRelationDirection;
   symbolId?: string | undefined;
   path?: string | undefined;
@@ -352,18 +354,16 @@ export function createRelationService(
   };
 
   const snapshotFor = async (query: RelationQuery): Promise<ProjectSnapshot> => {
-    let saved: ProjectSnapshot | null = null;
-    try {
-      saved = await loadSnapshot(snapshotPathFor(options.home, query.slug));
-    } catch {
-      saved = null;
-    }
-    if (
-      saved &&
-      saved.analyzerVersion === ANALYZER_VERSION &&
-      saved.project.slug === query.slug
-    ) {
-      return saved;
+    if (query.useSavedSnapshot !== false) {
+      const saved = await loadSnapshot(snapshotPathFor(options.home, query.slug)).catch(
+        () => null,
+      );
+      if (
+        saved?.analyzerVersion === ANALYZER_VERSION &&
+        saved.project.slug === query.slug
+      ) {
+        return saved;
+      }
     }
 
     if (!query.root) {

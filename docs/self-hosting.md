@@ -4,7 +4,7 @@
 
 - Node.js 26+
 - pnpm 12.14.0
-- A local checkout of the project you want to explain
+- Optional: a local checkout for authoring a tour of your own project
 - Optional: `SOTHSPELL_MODEL` provider credentials
 - Optional: `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` for cloud narration
 
@@ -35,13 +35,16 @@ pnpm sothspell serve --port 4319 --host 127.0.0.1 --no-open
 ```
 
 The server binds to loopback by default. `serve` hosts the API and the built web
-app when `apps/web/dist` exists.
+app when `apps/web/dist` exists. The home page plays the built-in Tiny Notes tour
+with its tracked source, English, Spanish, and Arabic text, and no provider
+credentials. Preserve `examples/tiny-notes/` and `examples/tiny-notes-tour/`
+when copying a source release to another machine.
 
 ## Environment
 
 ```bash
 SOTHSPELL_HOME=~/.sothspell
-SOTHSPELL_PROJECT_ROOT=/path/to/project
+SOTHSPELL_PROJECT_ROOT=/path/to/bunbun  # optional historical demo checkout
 SOTHSPELL_MODEL=openai/gpt-5.2          # or anthropic/...
 OPENAI_API_KEY=...                       # provider key, server only
 ANTHROPIC_API_KEY=...

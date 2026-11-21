@@ -15,7 +15,8 @@ export interface DrilldownService {
 
 export interface CreateDrilldownServiceOptions {
   resolveTourPath: (tourId: string) => Promise<string | null>;
-  sourceRoot: string;
+  sourceRoot: string | null;
+  resolveSourceRoot?: (tourId: string, projectSlug: string) => Promise<string | null>;
   modelId?: string | null;
   model?: GuideModel;
   /**
@@ -29,7 +30,7 @@ export function createDrilldownService(
   options: CreateDrilldownServiceOptions,
 ): DrilldownService {
   const documents = new Map<string, Promise<SothspellDocument>>();
-  let snapshotPromise: ReturnType<typeof analyzeProject> | null = null;
+  const snapshots = new Map<string, ReturnType<typeof analyzeProject>>();
   let model: GuideModel | null = options.model ?? null;
 
   const resolveModel = async (): Promise<GuideModel> => {
@@ -72,17 +73,27 @@ export function createDrilldownService(
 
   return {
     async generate(tourId, anchorId) {
-      snapshotPromise ??= analyzeProject(options.sourceRoot);
-      const [document, snapshot] = await Promise.all([
-        loadDocument(tourId),
-        snapshotPromise,
-      ]);
+      const document = await loadDocument(tourId);
+      const guide = await resolveModel();
+      const sourceRoot = await (options.resolveSourceRoot?.(
+        tourId,
+        document.project.slug,
+      ) ?? Promise.resolve(options.sourceRoot));
+      if (sourceRoot === null) {
+        throw new AskUnavailableError('drilldown needs a project source root');
+      }
+      let snapshot = snapshots.get(sourceRoot);
+      if (!snapshot) {
+        snapshot = analyzeProject(sourceRoot);
+        snapshots.set(sourceRoot, snapshot);
+        snapshot.catch(() => snapshots.delete(sourceRoot));
+      }
       return generateDrilldown({
         tour: document,
         anchorId,
-        snapshot,
-        sourceRoot: options.sourceRoot,
-        model: await resolveModel(),
+        snapshot: await snapshot,
+        sourceRoot,
+        model: guide,
       });
     },
   };

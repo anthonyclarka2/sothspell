@@ -1,35 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { bunbunAvailable } from './bunbun-root.js';
 
-test('plays the golden tour and opens code from a beat', async ({ page }) => {
-  await page.goto('/');
-  await expect(
-    page.getByRole('heading', { name: 'Bunbun: a truth story' }),
-  ).toBeVisible();
-
-  await page.getByRole('link', { name: /play the tour/i }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Two sources, one conversation' }),
-  ).toBeVisible();
-
-  await page.getByRole('button', { name: 'Play' }).click();
-  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
-
-  await page.getByRole('button', { name: 'Next beat' }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Three application surfaces' }),
-  ).toBeVisible();
-
-  await page.getByRole('link', { name: 'Open code page' }).click();
-  await expect(page.getByRole('heading', { name: 'Repository layout' })).toBeVisible();
-  await expect(page.getByTestId('code-viewport')).toBeVisible();
-
-  await page.getByRole('link', { name: /back to the beat/i }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Three application surfaces' }),
-  ).toBeVisible();
-});
-
 test('opens code from a diagram node', async ({ page }) => {
   await page.goto('/t/tour_bunbun_golden/beat_purpose_01?view=stage');
   await expect(

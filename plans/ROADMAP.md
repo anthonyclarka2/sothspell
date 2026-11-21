@@ -93,6 +93,7 @@ axe gate at 0 critical / 0 serious for the states it introduces.
 | 19    | complete (2026-10-21, automated) | Keyboard model, screen-reader outline, preferences, contrast and text |
 | 20    | complete (2026-10-21, automated) | PNG/JPG/PDF export, performance budget, coverage, docs, final gate    |
 | 22    | complete (2026-11-02)            | Canvas default, Stage fallback, chapter drawer, fullscreen chrome     |
+| 23    | in progress (2026-11-20)         | Tiny Notes demo, Reading view, learning checks and audit              |
 
 ## 1. Product direction
 
@@ -301,8 +302,8 @@ schema field and migration:
   limit, and offset. It returns only bounded excerpts. It never returns absolute
   paths, secrets, or unredacted files.
 - **Local-first.** Canvas works without an account. The golden tour works with
-  the local Bunbun checkout; without it, relations degrade to an explicit
-  "relations unavailable" state and the rest of the canvas still works.
+  bundled Tiny Notes source. Historical Bunbun relations use the local read-only
+  checkout when available. Missing source shows an explicit unavailability state.
 - **Format stability.** Schema 1.2.0 is additive. Every 1.0.0 and 1.1.0 tour
   parses through migration; the golden tour is not rewritten unless a new pin is
   approved.

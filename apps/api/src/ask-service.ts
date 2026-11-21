@@ -33,6 +33,7 @@ export interface AskService {
 export interface CreateAskServiceOptions {
   resolveTourPath: (tourId: string) => Promise<string | null>;
   sourceRoot: string | null;
+  resolveSourceRoot?: (tourId: string, projectSlug: string) => Promise<string | null>;
   modelId?: string | null;
   model?: GuideModel;
   /**
@@ -93,11 +94,15 @@ export function createAskService(options: CreateAskServiceOptions): AskService {
     async answer(request) {
       const document = await loadDocument(request.tourId);
       const guide = await resolveModel();
+      const sourceRoot = await (options.resolveSourceRoot?.(
+        request.tourId,
+        document.project.slug,
+      ) ?? Promise.resolve(options.sourceRoot));
       const result = await answerQuestion({
         question: request.question,
         tour: document,
         beatId: request.beatId,
-        sourceRoot: options.sourceRoot ?? process.cwd(),
+        sourceRoot,
         model: guide,
         ...(request.history === undefined ? {} : { history: request.history }),
       });

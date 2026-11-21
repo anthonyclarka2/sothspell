@@ -101,6 +101,7 @@ export interface ReviewServiceOptions {
   tours: ReviewTourSource;
   /** Read-only project root for anchor verification; `null` uses excerpts. */
   sourceRoot?: string | null;
+  resolveSourceRoot?: (tourId: string, projectSlug: string) => Promise<string | null>;
   /** Resolves the authoring model for regeneration; `null` disables it. */
   resolveModel?: () => Promise<GuideModel | null>;
   clock?: () => Date;
@@ -119,7 +120,9 @@ function effectiveDocument(session: ReviewSession, tour: ReviewTour): SothspellD
 export function createReviewService(options: ReviewServiceOptions): ReviewService {
   const { store, tours } = options;
   const clock = options.clock ?? (() => new Date());
-  const sourceRoot = options.sourceRoot ?? null;
+  const sourceRootFor = (tourId: string, document: SothspellDocument) =>
+    options.resolveSourceRoot?.(tourId, document.project.slug) ??
+    Promise.resolve(options.sourceRoot ?? null);
   const newId = options.generateId ?? defaultId;
   // One beat is one model call; an unchanged prompt (a regenerate, revert,
   // regenerate cycle) is served from this in-memory cache.
@@ -145,9 +148,13 @@ export function createReviewService(options: ReviewServiceOptions): ReviewServic
     return tour;
   }
 
-  async function verify(document: SothspellDocument, at: string): Promise<AnchorCheck[]> {
+  async function verify(
+    tourId: string,
+    document: SothspellDocument,
+    at: string,
+  ): Promise<AnchorCheck[]> {
     const verification = await verifyAnchors(document, {
-      sourceRoot,
+      sourceRoot: await sourceRootFor(tourId, document),
       clock: () => new Date(at),
     });
     return verification.checks;
@@ -204,6 +211,7 @@ export function createReviewService(options: ReviewServiceOptions): ReviewServic
       }
       const tour = await requireTour(session);
       const document = effectiveDocument(session, tour);
+      const sourceRoot = await sourceRootFor(session.tourId, document);
       const compiled = await compileSothspell(
         document,
         sourceRoot === null ? {} : { sourceRoot },
@@ -212,7 +220,7 @@ export function createReviewService(options: ReviewServiceOptions): ReviewServic
         review: session,
         tour: compiled,
         quality: tour.quality,
-        anchors: await verify(document, now()),
+        anchors: await verify(session.tourId, document, now()),
       };
     },
 
@@ -472,7 +480,7 @@ export function createReviewService(options: ReviewServiceOptions): ReviewServic
         // check runs fresh here rather than trusting a cached list.
         const document = effectiveDocument(session, tour);
         const verification = await verifyAnchors(document, {
-          sourceRoot,
+          sourceRoot: await sourceRootFor(session.tourId, document),
           clock: () => new Date(timestamp),
         });
         assertApprovalAllowed(verification);
@@ -505,7 +513,7 @@ export function createReviewService(options: ReviewServiceOptions): ReviewServic
       const session = requireSession(id);
       const tour = await requireTour(session);
       const document = effectiveDocument(session, tour);
-      const anchors = await verify(document, now());
+      const anchors = await verify(session.tourId, document, now());
       const context = { document, quality: tour.quality, anchors };
       return format === 'json'
         ? renderReviewReportJson(session, context)

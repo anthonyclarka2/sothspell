@@ -62,7 +62,11 @@ pnpm sothspell help
 pnpm sothspell serve
 ```
 
-http://127.0.0.1:4319/ is opened automatically. From here you can run through the demo narration.
+The server opens http://127.0.0.1:4319/. Select **Play the demo** to read the
+three-to-five-minute Tiny Notes tour. Follow the CLI and HTTP entry points into
+the shared notes service, then trace a note to its JSON file and a behavior test.
+The source and excerpts ship with Sóþspell, so the demo works on a fresh install
+without provider credentials.
 
 #### To Analyse and Narrate a Different Repo
 
@@ -201,13 +205,20 @@ you copy the plugin elsewhere, set `SOTHSPELL_REPO=/path/to/sothspell` (or
 `SOTHSPELL_TSX`). `SOTHSPELL_PLAYER_URL` overrides the default player URL
 `http://127.0.0.1:4319`. See [docs/harnesses.md](docs/harnesses.md).
 
-## Example project
+## Example projects
+
+[Tiny Notes](examples/tiny-notes/) is the default demo. The
+[golden tour](examples/tiny-notes-tour/) pins the source revision and every
+cited range. To author a tour of Tiny Notes yourself, run
+`pnpm example:tiny-notes`, then use the checkout path printed by the command in
+**New tour**.
 
 The first reference project is **Bunbun**, a NestJS + Prisma Next + ATProto
 discussion service at commit `9fef24d`. The Bunbun tree is read-only; all
 snapshots, tours, audio, and runs live under `SOTHSPELL_HOME` (default
 `~/.sothspell`). The checked-in golden tour lives in `examples/bunbun-tour/` and
-stores only small, attributed excerpts.
+stores only small, attributed excerpts. Published links such as
+`/t/tour_bunbun_golden/beat_purpose_01` still open Bunbun.
 
 ## Documentation
 
@@ -320,7 +331,8 @@ pnpm check:toolchain
 pnpm check:version
 pnpm check:secrets
 pnpm schema:json
-pnpm tour:build      # regenerate the golden tour from the pinned Bunbun checkout
+pnpm tour:build:tiny-notes  # regenerate the default tour from tracked Tiny Notes source
+pnpm tour:build            # regenerate the historical tour from the pinned Bunbun checkout
 ```
 
 ### Stack
