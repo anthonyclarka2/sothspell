@@ -1,0 +1,15 @@
+{
+  ".gitignore": "sha256:2a9e5a6f50f28be8feb1e9adfd2cd1fadfa5d61d1094511e7cfe33d7f3fd5f1d",
+  "README.md": "sha256:3a1490ecd56a8b035c91018c411f4222d2bb5264bcf88097554a688f165c8866",
+  "package.json": "sha256:f78e9f2515b2486e3c044656dd5c3867afc79ca8b996f0ce4850afc84c13b840",
+  "src/cli.ts": "sha256:95f0b4c8b73bf46fe4d61c82f84f04d48b2e0e8cdeb7c0919ec829a28467a28d",
+  "src/http/server.ts": "sha256:419893507ed1cf26ac3bcaf7e3ee66881b7902d210a1c955a8cdf4809d867b9a",
+  "src/index.ts": "sha256:061c17d682e5195153e212b27d115d0868ac467012a3efb2d7145f0eb3d589e3",
+  "src/notes/format.ts": "sha256:36f1a90070fc788433ae7ecf9cbc93fa0ee1335707965c45dbaf267949a325d0",
+  "src/notes/repository.ts": "sha256:dbfd79c1ffa152e6ff1aa687c3f337859833da857dca2eeca40734830cf13093",
+  "src/notes/service.ts": "sha256:dc0ab9c664b75bcd2f804b02898d6b95e18704393e8fb2fd4c401dffe8d2c3a1",
+  "src/storage/file-store.ts": "sha256:d2b043f2609d07c6a329ba6a224f1517c9ab76e3bcce66286e725578e07cc25c",
+  "src/types.ts": "sha256:97d08449982b30a8eadc22815892ea78ea67a2a053e28951e1641df9d267ea35",
+  "test/service.test.ts": "sha256:5ed1ab7b68a6b26f39fbf1ff624a3261a602a2c16f87f12da5d047bb9d6e1661",
+  "tsconfig.json": "sha256:28b320047d9043dc01dfc1b403d2320565ad66a306f2fafb3fa8b1abd8939e21"
+}

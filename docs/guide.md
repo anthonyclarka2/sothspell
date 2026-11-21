@@ -37,6 +37,28 @@ The player's **Ask about this beat** action:
 4. opens a cited code page in a new tab so the interlude is preserved;
 5. **Continue tour** resumes if the tour was playing before the question.
 
+## Learning checks
+
+Tiny Notes includes two authored checks. One asks which operation the CLI and
+HTTP share. The other asks what the service test expects after adding tags
+with different case and spacing. Each check works without a model connection.
+
+The player offers a check when Read or Listen naturally reaches a chapter end
+with an authored check. Use **Learning check** on that beat to open it on demand,
+or turn off **Automatic learning checks**. A seek or manual beat change leaves
+the learner in control. **Code hint** shows the cited excerpt and can open the
+full file in another tab. **Show explanation** reveals the authored answer.
+
+Typed answers stay in the open check and are discarded on close or reload.
+**Try again** clears the answer. **Skip** or **Continue** resumes active playback
+or leaves it paused if the learner opened the check while exploring.
+
+During authoring, validate check text and anchor references together. The
+review editor can update or remove authored checks. Record learner observations
+as review comments when evaluating whether a check helped a first-time learner
+find the cited module or explain the feature. Review exports include the
+authored evidence and those comments.
+
 ## Context
 
 The ask pipeline uses the current beat, chapter summary, tour outline, the

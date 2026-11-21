@@ -71,7 +71,7 @@ export function PlayerPage() {
   const clientId = useMemo(() => getOrCreateClientId(), []);
   const playerView = resolvePlayerView(search);
   const canvasRequested = playerView === 'canvas';
-  const showCanvas = canvasRequested;
+  const showCanvas = playerView !== 'stage';
   const tourState = useAsync(
     () => fetchTour(params.tourId, locale),
     [params.tourId, locale],
@@ -99,6 +99,13 @@ export function PlayerPage() {
   const [resume, setResume] = useState<StoredRun | null>(null);
   const [hasResumed, setHasResumed] = useState(false);
   const [completedBeatIds, setCompletedBeatIds] = useState<string[]>([]);
+  const [characterShortcuts, setCharacterShortcuts] = useState(() => {
+    try {
+      return localStorage.getItem('sothspell.characterShortcuts') !== 'off';
+    } catch {
+      return true;
+    }
+  });
   const [theater, setTheater] = useState(false);
   const [narrationMode, setNarrationMode] = useState<'read' | 'listen'>('read');
   const [narrationProvider, setNarrationProvider] =
@@ -148,7 +155,7 @@ export function PlayerPage() {
     enabled: narrationMode === 'listen' && currentBeat !== null,
     provider: narrationProvider,
     speed: snapshot?.speed ?? 1,
-    locale,
+    locale: tour?.locale ?? locale,
     onBeatEnd: () => {
       const beatId = playback?.getSnapshot().beatId;
       if (!openCheck && beatId && !offer(beatId, 'listen-end')) {
@@ -293,12 +300,23 @@ export function PlayerPage() {
     snapshot?.speed,
   ]);
 
+  const togglePlayback = () => {
+    if (narrationMode === 'listen') narration.toggle();
+    else playback?.toggle();
+  };
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       const tag = target?.tagName ?? '';
       if (
         event.defaultPrevented ||
+        (!characterShortcuts && event.key.length === 1 && event.key !== ' ') ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        event.isComposing ||
+        target?.closest('dialog, [role="dialog"]') ||
         target?.isContentEditable ||
         tag === 'INPUT' ||
         tag === 'SELECT' ||
@@ -315,7 +333,7 @@ export function PlayerPage() {
       switch (event.key) {
         case ' ':
           event.preventDefault();
-          playback?.toggle();
+          togglePlayback();
           break;
         case 'ArrowRight':
           if (event.shiftKey) {
@@ -369,11 +387,13 @@ export function PlayerPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [
     askOpen,
+    characterShortcuts,
     fullscreenActive,
     fullscreenSupported,
     fullscreenToggle,
     playback,
     toggleFullscreen,
+    togglePlayback,
   ]);
 
   if (!tour) {
@@ -553,7 +573,7 @@ export function PlayerPage() {
             >
               <button
                 type="button"
-                aria-pressed={!canvasRequested}
+                aria-pressed={playerView === 'stage'}
                 onClick={() => selectView('stage')}
               >
                 {t('canvas.stage')}
@@ -565,11 +585,40 @@ export function PlayerPage() {
               >
                 {t('canvas.canvasView')}
               </button>
+              <button
+                type="button"
+                aria-pressed={playerView === 'reader'}
+                onClick={() => selectView('reader')}
+              >
+                {t('canvas.reader')}
+              </button>
             </div>
+            <label className="player-character-shortcuts">
+              <input
+                type="checkbox"
+                checked={characterShortcuts}
+                onChange={(event) => {
+                  const enabled = event.currentTarget.checked;
+                  setCharacterShortcuts(enabled);
+                  try {
+                    localStorage.setItem(
+                      'sothspell.characterShortcuts',
+                      enabled ? 'on' : 'off',
+                    );
+                  } catch {
+                    /* The current session still honors the choice. */
+                  }
+                }}
+              />
+              {t('player.characterShortcuts')}
+            </label>
           </div>
 
           {showCanvas ? (
             <CanvasView
+              characterShortcuts={characterShortcuts}
+              key={playerView}
+              reading={playerView === 'reader'}
               tour={tour}
               chapter={chapter}
               beat={beat}
@@ -588,6 +637,7 @@ export function PlayerPage() {
           )}
 
           <NarrationRail
+            contentLocale={tour.locale}
             chapter={chapter}
             beat={beat}
             mode={narrationMode}
@@ -665,13 +715,7 @@ export function PlayerPage() {
             ? narration.status === 'playing'
             : snapshot.status === 'playing'
         }
-        onToggle={() => {
-          if (narrationMode === 'listen') {
-            narration.toggle();
-          } else {
-            playback?.toggle();
-          }
-        }}
+        onToggle={togglePlayback}
         onNext={() => playback?.next()}
         onPrevious={() => playback?.previous()}
         onSeek={seek}

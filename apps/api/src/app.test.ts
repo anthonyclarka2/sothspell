@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -57,6 +57,184 @@ describe('API', () => {
     expect(body.id).toBe('tour_bunbun_golden');
     expect(body.chapters.length).toBe(6);
     expect(body.chapters[0]?.beats[0]?.anchors[0]?.id).toBe('anchor_readme_overview');
+  });
+
+  it('serves a replacement tour at the same path without restarting the app', async () => {
+    const root = await makeProjectRoot();
+    const tourJsonPath = path.join(root, 'tour.json');
+    const tour = JSON.parse(
+      await readFile(
+        new URL('../../../examples/bunbun-tour/tour.json', import.meta.url),
+        'utf8',
+      ),
+    ) as { title: string };
+    await writeFile(tourJsonPath, JSON.stringify({ ...tour, title: 'First tour' }));
+    const app = createApp({ databasePath: ':memory:', projectRoot: null, tourJsonPath });
+    const firstResponse = await app.request('/api/tours/tour_bunbun_golden');
+    expect(firstResponse.status).toBe(200);
+    await expect(firstResponse.json()).resolves.toMatchObject({ title: 'First tour' });
+
+    const replacement = path.join(root, 'replacement.json');
+    await writeFile(replacement, JSON.stringify({ ...tour, title: 'Revised tour' }));
+    await rename(replacement, tourJsonPath);
+
+    const secondResponse = await app.request('/api/tours/tour_bunbun_golden');
+    expect(secondResponse.status).toBe(200);
+    await expect(secondResponse.json()).resolves.toMatchObject({ title: 'Revised tour' });
+  });
+
+  it('recovers after the tour file becomes available', async () => {
+    const root = await makeProjectRoot();
+    const tourJsonPath = path.join(root, 'tour.json');
+    const app = createApp({ databasePath: ':memory:', projectRoot: null, tourJsonPath });
+    app.onError((_error, context) => context.text('Unable to load tour', 500));
+    expect((await app.request('/api/tours/tour_bunbun_golden')).status).toBe(500);
+
+    const tour = await readFile(
+      new URL('../../../examples/bunbun-tour/tour.json', import.meta.url),
+    );
+    await writeFile(tourJsonPath, tour);
+
+    const response = await app.request('/api/tours/tour_bunbun_golden');
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ id: 'tour_bunbun_golden' });
+  });
+
+  it('resolves the default demo and both historical IDs on a clean install', async () => {
+    const app = appFor(path.join(tmpdir(), 'sothspell-missing-bunbun'));
+    for (const id of ['demo', 'tour_tiny_notes_golden', 'tiny-notes-golden']) {
+      const response = await app.request(`/api/tours/${id}`);
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toMatchObject({
+        id: 'tour_tiny_notes_golden',
+        project: { slug: 'tiny-notes' },
+        chapters: [
+          { beats: [{ id: 'beat_tiny_entry_01' }, { id: 'beat_tiny_entry_02' }] },
+          { beats: [{ id: 'beat_tiny_persist_01' }, { id: 'beat_tiny_persist_02' }] },
+          { beats: [{ id: 'beat_tiny_test_01' }, { id: 'beat_tiny_test_02' }] },
+        ],
+      });
+    }
+    const historical = await app.request('/api/tours/bunbun-golden');
+    expect(historical.status).toBe(200);
+    await expect(historical.json()).resolves.toMatchObject({
+      id: 'tour_bunbun_golden',
+      project: { slug: 'bunbun' },
+      chapters: expect.arrayContaining([
+        expect.objectContaining({
+          beats: expect.arrayContaining([
+            expect.objectContaining({ id: 'beat_write_02' }),
+          ]),
+        }),
+      ]),
+    });
+  });
+
+  it('serves the demo in Spanish and Arabic with the same evidence IDs', async () => {
+    const app = appFor();
+    const locales = {
+      es: 'Tiny Notes: de la entrada a JSON',
+      ar: 'Tiny Notes: من الإدخال إلى JSON',
+    };
+    for (const [locale, title] of Object.entries(locales)) {
+      const response = await app.request(`/api/tours/demo?locale=${locale}`);
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toMatchObject({
+        id: 'tour_tiny_notes_golden',
+        title,
+        locale,
+        chapters: expect.arrayContaining([
+          expect.objectContaining({
+            beats: expect.arrayContaining([
+              expect.objectContaining({
+                id: 'beat_tiny_entry_01',
+                anchors: expect.arrayContaining([
+                  expect.objectContaining({ id: 'anchor_tiny_cli_main' }),
+                ]),
+              }),
+            ]),
+          }),
+        ]),
+      });
+      const translation = await app.request(`/api/tours/demo/translations/${locale}`);
+      expect(translation.status).toBe(200);
+      await expect(translation.json()).resolves.toMatchObject({ translation: { title } });
+    }
+  });
+
+  it('serves the pinned Tiny Notes ranges and proves the live outgoing call', async () => {
+    const app = appFor(await makeProjectRoot());
+    const tours = await app.request('/api/tours/tour_tiny_notes_golden');
+    const tour = (await tours.json()) as import('@sothspell/core').CompiledTour;
+    for (const chapter of tour.chapters) {
+      for (const beat of chapter.beats) {
+        for (const anchor of beat.anchors) {
+          const source = await app.request(
+            `/api/projects/tiny-notes/source/${anchor.path}?anchor=${anchor.id}`,
+          );
+          expect(source.status).toBe(200);
+          const body = (await source.json()) as {
+            liveContentHash: string;
+            stale: boolean;
+            lines: Array<{ number: number; focus: boolean }>;
+          };
+          expect(body.liveContentHash).toBe(anchor.contentHash);
+          expect(body.stale).toBe(false);
+          expect(
+            body.lines.filter((line) => line.focus).map((line) => line.number),
+          ).toEqual(
+            Array.from(
+              { length: anchor.endLine - anchor.startLine + 1 },
+              (_, index) => anchor.startLine + index,
+            ),
+          );
+        }
+      }
+    }
+
+    const params = new URLSearchParams({
+      symbolId: 'symbol:src/cli.ts#main',
+      direction: 'outgoing',
+    });
+    const response = await app.request(`/api/tours/demo/canvas/symbol?${params}`);
+    expect(response.status).toBe(200);
+    const body =
+      (await response.json()) as import('@sothspell/canvas').CanvasRelationResponse;
+    expect(body.relations).toContainEqual(
+      expect.objectContaining({
+        relation: 'calls',
+        symbol: expect.objectContaining({
+          id: 'symbol:src/index.ts#openNotes',
+          startLine: 23,
+          endLine: 26,
+        }),
+        container: expect.objectContaining({
+          excerpt: expect.stringContaining('return createNoteService'),
+        }),
+      }),
+    );
+  });
+
+  it('uses the pinned source to verify the demo in the review workflow', async () => {
+    const app = appFor(await makeProjectRoot());
+    const started = await app.request('/api/reviews', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ tourId: 'tour_tiny_notes_golden' }),
+    });
+    expect(started.status).toBe(201);
+    const { review } = (await started.json()) as { review: { id: string } };
+    const response = await app.request(`/api/reviews/${review.id}`);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      anchors: expect.arrayContaining([
+        expect.objectContaining({
+          anchorId: 'anchor_tiny_file_write',
+          status: 'verified',
+          detail: 'the live source matches the anchor hash',
+        }),
+      ]),
+    });
   });
 
   it('rejects a traversal-shaped tour id instead of reading outside projects', async () => {

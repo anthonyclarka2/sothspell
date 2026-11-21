@@ -61,7 +61,14 @@ async function readRevision(root: string): Promise<ProjectRevision> {
       await Promise.all([
         execFileAsync('git', ['-C', root, 'rev-parse', 'HEAD']),
         execFileAsync('git', ['-C', root, 'rev-parse', '--abbrev-ref', 'HEAD']),
-        execFileAsync('git', ['-C', root, 'status', '--porcelain']),
+        // Status can refresh the index unless optional locks are disabled.
+        execFileAsync('git', [
+          '--no-optional-locks',
+          '-C',
+          root,
+          'status',
+          '--porcelain',
+        ]),
       ]);
     return {
       commit: commit.trim().slice(0, 64),

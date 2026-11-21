@@ -8,6 +8,7 @@ import {
   isSafeLocaleSegment,
   parseSothspell,
   sourceLocaleOf,
+  type SothspellDocument,
   type TourTranslation,
 } from '@sothspell/core';
 import {
@@ -68,6 +69,21 @@ export function createFileTranslationStore(root: string): TranslationStore {
       await writeFile(file, `${JSON.stringify(translation, null, 2)}\n`, 'utf8');
     },
   };
+}
+
+export async function readTourTranslation(
+  store: TranslationStore,
+  document: SothspellDocument,
+  tourId: string,
+  locale: string,
+): Promise<TourTranslation | null> {
+  // Keep translations saved under a historical alias readable.
+  return (
+    (await store.read(tourId, locale)) ??
+    (tourId === document.id ? null : await store.read(document.id, locale)) ??
+    document.translations?.[locale] ??
+    null
+  );
 }
 
 export interface MemoryTranslationStore extends TranslationStore {
@@ -226,7 +242,8 @@ export function registerTranslationRoutes(
 
   app.get('/api/tours/:tourId/translations/:locale', async (context) => {
     const tourId = context.req.param('tourId');
-    if (!(await dependencies.resolveTourPath(tourId))) {
+    const tourPath = await dependencies.resolveTourPath(tourId);
+    if (!tourPath) {
       return context.json({ error: `unknown tour: ${tourId}` }, 404);
     }
     const locale = context.req.param('locale');
@@ -234,7 +251,15 @@ export function registerTranslationRoutes(
       return context.json({ error: `invalid locale: ${locale}` }, 400);
     }
 
-    const translation = await dependencies.store.read(tourId, locale);
+    const document = parseSothspell(
+      JSON.parse(await readFile(tourPath, 'utf8')) as unknown,
+    );
+    const translation = await readTourTranslation(
+      dependencies.store,
+      document,
+      tourId,
+      locale,
+    );
     if (!translation) {
       return context.json({ error: `the tour has no ${locale} translation` }, 404);
     }

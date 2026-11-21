@@ -1,8 +1,5 @@
 import type { CompiledTour } from '@sothspell/core';
 
-export const GOLDEN_TOUR_ID = 'tour_bunbun_golden';
-export const GOLDEN_PROJECT_ID = 'bunbun';
-
 export interface AnchorLine {
   number: number;
   html: string;

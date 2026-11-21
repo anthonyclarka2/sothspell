@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { expectNoWcagViolations } from './axe.js';
 import { beatPath, installCheck, prompt } from './learning-check-fixture.js';
 
 const answer = 'Private learning check response 7742';
@@ -179,4 +180,57 @@ test('offers the check when Listen reaches the end of the beat', async ({ page }
   await dialog.getByRole('button', { name: 'Skip' }).click();
   await expect(page).toHaveURL(/beat_purpose_02/);
   await expect(page.getByText('Listening · browser voice')).toBeVisible();
+});
+
+test('reads both bundled Tiny Notes checks and their evidence without a model', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  const questions = [
+    {
+      beat: 'beat_tiny_entry_02',
+      prompt: 'Which operation do the CLI and HTTP handlers share when adding a note?',
+      evidence: 'src/cli.ts',
+      explanation: /Both handlers call service\.add/,
+    },
+    {
+      beat: 'beat_tiny_test_02',
+      prompt: 'What tags does the test expect after adding Work, padded work, and Ideas?',
+      evidence: 'test/service.test.ts',
+      explanation: /It expects ideas and work/,
+    },
+  ];
+  const askRequests: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().endsWith('/ask')) {
+      askRequests.push(request.url());
+    }
+  });
+
+  for (const question of questions) {
+    await page.goto(`/t/tour_tiny_notes_golden/${question.beat}?view=reader`);
+    const trigger = page.getByRole('button', { name: 'Learning check' });
+    await trigger.focus();
+    await page.keyboard.press('Enter');
+    const dialog = page.getByRole('dialog', { name: 'Learning check' });
+    await expect(dialog.getByRole('heading', { name: question.prompt })).toBeVisible();
+    await expectNoWcagViolations(page);
+    await dialog.getByText('Code hint').click();
+    await expect(dialog.getByRole('code').first()).toBeVisible();
+    const [source] = await Promise.all([
+      page.waitForEvent('popup'),
+      dialog.getByRole('link', { name: 'Open full code in a new tab' }).first().click(),
+    ]);
+    await expect(source.getByRole('region', { name: 'Source lines' })).toBeVisible();
+    expect(new URL(source.url()).pathname).toContain(question.evidence);
+    await source.close();
+    await dialog.getByRole('button', { name: 'Show explanation' }).click();
+    await expect(dialog.getByText(question.explanation)).toBeVisible();
+    await dialog.getByRole('button', { name: 'Continue' }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page).toHaveURL(new RegExp(`${question.beat}\\?view=reader`));
+    await expect(trigger).toBeFocused();
+  }
+
+  expect(askRequests).toEqual([]);
 });

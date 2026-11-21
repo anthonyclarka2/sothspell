@@ -35,6 +35,7 @@ export interface FileTourSourceOptions {
   homeDirectory: string;
   goldenTourPath?: string | null;
   goldenTourIds?: string[];
+  resolvePath?: (tourId: string) => Promise<string | null>;
 }
 
 async function resolveTourPath(
@@ -69,7 +70,8 @@ async function resolveTourPath(
 export function createFileTourSource(options: FileTourSourceOptions): ReviewTourSource {
   return {
     async load(tourId) {
-      const tourPath = await resolveTourPath(options, tourId);
+      const tourPath = await (options.resolvePath?.(tourId) ??
+        resolveTourPath(options, tourId));
       if (!tourPath) {
         return null;
       }

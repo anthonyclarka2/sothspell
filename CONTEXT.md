@@ -153,6 +153,13 @@ A question and answer inserted into a run without changing the sóþspell. An
 interlude pauses playback, preserves the position, and returns to the same frame
 when the user continues.
 
+### Learning check
+
+An optional prompt and explanation on a beat, grounded in its code anchors.
+The guide can ask it at the end of a chapter in Read or Listen mode. A learner
+can inspect evidence, reveal the explanation, retry, or skip. The learner's
+answer stays in the open check and is discarded when the check closes.
+
 ### Guide
 
 The LLM-backed narrator and answerer. The guide authors the tour through the
@@ -196,9 +203,9 @@ the publisher is the local user; the authoring pipeline is their tool.
 
 ### Golden tour
 
-A checked-in sóþspell used as a demo and regression fixture. The first golden tour
-explains Bunbun at commit `9fef24d`. It is pinned, attributed, and never written
-back into the Bunbun tree.
+A checked-in sóþspell used as a demo and regression fixture. The default golden
+tour explains the pinned Tiny Notes project. The historical golden tour explains
+Bunbun at commit `9fef24d`. Both are pinned to read-only source.
 
 ### Stale tour
 

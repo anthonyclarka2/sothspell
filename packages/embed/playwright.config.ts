@@ -24,7 +24,7 @@ export default defineConfig({
   },
   webServer: {
     command:
-      'pnpm build:embed && pnpm sothspell export examples/bunbun-tour/tour.json --embed --out examples/embed-docs/dist/sothspell && node examples/embed-docs/serve.mjs',
+      'pnpm build:embed && pnpm sothspell export examples/tiny-notes-tour/tour.json --embed --out examples/embed-docs/dist/sothspell && node examples/embed-docs/serve.mjs',
     cwd: repoRoot,
     url: 'http://127.0.0.1:4320/',
     reuseExistingServer: !process.env.CI,

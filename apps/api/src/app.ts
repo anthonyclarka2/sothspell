@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { readdir, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { Hono } from 'hono';
@@ -21,7 +21,6 @@ import {
   compileSothspell,
   hashText,
   highlightCodeLines,
-  isSafeTourId,
   languageForPath,
   parseSothspell,
   readSourceFile,
@@ -62,6 +61,7 @@ import { createSqliteAccountStore } from '@sothspell/accounts/sqlite';
 import {
   createFileTranslationStore,
   createTranslationService,
+  readTourTranslation,
   registerTranslationRoutes,
   type TranslationService,
   type TranslationStore,
@@ -70,7 +70,7 @@ import { createAuthoringService, type AuthoringService } from './authoring-servi
 import { SOTHSPELL_VERSION } from './version.js';
 import { registerAuthoringRoutes } from './authoring.js';
 import { createApiSecurityMiddleware } from './security.js';
-import { resolveProjectSource } from './project-record.js';
+import { BUNBUN_TOUR_ID, TINY_NOTES_TOUR_ID, createTourAccess } from './tour-access.js';
 import {
   MAX_RELATION_LIMIT,
   RelationInputError,
@@ -80,6 +80,8 @@ import {
   createRelationService,
   type RelationService,
 } from './relations.js';
+
+export { BUNBUN_TOUR_ID as GOLDEN_TOUR_ID, createTourAccess } from './tour-access.js';
 
 const AskBodySchema = z.object({
   beatId: z.string().min(1).max(128),
@@ -105,9 +107,9 @@ const CanvasSymbolQuerySchema = z.object({
 });
 
 export interface AppOptions {
-  /** Override for tests; defaults to the checked-in golden tour. */
+  /** Override for tests; replaces the historical Bunbun tour document. */
   tourJsonPath?: string;
-  /** Read-only project root for full-file code pages. */
+  /** Optional read-only checkout for the historical Bunbun tour. */
   projectRoot?: string | null;
   /** SQLite path; `:memory:` is used by tests. */
   databasePath?: string;
@@ -161,15 +163,9 @@ export interface AppOptions {
   relationService?: RelationService;
 }
 
-const DEFAULT_TOUR_PATH = new URL(
-  '../../../examples/bunbun-tour/tour.json',
-  import.meta.url,
-);
-
-export const GOLDEN_TOUR_ID = 'tour_bunbun_golden';
-const GOLDEN_TOUR_ALIASES = new Set([GOLDEN_TOUR_ID, 'bunbun-golden']);
-
-const compiledCache = new Map<string, Promise<CompiledTour>>();
+// Keep the last source compile bounded. Requests still read the current file
+// because authoring and review can replace an artifact at the same path.
+let lastSourceCompile: { raw: string; compiled: Promise<CompiledTour> } | undefined;
 
 function sothspellHome(): string {
   return process.env.SOTHSPELL_HOME ?? path.join(os.homedir(), '.sothspell');
@@ -184,62 +180,38 @@ export function defaultNarrationAssetRoot(): string {
   return path.join(sothspellHome(), 'audio');
 }
 
-async function resolveTourJsonPath(
-  tourJsonPath: string,
-  tourId: string,
-): Promise<string | null> {
-  if (GOLDEN_TOUR_ALIASES.has(tourId)) {
-    return tourJsonPath;
-  }
-  if (!isSafeTourId(tourId)) {
-    return null;
-  }
-  const root = path.join(sothspellHome(), 'projects');
-  const projects = await readdir(root, { withFileTypes: true }).catch(() => []);
-  for (const project of projects) {
-    if (!project.isDirectory()) {
-      continue;
-    }
-    const candidate = path.join(root, project.name, 'tours', tourId, 'tour.json');
-    if (existsSync(candidate)) {
-      return candidate;
-    }
-  }
-  return null;
-}
-
-function loadCompiledTour(
+async function loadCompiledTour(
   store: TranslationStore,
   tourJsonPath: string,
   tourId: string,
   locale?: string,
 ): Promise<CompiledTour> {
+  const raw = await readFile(tourJsonPath, 'utf8');
   if (locale === undefined) {
-    const cached = compiledCache.get(tourJsonPath);
-    if (cached) {
-      return cached;
+    if (lastSourceCompile?.raw === raw) {
+      return lastSourceCompile.compiled;
     }
-
-    const compiled = readFile(tourJsonPath, 'utf8').then((raw) =>
-      compileSothspell(JSON.parse(raw) as unknown),
-    );
-    compiledCache.set(tourJsonPath, compiled);
-    return compiled;
+    const compiled = compileSothspell(JSON.parse(raw) as unknown);
+    lastSourceCompile = { raw, compiled };
+    try {
+      return await compiled;
+    } catch (error) {
+      if (lastSourceCompile?.compiled === compiled) {
+        lastSourceCompile = undefined;
+      }
+      throw error;
+    }
   }
 
-  // A translated compile is never cached: a translation can be stored at any
-  // moment, and recompiling one tour is cheaper than invalidating every key.
-  return readFile(tourJsonPath, 'utf8').then(async (raw) => {
-    const document = parseSothspell(JSON.parse(raw) as unknown);
-    if (locale === sourceLocaleOf(document)) {
-      return compileSothspell(document);
-    }
-    const translation = await store.read(tourId, locale);
-    if (!translation) {
-      return compileSothspell(document);
-    }
-    return compileSothspell(withTranslation(document, translation), { locale });
-  });
+  const document = parseSothspell(JSON.parse(raw) as unknown);
+  if (locale === sourceLocaleOf(document)) {
+    return compileSothspell(document);
+  }
+  const translation = await readTourTranslation(store, document, tourId, locale);
+  if (!translation) {
+    return compileSothspell(document);
+  }
+  return compileSothspell(withTranslation(document, translation), { locale });
 }
 
 interface AnchorLocation {
@@ -404,8 +376,12 @@ async function sourcePayload(input: {
  * request and cached under SOTHSPELL_HOME.
  */
 export function createApp(options: AppOptions = {}): Hono {
-  const tourJsonPath = options.tourJsonPath ?? DEFAULT_TOUR_PATH.pathname;
   const projectRoot = options.projectRoot ?? process.env.SOTHSPELL_PROJECT_ROOT ?? null;
+  const tourAccess = createTourAccess({
+    home: sothspellHome(),
+    bunbunRoot: projectRoot,
+    bunbunTourPath: options.tourJsonPath,
+  });
   const runStore = createRunStore(options.databasePath ?? defaultDatabasePath());
   const accountStore =
     options.accountStore ??
@@ -462,8 +438,9 @@ export function createApp(options: AppOptions = {}): Hono {
   const askService =
     options.askService === undefined
       ? createAskService({
-          resolveTourPath: (tourId) => resolveTourJsonPath(tourJsonPath, tourId),
+          resolveTourPath: tourAccess.resolvePath,
           sourceRoot: projectRoot,
+          resolveSourceRoot: tourAccess.resolveRoot,
           modelId: process.env.SOTHSPELL_MODEL ?? null,
           resolveModel: resolveAuthoringModel,
         })
@@ -471,8 +448,9 @@ export function createApp(options: AppOptions = {}): Hono {
   const drilldownService =
     options.drilldownService === undefined
       ? createDrilldownService({
-          resolveTourPath: (tourId) => resolveTourJsonPath(tourJsonPath, tourId),
-          sourceRoot: projectRoot ?? process.cwd(),
+          resolveTourPath: tourAccess.resolvePath,
+          sourceRoot: projectRoot,
+          resolveSourceRoot: tourAccess.resolveRoot,
           modelId: process.env.SOTHSPELL_MODEL ?? null,
           resolveModel: resolveAuthoringModel,
         })
@@ -502,10 +480,9 @@ export function createApp(options: AppOptions = {}): Hono {
       store: createReviewStore(options.databasePath ?? defaultDatabasePath()),
       tours: createFileTourSource({
         homeDirectory: sothspellHome(),
-        goldenTourPath: DEFAULT_TOUR_PATH.pathname,
-        goldenTourIds: [GOLDEN_TOUR_ID, 'bunbun-golden'],
+        resolvePath: tourAccess.resolvePath,
       }),
-      sourceRoot: projectRoot,
+      resolveSourceRoot: tourAccess.resolveRoot,
       resolveModel: resolveAuthoringModel,
     });
   const translationStore =
@@ -514,7 +491,7 @@ export function createApp(options: AppOptions = {}): Hono {
   const translationService =
     options.translationService === undefined
       ? createTranslationService({
-          resolveTourPath: (tourId) => resolveTourJsonPath(tourJsonPath, tourId),
+          resolveTourPath: tourAccess.resolvePath,
           resolveModel: resolveAuthoringModel,
           cacheDirectory: path.join(sothspellHome(), 'cache', 'authoring'),
         })
@@ -540,7 +517,7 @@ export function createApp(options: AppOptions = {}): Hono {
   registerTranslationRoutes(app, {
     service: translationService,
     store: translationStore,
-    resolveTourPath: (tourId) => resolveTourJsonPath(tourJsonPath, tourId),
+    resolveTourPath: tourAccess.resolvePath,
   });
   registerAuthoringRoutes(app, { service: authoringService });
 
@@ -554,7 +531,7 @@ export function createApp(options: AppOptions = {}): Hono {
 
   app.get('/api/tours/:tourId', async (context) => {
     const tourId = context.req.param('tourId');
-    const resolvedPath = await resolveTourJsonPath(tourJsonPath, tourId);
+    const resolvedPath = await tourAccess.resolvePath(tourId);
     if (!resolvedPath) {
       return context.json({ error: `unknown tour: ${tourId}` }, 404);
     }
@@ -569,7 +546,7 @@ export function createApp(options: AppOptions = {}): Hono {
 
   app.get('/api/tours/:tourId/canvas/symbol', async (context) => {
     const tourId = context.req.param('tourId');
-    const resolvedPath = await resolveTourJsonPath(tourJsonPath, tourId);
+    const resolvedPath = await tourAccess.resolvePath(tourId);
     if (!resolvedPath) {
       return context.json({ error: `unknown tour: ${tourId}` }, 404);
     }
@@ -583,17 +560,13 @@ export function createApp(options: AppOptions = {}): Hono {
     }
 
     const tour = await loadCompiledTour(translationStore, resolvedPath, tourId);
-    const source = await resolveProjectSource(tour.project.slug, {
-      home: sothspellHome(),
-      // A configured checkout only stands in for the golden Bunbun project;
-      // every authored or imported project resolves through its own record.
-      configuredRoot: projectRoot,
-    });
+    const root = await tourAccess.resolveRoot(tourId, tour.project.slug);
 
     try {
       const response = await relationService.load({
         slug: tour.project.slug,
-        root: source.root,
+        root,
+        useSavedSnapshot: !tourAccess.isPinnedDemo(tourId),
         direction: parsed.data.direction,
         ...(parsed.data.symbolId === undefined ? {} : { symbolId: parsed.data.symbolId }),
         ...(parsed.data.path === undefined ? {} : { path: parsed.data.path }),
@@ -627,8 +600,10 @@ export function createApp(options: AppOptions = {}): Hono {
       return context.json({ error: 'anchor query parameter is required' }, 400);
     }
 
-    const requestedTourId = context.req.query('tourId') ?? GOLDEN_TOUR_ID;
-    const resolvedPath = await resolveTourJsonPath(tourJsonPath, requestedTourId);
+    const requestedTourId =
+      context.req.query('tourId') ??
+      (projectId === 'tiny-notes' ? TINY_NOTES_TOUR_ID : BUNBUN_TOUR_ID);
+    const resolvedPath = await tourAccess.resolvePath(requestedTourId);
     if (!resolvedPath) {
       return context.json({ error: `unknown tour: ${requestedTourId}` }, 404);
     }
@@ -647,16 +622,13 @@ export function createApp(options: AppOptions = {}): Hono {
       return context.json({ error: 'the requested path does not match the anchor' }, 404);
     }
 
-    const source = await resolveProjectSource(tour.project.slug, {
-      home: sothspellHome(),
-      configuredRoot: projectRoot,
-    });
+    const root = await tourAccess.resolveRoot(requestedTourId, tour.project.slug);
 
     context.header('cache-control', 'no-store');
     try {
       return context.json(
         await sourcePayload({
-          projectRoot: source.root,
+          projectRoot: root,
           location,
           tour,
           projectId,
@@ -675,7 +647,7 @@ export function createApp(options: AppOptions = {}): Hono {
 
   app.post('/api/tours/:tourId/ask', async (context) => {
     const tourId = context.req.param('tourId');
-    if (!(await resolveTourJsonPath(tourJsonPath, tourId))) {
+    if (!(await tourAccess.resolvePath(tourId))) {
       return context.json({ error: `unknown tour: ${tourId}` }, 404);
     }
     if (!askService) {
@@ -709,7 +681,7 @@ export function createApp(options: AppOptions = {}): Hono {
 
   app.post('/api/tours/:tourId/drilldown', async (context) => {
     const tourId = context.req.param('tourId');
-    if (!(await resolveTourJsonPath(tourJsonPath, tourId))) {
+    if (!(await tourAccess.resolvePath(tourId))) {
       return context.json({ error: `unknown tour: ${tourId}` }, 404);
     }
     if (!drilldownService) {
