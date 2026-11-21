@@ -109,13 +109,13 @@ after dismissal at desktop and compact widths.
 
 ## Browser and assistive technology matrix
 
-| Platform     | Environment                                 | Evidence                                                                                                                                                                                              |
-| ------------ | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| macOS 26.7.1 | Chrome 158.0.8127.36, Playwright 1.64.1     | Browser keyboard journeys, focus assertions, axe checks, 375 px compact and 320 CSS px Reading view with increased text spacing, reduced motion and forced colours. Canvas text scale tested at 200%. |
-| macOS        | Playwright Firefox 157.0, production bundle | Independent keyboard smoke at 320 CSS px. Directed relation visible. Enter opened paged Source lines and Back returned to the same beat in Reading view.                                              |
-| macOS 26.7.1 | Safari 27.0 and VoiceOver 10 installed      | Manual session pending. No spoken-output recording.                                                                                                                                                   |
-| Windows      | NVDA with Firefox or Chrome                 | No Windows AT host used. Record OS, browser and NVDA versions during the manual session.                                                                                                              |
-| Mobile       | Chrome mobile emulation                     | Compact web and embed checks. Real touch, VoiceOver on iOS and TalkBack remain untested.                                                                                                              |
+| Platform     | Environment                                                 | Evidence                                                                                                                                                                                              |
+| ------------ | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| macOS 26.7.1 | Chrome 158.0.8127.36, Playwright 1.64.1                     | Browser keyboard journeys, focus assertions, axe checks, 375 px compact and 320 CSS px Reading view with increased text spacing, reduced motion and forced colours. Canvas text scale tested at 200%. |
+| macOS        | Playwright Firefox 157.0 and WebKit 27.2, production bundle | Independent keyboard smoke in both engines at 320 CSS px. Directed relation visible. Enter opened paged Source lines and Back returned to the same beat in Reading view.                              |
+| macOS 26.7.1 | Safari 27.0 and VoiceOver 10 installed                      | Manual session pending. No spoken-output recording.                                                                                                                                                   |
+| Windows      | NVDA with Firefox or Chrome                                 | No Windows AT host used. Record OS, browser and NVDA versions during the manual session.                                                                                                              |
+| Mobile       | Chrome mobile emulation                                     | Compact web and embed checks. Real touch, VoiceOver on iOS and TalkBack remain untested.                                                                                                              |
 
 ## Manual evaluation journeys
 
