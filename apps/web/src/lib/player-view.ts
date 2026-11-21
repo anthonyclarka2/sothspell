@@ -3,12 +3,14 @@
  * pure module makes the default reversible and keeps the router, player, and
  * code page agreeing on what an unknown `view` value means.
  */
-export type PlayerView = 'canvas' | 'stage';
+export type PlayerView = 'canvas' | 'stage' | 'reader';
 
 export const DEFAULT_PLAYER_VIEW: PlayerView = 'canvas';
 
 export function parsePlayerView(value: unknown): PlayerView | undefined {
-  return value === 'canvas' || value === 'stage' ? value : undefined;
+  return value === 'canvas' || value === 'stage' || value === 'reader'
+    ? value
+    : undefined;
 }
 
 export function resolvePlayerView(search: { view?: unknown }): PlayerView {

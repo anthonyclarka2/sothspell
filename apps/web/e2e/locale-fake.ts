@@ -52,8 +52,11 @@ export function installTranslatedTours(page: Page): TranslatedToursHandle {
     }
 
     const response = await route.fetch();
-    const tour = (await response.json()) as unknown;
-    await route.fulfill({ response, json: markStrings(tour, `«${locale}»`) });
+    const tour = await response.json();
+    await route.fulfill({
+      response,
+      json: markStrings({ ...tour, locale }, `«${locale}»`),
+    });
   });
 
   return { requests };

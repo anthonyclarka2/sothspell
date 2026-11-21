@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+import { DiagramRelations } from '../DiagramRelations.js';
 import { Link } from '@tanstack/react-router';
 import { X } from '@phosphor-icons/react';
 import type { CanvasScene } from '@sothspell/canvas';
@@ -34,6 +36,7 @@ export interface CanvasOutlineActions {
 }
 
 export interface CanvasOutlineProps {
+  placement: (id: string, title: string, kind: 'diagram' | 'code') => ReactNode;
   scene: CanvasScene;
   chapterDiagrams: PositionedDiagram[];
   projectSlug: string;
@@ -60,6 +63,7 @@ export interface CanvasOutlineProps {
  * has a keyboard path before Phase 19 ships the full screen-reader model.
  */
 export function CanvasOutline({
+  placement,
   scene,
   chapterDiagrams,
   projectSlug,
@@ -89,6 +93,13 @@ export function CanvasOutline({
     <aside
       className="canvas-outline"
       aria-label={t('canvas.outline')}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          actions.close();
+        }
+      }}
       data-testid="canvas-outline"
     >
       <header className="canvas-outline-header">
@@ -131,6 +142,8 @@ export function CanvasOutline({
                     </button>
                   )}
                 </div>
+                {placement(diagram.id, diagram.title, 'diagram')}
+                <DiagramRelations diagram={diagram.diagram} />
                 {diagram.objects.length === 0 ? null : (
                   <ol>
                     {diagram.objects.map((object) => {
@@ -142,36 +155,25 @@ export function CanvasOutline({
                         object.symbolId !== undefined;
                       return (
                         <li key={object.id}>
-                          {resolved ? (
-                            <button
-                              type="button"
-                              className="canvas-outline-link"
-                              aria-current={
-                                selectedObjectId === object.id ? 'true' : undefined
-                              }
-                              onClick={() => actions.focusObject(diagram.id, object.id)}
+                          <button
+                            type="button"
+                            className="canvas-outline-link"
+                            aria-current={
+                              selectedObjectId === object.id ? 'true' : undefined
+                            }
+                            onClick={() => actions.focusObject(diagram.id, object.id)}
+                          >
+                            {t('canvas.focus', { label: object.label })}
+                          </button>
+                          {!resolved && (
+                            <span
+                              id={`canvas-outline-object-${diagram.id}-${object.id}`}
+                              className="canvas-outline-note"
                             >
-                              {t('canvas.focus', { label: object.label })}
-                            </button>
-                          ) : (
-                            <>
-                              <button
-                                type="button"
-                                className="canvas-outline-link"
-                                disabled
-                                aria-describedby={`canvas-outline-object-${diagram.id}-${object.id}`}
-                              >
-                                {t('canvas.focus', { label: object.label })}
-                              </button>
-                              <span
-                                id={`canvas-outline-object-${diagram.id}-${object.id}`}
-                                className="canvas-outline-note"
-                              >
-                                {t('canvas.objectUnavailable', {
-                                  label: object.label,
-                                })}
-                              </span>
-                            </>
+                              {t('canvas.objectUnavailable', {
+                                label: object.label,
+                              })}
+                            </span>
                           )}
                         </li>
                       );
@@ -219,6 +221,7 @@ export function CanvasOutline({
                       </span>
                     </div>
                     <div className="canvas-outline-row">
+                      {placement(container.id, container.label, 'code')}
                       {symbolId === undefined ? (
                         <span className="canvas-outline-note">
                           {t('canvas.noSymbolTarget')}

@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import {
   Link,
   Outlet,
   createRootRoute,
   createRoute,
   createRouter,
+  useRouterState,
 } from '@tanstack/react-router';
 import { HomePage } from './routes/HomePage.js';
 import { PlayerPage } from './routes/PlayerPage.js';
@@ -22,8 +24,27 @@ import { parsePlayerView } from './lib/player-view.js';
 function RootLayout() {
   const { t } = useLocale();
 
+  const path = useRouterState({ select: (state) => state.location.pathname });
+  const pageTitles: Record<string, string> = {
+    settings: t('shell.settings'),
+    new: t('new.title'),
+    import: 'Import a repository',
+    account: 'Account',
+    review: 'Review',
+    t: t('canvas.viewLabel'),
+    p: t('code.sourceLabel'),
+    '': t('home.chapterIndex'),
+  };
+  const title = pageTitles[path.split('/')[1] ?? ''] ?? 'Page not found';
+  useEffect(() => {
+    document.title = `${title} · Sóþspell`;
+  }, [title]);
+
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        {t('shell.skip')}
+      </a>
       <header className="topbar">
         <Link to="/" className="brand">
           <span className="brand-mark">sóþspell</span>
@@ -41,7 +62,7 @@ function RootLayout() {
           <span className="mono">phase 1</span>
         </div>
       </header>
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <Outlet />
       </main>
     </div>

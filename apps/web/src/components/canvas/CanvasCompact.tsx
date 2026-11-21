@@ -1,3 +1,4 @@
+import { DiagramRelations } from '../DiagramRelations.js';
 import type { ReactNode, RefObject } from 'react';
 import { Link } from '@tanstack/react-router';
 import type { CompiledBeat, CompiledChapter, CompiledTour } from '@sothspell/core';
@@ -14,6 +15,7 @@ import {
 } from './relation-scene.js';
 
 export interface CanvasCompactProps {
+  reading: boolean;
   tour: CompiledTour;
   chapter: CompiledChapter;
   beat: CompiledBeat;
@@ -48,6 +50,7 @@ export interface CanvasCompactProps {
  * relation, or preference action disappears on a phone.
  */
 export function CanvasCompact({
+  reading,
   tour,
   chapter,
   beat,
@@ -94,7 +97,9 @@ export function CanvasCompact({
     >
       <header className="canvas-compact-header">
         <div>
-          <span className="canvas-card-kicker">{t('canvas.compact')}</span>
+          <span className="canvas-card-kicker">
+            {t(reading ? 'canvas.reader' : 'canvas.compact')}
+          </span>
           <h2>{beat.title}</h2>
           <p>{chapter.title}</p>
         </div>
@@ -166,6 +171,7 @@ export function CanvasCompact({
               </span>
               <h4>{diagram.title}</h4>
             </header>
+            <DiagramRelations diagram={diagram.diagram} />
             {diagram.objects.length === 0 ? (
               <p className="canvas-outline-note">{t('canvas.noCode')}</p>
             ) : (
@@ -184,7 +190,7 @@ export function CanvasCompact({
                         className="canvas-compact-object"
                         data-testid="canvas-object"
                         data-object-id={object.id}
-                        disabled={!resolved}
+
                         aria-current={selectedObjectId === object.id ? 'true' : undefined}
                         title={
                           resolved
@@ -193,11 +199,7 @@ export function CanvasCompact({
                                 label: object.label,
                               })
                         }
-                        onClick={() =>
-                          resolved
-                            ? actions.focusObject(diagram.id, object.id)
-                            : undefined
-                        }
+                        onClick={() => actions.focusObject(diagram.id, object.id)}
                       >
                         <span>{object.label}</span>
                         <span className="canvas-object-kind">{object.type}</span>
@@ -343,7 +345,7 @@ export function CanvasCompact({
                       anchor: container.anchorId,
                       beat: beat.id,
                       tourId: tour.id,
-                      view: 'canvas',
+                      view: reading ? 'reader' : 'canvas',
                     }}
                     className="canvas-outline-action"
                   >

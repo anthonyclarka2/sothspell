@@ -105,6 +105,11 @@ test('narrates with browser speech and pauses', async ({ page }) => {
   await expect(page.getByText(/Listening · browser voice/)).toBeVisible();
   await expect(page.locator('.narration-sentence.is-active')).toBeVisible();
 
+  await page.getByTestId('canvas-view').focus();
+  await page.keyboard.press('Space');
+  await expect(page.getByText('Narration paused')).toBeVisible();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(page.getByText(/Listening · browser voice/)).toBeVisible();
   await page.getByRole('button', { name: 'Pause' }).click();
   await expect(page.getByText('Narration paused')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();

@@ -4,6 +4,7 @@ import type { NarrationProviderChoice, NarrationStatus } from '../lib/use-narrat
 import { useLocale } from '../i18n/locale.js';
 
 export interface NarrationRailProps {
+  contentLocale: string;
   chapter: CompiledChapter;
   beat: CompiledBeat;
   mode: 'read' | 'listen';
@@ -17,6 +18,7 @@ export interface NarrationRailProps {
 }
 
 export function NarrationRail({
+  contentLocale,
   chapter,
   beat,
   mode,
@@ -28,7 +30,7 @@ export function NarrationRail({
   onProviderChange,
   onAsk,
 }: NarrationRailProps) {
-  const { locale, t } = useLocale();
+  const { t } = useLocale();
   const sentences = splitSentences(beat.narration);
 
   const statusText =
@@ -46,7 +48,7 @@ export function NarrationRail({
     <section className="narration" aria-label={t('narration.label')}>
       <div className="narration-main">
         <div className="narration-toolbar">
-          <h2>{beat.title}</h2>
+          <h2 lang={contentLocale}>{beat.title}</h2>
           <div className="narration-mode">
             <button type="button" className="secondary-action" onClick={onToggleMode}>
               {mode === 'listen' ? t('narration.readMode') : t('narration.listen')}
@@ -65,7 +67,7 @@ export function NarrationRail({
         </div>
 
         {/* The narration language is the tour locale; the markup says so. */}
-        <p className="narration-copy" lang={locale}>
+        <p className="narration-copy" lang={contentLocale}>
           {sentences.map((sentence, index) => (
             <span
               key={`${sentence.charStart}-${index}`}
@@ -92,7 +94,7 @@ export function NarrationRail({
       <aside className="narration-aside">
         <h3>{t('narration.askYourself')}</h3>
         {beat.suggestedQuestions.length > 0 ? (
-          <ul className="question-list" lang={locale}>
+          <ul className="question-list" lang={contentLocale}>
             {beat.suggestedQuestions.map((question) => (
               <li key={question}>{question}</li>
             ))}
