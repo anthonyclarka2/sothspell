@@ -1,6 +1,6 @@
 # Embed docs fixture
 
-A static docs page that embeds the golden Bunbun tour with both integration
+A static docs page that embeds the golden Tiny Notes tour with both integration
 styles. It exists to prove, in a real browser, that an exported bundle plays
 without the Sóþspell server.
 
@@ -8,7 +8,7 @@ without the Sóþspell server.
 
 ```bash
 pnpm build:embed
-pnpm sothspell export examples/bunbun-tour/tour.json --embed \
+pnpm sothspell export examples/tiny-notes-tour/tour.json --embed \
   --out examples/embed-docs/dist/sothspell
 node examples/embed-docs/serve.mjs
 # open http://127.0.0.1:4320/

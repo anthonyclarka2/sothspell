@@ -29,6 +29,7 @@
     "schema:json": "pnpm --filter @sothspell/core schema:json",
     "sothspell": "tsx apps/cli/src/index.ts",
     "tour:build": "node scripts/build-golden-tour.mjs",
+    "tour:build:tiny-notes": "node --import tsx scripts/build-tiny-notes-tour.mjs",
     "example:tiny-notes": "node scripts/make-example-repo.mjs"
   },
   "devDependencies": {

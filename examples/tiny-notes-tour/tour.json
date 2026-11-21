@@ -1,0 +1,660 @@
+{
+  "schemaVersion": "1.2.0",
+  "id": "tour_tiny_notes_golden",
+  "title": "Tiny Notes: from input to JSON",
+  "subtitle": "Trace a note from the CLI and HTTP entry points through shared code to disk and a behavior test.",
+  "audience": "new-contributor",
+  "project": {
+    "slug": "tiny-notes",
+    "name": "Tiny Notes",
+    "revision": {
+      "commit": "845a52bad16d210f4defdb3c6c905bb97bf3fc58",
+      "branch": null,
+      "dirty": false
+    }
+  },
+  "locale": "en",
+  "estimatedDurationMs": 222000,
+  "chapters": [
+    {
+      "id": "chapter_tiny_entry",
+      "title": "Where the entry points meet",
+      "summary": "Find the shared service behind a terminal command and an HTTP request.",
+      "diagrams": [
+        {
+          "id": "diagram_tiny_entry",
+          "kind": "flow",
+          "title": "Entry points and shared wiring",
+          "nodes": [
+            {
+              "id": "node_tiny_cli",
+              "label": "CLI main",
+              "type": "function",
+              "anchorId": "anchor_tiny_cli_main",
+              "symbolId": "symbol:src/cli.ts#main"
+            },
+            {
+              "id": "node_tiny_open",
+              "label": "openNotes",
+              "type": "function",
+              "anchorId": "anchor_tiny_open_notes",
+              "symbolId": "symbol:src/index.ts#openNotes"
+            },
+            {
+              "id": "node_tiny_serve",
+              "label": "HTTP POST handler",
+              "type": "function",
+              "anchorId": "anchor_tiny_http_route",
+              "symbolId": "symbol:src/http/server.ts#route"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_tiny_cli_open",
+              "kind": "calls",
+              "to": "node_tiny_open",
+              "from": "node_tiny_cli"
+            }
+          ]
+        }
+      ],
+      "beats": [
+        {
+          "id": "beat_tiny_entry_01",
+          "title": "Two entry points, one service",
+          "narration": "Start at main in the CLI. It parses input, finds a command, and picks a file path. Its call to openNotes on line 125 creates the service passed to that command. Follow the outgoing call to openNotes. The four lines there put together a JSON store, a repository, and a service. This is the shared setup. The CLI add command and the CLI serve command both get their service from this same line.",
+          "durationMs": 37000,
+          "anchors": [
+            {
+              "id": "anchor_tiny_cli_main",
+              "path": "src/cli.ts",
+              "label": "CLI main",
+              "lines": {
+                "start": 116,
+                "end": 127
+              },
+              "language": "typescript",
+              "symbol": "main",
+              "symbolId": "symbol:src/cli.ts#main",
+              "excerpt": "export async function main(argv: string[]): Promise<number> {\n  const parsed = parseArguments(argv);\n  const command = COMMANDS[parsed.command];\n  if (command === undefined) {\n    console.log(USAGE);\n    return parsed.command === 'help' ? 0 : 1;\n  }\n  const filePath =\n    process.env.TINY_NOTES_FILE ?? path.join(process.cwd(), '.tiny-notes', 'notes.json');\n  await command(parsed, openNotes({ filePath }));\n  return 0;\n}",
+              "contentHash": "sha256:21b3047ba35c3ef3d5bb27e2e089aeae92455c563cd7d49bb4ee56a69db49e3b"
+            },
+            {
+              "id": "anchor_tiny_open_notes",
+              "path": "src/index.ts",
+              "label": "openNotes",
+              "lines": {
+                "start": 23,
+                "end": 26
+              },
+              "language": "typescript",
+              "symbol": "openNotes",
+              "symbolId": "symbol:src/index.ts#openNotes",
+              "excerpt": "export function openNotes(options: OpenNotesOptions): NoteService {\n  const store = createJsonStore<NotesDocument>(options.filePath, () => ({ notes: [] }));\n  return createNoteService(createNoteRepository(store, options), { now: options.now });\n}",
+              "contentHash": "sha256:69d200d447b1659b14cc85af95ecf23dd9f6c588a7c6343f2a1a24035a174938"
+            }
+          ],
+          "stage": {
+            "anchorIds": [
+              "anchor_tiny_cli_main"
+            ],
+            "diagramId": "diagram_tiny_entry",
+            "nodeIds": [
+              "node_tiny_cli",
+              "node_tiny_open"
+            ],
+            "edgeIds": [
+              "edge_tiny_cli_open"
+            ]
+          }
+        },
+        {
+          "id": "beat_tiny_entry_02",
+          "title": "Follow the add operation",
+          "narration": "The CLI add command maps a title, body flag, and tag flags into a draft, then calls service.add. For HTTP, the CLI serve command starts the HTTP server with the service it already has. Open the POST handler and find the same service.add operation. That handler gets its draft from the JSON request body and sends the returned note with status 201. The differences belong at the entry points. Both hand the draft to the same service logic.",
+          "durationMs": 37000,
+          "anchors": [
+            {
+              "id": "anchor_tiny_cli_add",
+              "path": "src/cli.ts",
+              "label": "CLI add command",
+              "lines": {
+                "start": 74,
+                "end": 81
+              },
+              "language": "typescript",
+              "excerpt": "  async add({ positional, flags }, service) {\n    const note = await service.add({\n      title: requiredText(positional.join(' '), 'add needs a title'),\n      body: flag(flags, 'body') ?? '',\n      tags: flags.get('tag') ?? [],\n    });\n    console.log(formatNote(note));\n  },",
+              "contentHash": "sha256:24c715b3a984b2f25a8140f642476d993c48ff2e2c5be259df84ceb8e6855e92"
+            },
+            {
+              "id": "anchor_tiny_cli_serve",
+              "path": "src/cli.ts",
+              "label": "CLI serve command",
+              "lines": {
+                "start": 109,
+                "end": 113
+              },
+              "language": "typescript",
+              "excerpt": "  async serve({ flags }, service) {\n    const port = Number.parseInt(flag(flags, 'port') ?? '4321', 10);\n    const { url } = await startNotesServer(service, { port });\n    console.log(`tiny-notes API listening on ${url}`);\n  },",
+              "contentHash": "sha256:90b2c2edda5c8748a97205f50f350d148db65a541ec3e60cd5a681d0ad9abff3"
+            },
+            {
+              "id": "anchor_tiny_http_route",
+              "path": "src/http/server.ts",
+              "label": "HTTP POST handler",
+              "lines": {
+                "start": 91,
+                "end": 109
+              },
+              "language": "typescript",
+              "symbol": "route",
+              "symbolId": "symbol:src/http/server.ts#route",
+              "excerpt": "  if (segments[1] === 'notes' && segments.length === 2) {\n    if (method === 'GET') {\n      const notes = await service.search({\n        tag: url.searchParams.get('tag') ?? undefined,\n        text: url.searchParams.get('text') ?? undefined,\n        includeArchived: url.searchParams.get('includeArchived') === 'true',\n      });\n      sendJson(response, 200, { notes });\n      return;\n    }\n    if (method === 'POST') {\n      sendJson(\n        response,\n        201,\n        await service.add(draftFromBody(await readJsonBody(request))),\n      );\n      return;\n    }\n  }",
+              "contentHash": "sha256:d8063d25b33f6304dacc5e355f02a7c8b54d206ae02ca7c158ca3cc48d5edcdc"
+            }
+          ],
+          "stage": {
+            "anchorIds": [
+              "anchor_tiny_cli_add",
+              "anchor_tiny_cli_serve",
+              "anchor_tiny_http_route"
+            ],
+            "diagramId": "diagram_tiny_entry",
+            "nodeIds": [
+              "node_tiny_serve"
+            ],
+            "edgeIds": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "chapter_tiny_persist",
+      "title": "How a note reaches disk",
+      "summary": "Trace title and tag rules, note creation, and the JSON file replacement.",
+      "diagrams": [
+        {
+          "id": "diagram_tiny_storage",
+          "kind": "flow",
+          "title": "Layers wired by openNotes",
+          "nodes": [
+            {
+              "id": "node_tiny_persist_open",
+              "label": "openNotes",
+              "type": "function",
+              "anchorId": "anchor_tiny_persist_wiring",
+              "symbolId": "symbol:src/index.ts#openNotes"
+            },
+            {
+              "id": "node_tiny_service",
+              "label": "Notes service",
+              "type": "service",
+              "anchorId": "anchor_tiny_service_add",
+              "symbolId": "symbol:src/notes/service.ts#createNoteService"
+            },
+            {
+              "id": "node_tiny_repository",
+              "label": "Notes repository",
+              "type": "module",
+              "anchorId": "anchor_tiny_repo_create",
+              "symbolId": "symbol:src/notes/repository.ts#createNoteRepository"
+            },
+            {
+              "id": "node_tiny_file",
+              "label": "JSON file store",
+              "type": "store",
+              "anchorId": "anchor_tiny_file_write",
+              "symbolId": "symbol:src/storage/file-store.ts#createJsonStore"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_tiny_persist_open_service",
+              "kind": "calls",
+              "to": "node_tiny_service",
+              "from": "node_tiny_persist_open"
+            },
+            {
+              "id": "edge_tiny_persist_open_repository",
+              "kind": "calls",
+              "to": "node_tiny_repository",
+              "from": "node_tiny_persist_open"
+            },
+            {
+              "id": "edge_tiny_persist_open_file",
+              "kind": "calls",
+              "to": "node_tiny_file",
+              "from": "node_tiny_persist_open"
+            }
+          ]
+        }
+      ],
+      "beats": [
+        {
+          "id": "beat_tiny_persist_01",
+          "title": "Normalize the draft and append the note",
+          "narration": "In the notes service, add trims the title and rejects an empty result before reaching the repository. It also trims the body and normalizes tags. In the repository, create adds an ID, a creation timestamp, and a null archive timestamp. Look at its write call. It reads the current notes, appends the new one, and hands the full document to the store. Open the wiring to see where the repository gets that store.",
+          "durationMs": 37000,
+          "anchors": [
+            {
+              "id": "anchor_tiny_service_add",
+              "path": "src/notes/service.ts",
+              "label": "Validate and normalize the draft",
+              "lines": {
+                "start": 63,
+                "end": 74
+              },
+              "language": "typescript",
+              "symbol": "createNoteService",
+              "symbolId": "symbol:src/notes/service.ts#createNoteService",
+              "excerpt": "  return {\n    async add(draft) {\n      const title = draft.title.trim();\n      if (title.length === 0) {\n        throw new NoteValidationError('a note needs a title');\n      }\n      return repository.create({\n        title,\n        body: (draft.body ?? '').trim(),\n        tags: normalizeTags(draft.tags ?? []),\n      });\n    },",
+              "contentHash": "sha256:10bf7f7fd7da63c0d5713e51adff732d801b1cf3a5ec051efae1d0fb1a232bf9"
+            },
+            {
+              "id": "anchor_tiny_repo_create",
+              "path": "src/notes/repository.ts",
+              "label": "Create and append the note",
+              "lines": {
+                "start": 61,
+                "end": 73
+              },
+              "language": "typescript",
+              "symbol": "createNoteRepository",
+              "symbolId": "symbol:src/notes/repository.ts#createNoteRepository",
+              "excerpt": "  return {\n    async create(draft) {\n      const note: Note = {\n        id: newId(),\n        title: draft.title,\n        body: draft.body ?? '',\n        tags: draft.tags ?? [],\n        createdAt: now().toISOString(),\n        archivedAt: null,\n      };\n      await store.write({ notes: [...(await readNotes()), note] });\n      return note;\n    },",
+              "contentHash": "sha256:d210bb74da64d8d0e79feebeecbe33a072fc4ebe356d14d6399b1392882ae097"
+            },
+            {
+              "id": "anchor_tiny_persist_wiring",
+              "path": "src/index.ts",
+              "label": "Wire the three layers",
+              "lines": {
+                "start": 23,
+                "end": 26
+              },
+              "language": "typescript",
+              "symbol": "openNotes",
+              "symbolId": "symbol:src/index.ts#openNotes",
+              "excerpt": "export function openNotes(options: OpenNotesOptions): NoteService {\n  const store = createJsonStore<NotesDocument>(options.filePath, () => ({ notes: [] }));\n  return createNoteService(createNoteRepository(store, options), { now: options.now });\n}",
+              "contentHash": "sha256:69d200d447b1659b14cc85af95ecf23dd9f6c588a7c6343f2a1a24035a174938"
+            }
+          ],
+          "stage": {
+            "anchorIds": [
+              "anchor_tiny_service_add",
+              "anchor_tiny_repo_create",
+              "anchor_tiny_persist_wiring"
+            ],
+            "diagramId": "diagram_tiny_storage",
+            "nodeIds": [
+              "node_tiny_persist_open",
+              "node_tiny_service",
+              "node_tiny_repository"
+            ],
+            "edgeIds": [
+              "edge_tiny_persist_open_service",
+              "edge_tiny_persist_open_repository"
+            ]
+          }
+        },
+        {
+          "id": "beat_tiny_persist_02",
+          "title": "Replace the JSON file",
+          "narration": "The store writes the whole document as JSON to a uniquely named temporary file in the same directory. Then it renames that file over the destination. Find the two calls in the cited lines: writeFile prepares the new document, rename publishes it. If rename fails, the code removes the temporary file and rethrows the error. By default the destination is .tiny-notes/notes.json under the CLI working directory. TINY_NOTES_FILE can choose a different path.",
+          "durationMs": 37000,
+          "anchors": [
+            {
+              "id": "anchor_tiny_file_write",
+              "path": "src/storage/file-store.ts",
+              "label": "Replace the JSON file",
+              "lines": {
+                "start": 31,
+                "end": 45
+              },
+              "language": "typescript",
+              "symbol": "createJsonStore",
+              "symbolId": "symbol:src/storage/file-store.ts#createJsonStore",
+              "excerpt": "    async write(value) {\n      const directory = path.dirname(filePath);\n      await mkdir(directory, { recursive: true });\n      const temporary = path.join(\n        directory,\n        `.${path.basename(filePath)}.${randomUUID()}.tmp`,\n      );\n      await writeFile(temporary, `${JSON.stringify(value, null, 2)}\\n`, 'utf8');\n      try {\n        await rename(temporary, filePath);\n      } catch (error) {\n        await rm(temporary, { force: true });\n        throw error;\n      }\n    },",
+              "contentHash": "sha256:b2cde2ed5e7f87adb11961191f2f1d9b56739ac555266dc8eb4d6de80b4916d0"
+            }
+          ],
+          "stage": {
+            "anchorIds": [
+              "anchor_tiny_file_write"
+            ],
+            "diagramId": "diagram_tiny_storage",
+            "nodeIds": [
+              "node_tiny_file"
+            ],
+            "edgeIds": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "chapter_tiny_test",
+      "title": "What the test proves",
+      "summary": "Use the service test to connect normalization and storage back to repeatable behavior.",
+      "diagrams": [
+        {
+          "id": "diagram_tiny_verification",
+          "kind": "flow",
+          "title": "A test uses the same entry point",
+          "nodes": [
+            {
+              "id": "node_tiny_setup",
+              "label": "withService",
+              "type": "function",
+              "anchorId": "anchor_tiny_test_setup",
+              "symbolId": "symbol:test/service.test.ts#withService"
+            },
+            {
+              "id": "node_tiny_test_open",
+              "label": "openNotes",
+              "type": "function",
+              "anchorId": "anchor_tiny_test_open",
+              "symbolId": "symbol:src/index.ts#openNotes"
+            },
+            {
+              "id": "node_tiny_test_tags",
+              "label": "Tag and search assertions",
+              "type": "note",
+              "anchorId": "anchor_tiny_test_tags"
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge_tiny_setup_test_open",
+              "kind": "calls",
+              "to": "node_tiny_test_open",
+              "from": "node_tiny_setup"
+            }
+          ]
+        }
+      ],
+      "beats": [
+        {
+          "id": "beat_tiny_test_01",
+          "title": "Open a real store in a temporary directory",
+          "narration": "The test helper calls openNotes with a path inside a temporary directory. Read the arguments alongside the wiring from chapter one. The helper supplies a predictable ID and clock, while the repository and JSON store are the same modules used by the CLI and HTTP paths. The test still reads and writes a real JSON file. The finally block removes the temporary directory, even when an assertion fails. This makes the test repeatable without touching a working notes file.",
+          "durationMs": 37000,
+          "anchors": [
+            {
+              "id": "anchor_tiny_test_setup",
+              "path": "test/service.test.ts",
+              "label": "Open a temporary store",
+              "lines": {
+                "start": 19,
+                "end": 33
+              },
+              "language": "typescript",
+              "symbol": "withService",
+              "symbolId": "symbol:test/service.test.ts#withService",
+              "excerpt": "async function withService(run: (service: NoteService) => Promise<void>): Promise<void> {\n  const directory = await mkdtemp(path.join(os.tmpdir(), 'tiny-notes-'));\n  let sequence = 0;\n  const next = (): number => (sequence += 1);\n  const service = openNotes({\n    filePath: path.join(directory, 'notes.json'),\n    newId: () => `note-${next()}`,\n    now: () => new Date(Date.UTC(2026, 0, 1, 0, 0, next())),\n  });\n  try {\n    await run(service);\n  } finally {\n    await rm(directory, { recursive: true, force: true });\n  }\n}",
+              "contentHash": "sha256:7d4044cdb4fb810e91f94ac32d96fd187af2a30ba55fe405a64a74b57ba1d8bc"
+            },
+            {
+              "id": "anchor_tiny_test_open",
+              "path": "src/index.ts",
+              "label": "Use the public entry in tests",
+              "lines": {
+                "start": 23,
+                "end": 26
+              },
+              "language": "typescript",
+              "symbol": "openNotes",
+              "symbolId": "symbol:src/index.ts#openNotes",
+              "excerpt": "export function openNotes(options: OpenNotesOptions): NoteService {\n  const store = createJsonStore<NotesDocument>(options.filePath, () => ({ notes: [] }));\n  return createNoteService(createNoteRepository(store, options), { now: options.now });\n}",
+              "contentHash": "sha256:69d200d447b1659b14cc85af95ecf23dd9f6c588a7c6343f2a1a24035a174938"
+            }
+          ],
+          "stage": {
+            "anchorIds": [
+              "anchor_tiny_test_setup",
+              "anchor_tiny_test_open"
+            ],
+            "diagramId": "diagram_tiny_verification",
+            "nodeIds": [
+              "node_tiny_setup",
+              "node_tiny_test_open"
+            ],
+            "edgeIds": [
+              "edge_tiny_setup_test_open"
+            ]
+          }
+        },
+        {
+          "id": "beat_tiny_test_02",
+          "title": "Connect the assertions to the code",
+          "narration": "The test adds one note with Work, a second spelling of work wrapped in spaces, and Ideas. It expects the deduplicated tags ideas and work. Then it calls search and checks that the most recent note comes first. Look at the separate blank title test for the other branch of the service rule. This completes the trace: the entry points supply drafts, add enforces the rules, and the repository reads the saved notes back through the JSON store.",
+          "durationMs": 37000,
+          "anchors": [
+            {
+              "id": "anchor_tiny_test_tags",
+              "path": "test/service.test.ts",
+              "label": "Check tags and order",
+              "lines": {
+                "start": 35,
+                "end": 47
+              },
+              "language": "typescript",
+              "excerpt": "test('adds a note, normalizes tags, and lists newest first', async () => {\n  await withService(async (service) => {\n    const first = await service.add({\n      title: 'First',\n      body: 'one',\n      tags: ['Work', ' work ', 'Ideas'],\n    });\n    const second = await service.add({ title: 'Second' });\n    assert.deepEqual(first.tags, ['ideas', 'work']);\n    assert.deepEqual(\n      (await service.search()).map((note) => note.id),\n      [second.id, first.id],\n    );",
+              "contentHash": "sha256:05c5c092495953c390e5450933b2c49b93623485f7dd9dc3478b7907bfb79bd8"
+            },
+            {
+              "id": "anchor_tiny_test_title",
+              "path": "test/service.test.ts",
+              "label": "Reject a blank title",
+              "lines": {
+                "start": 56,
+                "end": 60
+              },
+              "language": "typescript",
+              "excerpt": "test('rejects a note without a title', async () => {\n  await withService(async (service) => {\n    await assert.rejects(service.add({ title: '   ' }), NoteValidationError);\n  });\n});",
+              "contentHash": "sha256:55ff49704bc6dec982b4774d01f8d6f6b7bf92574c3726a633b11db4a207c7f7"
+            }
+          ],
+          "stage": {
+            "anchorIds": [
+              "anchor_tiny_test_tags",
+              "anchor_tiny_test_title"
+            ],
+            "diagramId": "diagram_tiny_verification",
+            "nodeIds": [
+              "node_tiny_test_tags"
+            ],
+            "edgeIds": []
+          }
+        }
+      ]
+    }
+  ],
+  "translations": {
+    "es": {
+      "locale": "es",
+      "sourceLocale": "en",
+      "title": "Tiny Notes: de la entrada a JSON",
+      "subtitle": "Sigue una nota desde la terminal y HTTP hasta el disco y una prueba de comportamiento.",
+      "chapters": [
+        {
+          "id": "chapter_tiny_entry",
+          "title": "Dónde se unen las vías de entrada",
+          "summary": "Encuentra el servicio que comparten un comando de terminal y una petición HTTP.",
+          "diagrams": [
+            {
+              "id": "diagram_tiny_entry",
+              "title": "Vías de entrada y configuración compartida",
+              "nodeLabels": {
+                "node_tiny_cli": "main de la CLI",
+                "node_tiny_open": "openNotes",
+                "node_tiny_serve": "Manejador de POST"
+              }
+            }
+          ],
+          "beats": [
+            {
+              "id": "beat_tiny_entry_01",
+              "title": "Dos vías de entrada, un servicio",
+              "narration": "Empieza en main, en la CLI. La función interpreta los argumentos, busca el comando y elige una ruta de archivo. En la línea 125, openNotes crea el servicio que recibe ese comando. Sigue la llamada saliente a openNotes. Sus cuatro líneas conectan un almacén JSON, un repositorio y un servicio. Tanto add como serve reciben el servicio desde esta misma línea."
+            },
+            {
+              "id": "beat_tiny_entry_02",
+              "title": "Sigue la operación de añadir",
+              "narration": "El comando add de la CLI toma el título y las opciones de texto y etiquetas, forma un borrador y llama a service.add. El comando serve abre el servidor HTTP con el servicio que ya recibió. Abre el manejador de POST para encontrar la misma operación. El manejador extrae el borrador del cuerpo JSON y responde con la nota y el estado 201. Ambas vías entregan el borrador al mismo servicio."
+            }
+          ]
+        },
+        {
+          "id": "chapter_tiny_persist",
+          "title": "Cómo llega una nota al disco",
+          "summary": "Sigue las reglas del título y las etiquetas, la creación de la nota y el reemplazo del archivo JSON.",
+          "diagrams": [
+            {
+              "id": "diagram_tiny_storage",
+              "title": "Capas que conecta openNotes",
+              "nodeLabels": {
+                "node_tiny_persist_open": "openNotes",
+                "node_tiny_service": "Servicio de notas",
+                "node_tiny_repository": "Repositorio de notas",
+                "node_tiny_file": "Almacén de archivos JSON"
+              }
+            }
+          ],
+          "beats": [
+            {
+              "id": "beat_tiny_persist_01",
+              "title": "Normaliza el borrador y añade la nota",
+              "narration": "En el servicio de notas, add recorta los espacios del título y rechaza un título vacío antes de llamar al repositorio. También recorta el cuerpo y normaliza las etiquetas. En el repositorio, create asigna un ID, una fecha de creación y una fecha de archivo nula. Examina la llamada de escritura. Lee las notas que existen, añade la nueva y entrega el documento completo al almacén. Abre openNotes para ver cómo el repositorio recibe el almacén."
+            },
+            {
+              "id": "beat_tiny_persist_02",
+              "title": "Reemplaza el archivo JSON",
+              "narration": "El almacén escribe el documento entero en un archivo temporal con nombre único dentro del mismo directorio. Después lo renombra para reemplazar el archivo de destino. Busca las dos llamadas en las líneas citadas. writeFile prepara el documento y rename lo publica. Si rename falla, el código elimina el archivo temporal y propaga el error. La ruta predeterminada es .tiny-notes/notes.json, relativa al directorio de trabajo de la CLI. TINY_NOTES_FILE permite cambiarla."
+            }
+          ]
+        },
+        {
+          "id": "chapter_tiny_test",
+          "title": "Qué demuestra la prueba",
+          "summary": "Relaciona la normalización y el almacenamiento con una prueba de comportamiento reproducible.",
+          "diagrams": [
+            {
+              "id": "diagram_tiny_verification",
+              "title": "Una prueba usa la misma vía de entrada",
+              "nodeLabels": {
+                "node_tiny_setup": "withService",
+                "node_tiny_test_open": "openNotes",
+                "node_tiny_test_tags": "Aserciones de etiquetas y búsqueda"
+              }
+            }
+          ],
+          "beats": [
+            {
+              "id": "beat_tiny_test_01",
+              "title": "Abre un almacén real en un directorio temporal",
+              "narration": "La función auxiliar de la prueba llama a openNotes con una ruta dentro de un directorio temporal. Lee los argumentos junto al código de configuración del primer capítulo. La prueba proporciona un generador de ID y un reloj predecibles. El repositorio y el almacén JSON son los mismos que usan la CLI y HTTP. La prueba lee y escribe un archivo real. El bloque finally elimina el directorio incluso si falla una aserción."
+            },
+            {
+              "id": "beat_tiny_test_02",
+              "title": "Relaciona las aserciones con el código",
+              "narration": "La prueba añade una nota con Work, la misma etiqueta en minúsculas y rodeada de espacios, e Ideas. Espera las etiquetas ideas y work, sin duplicados. Luego llama a search y comprueba que la nota más reciente aparece primero. La prueba del título vacío cubre la otra rama de la regla del servicio. Las vías de entrada entregan los borradores, add aplica las reglas y el repositorio vuelve a leer las notas guardadas en JSON."
+            }
+          ]
+        }
+      ]
+    },
+    "ar": {
+      "locale": "ar",
+      "sourceLocale": "en",
+      "title": "Tiny Notes: من الإدخال إلى JSON",
+      "subtitle": "تتبّع ملاحظة من واجهتي الأوامر وHTTP عبر الشيفرة المشتركة إلى القرص واختبار السلوك.",
+      "chapters": [
+        {
+          "id": "chapter_tiny_entry",
+          "title": "نقطة التقاء واجهتي الإدخال",
+          "summary": "تعرّف على الخدمة التي يشترك فيها أمر من الطرفية وطلب عبر HTTP.",
+          "diagrams": [
+            {
+              "id": "diagram_tiny_entry",
+              "title": "واجهتا الإدخال وتهيئة الخدمة",
+              "nodeLabels": {
+                "node_tiny_cli": "الدالة main في واجهة الأوامر",
+                "node_tiny_open": "openNotes",
+                "node_tiny_serve": "معالج طلب POST"
+              }
+            }
+          ],
+          "beats": [
+            {
+              "id": "beat_tiny_entry_01",
+              "title": "واجهتا إدخال وخدمة واحدة",
+              "narration": "ابدأ بالدالة main في واجهة الأوامر. تحلّل الدالة المدخلات وتبحث عن الأمر وتختار مسار الملف. في السطر 125 تستدعي openNotes لإنشاء الخدمة التي يتلقّاها الأمر. اتبع الاستدعاء إلى openNotes لترى كيف تربط أربعة أسطر مخزن JSON بمستودع الملاحظات وخدمتها. يحصل الأمران add وserve على الخدمة من السطر نفسه."
+            },
+            {
+              "id": "beat_tiny_entry_02",
+              "title": "تتبّع عملية إضافة ملاحظة",
+              "narration": "يحوّل أمر add العنوان وخيارات النص والوسوم إلى مسوّدة ثم يستدعي service.add. ويبدأ أمر serve تشغيل خادم HTTP بالخدمة التي تلقّاها. افتح معالج POST لتجد الاستدعاء نفسه. يستخرج المعالج المسوّدة من نص الطلب بصيغة JSON ويرسل الملاحظة الناتجة مع رمز الحالة 201. لكل واجهة طريقة مختلفة في استقبال المسوّدة، وكلتاهما تسلّمها إلى الخدمة نفسها."
+            }
+          ]
+        },
+        {
+          "id": "chapter_tiny_persist",
+          "title": "كيف تصل الملاحظة إلى القرص",
+          "summary": "تتبّع قواعد العنوان والوسوم وإنشاء الملاحظة واستبدال ملف JSON.",
+          "diagrams": [
+            {
+              "id": "diagram_tiny_storage",
+              "title": "الطبقات التي تربطها openNotes",
+              "nodeLabels": {
+                "node_tiny_persist_open": "openNotes",
+                "node_tiny_service": "خدمة الملاحظات",
+                "node_tiny_repository": "مستودع الملاحظات",
+                "node_tiny_file": "مخزن ملفات JSON"
+              }
+            }
+          ],
+          "beats": [
+            {
+              "id": "beat_tiny_persist_01",
+              "title": "تنسيق المسوّدة وإلحاق الملاحظة",
+              "narration": "في خدمة الملاحظات، تحذف add المسافات من طرفي العنوان وترفض العنوان الفارغ قبل الوصول إلى المستودع. كما تحذف المسافات من طرفي النص وتوحّد صيغة الوسوم. يضيف المستودع معرّفًا ووقت إنشاء ويترك وقت الأرشفة فارغًا. انظر إلى استدعاء الكتابة. يقرأ المستودع الملاحظات الموجودة ويلحق الملاحظة الجديدة ثم يسلّم المستند الكامل إلى المخزن. افتح openNotes لترى كيف يحصل المستودع على المخزن."
+            },
+            {
+              "id": "beat_tiny_persist_02",
+              "title": "استبدال ملف JSON",
+              "narration": "يكتب المخزن المستند كاملاً بصيغة JSON إلى ملف مؤقت يحمل اسمًا فريدًا في المجلد نفسه. ثم يعيد تسمية الملف ليحلّ محل الملف الهدف. ابحث عن الاستدعاءين في الأسطر المشار إليها. تجهّز writeFile المستند وتنشره rename. إذا فشلت إعادة التسمية، يحذف البرنامج الملف المؤقت ويعيد طرح الخطأ. المسار الافتراضي هو .tiny-notes/notes.json داخل مجلد عمل واجهة الأوامر. يتيح TINY_NOTES_FILE اختيار مسار آخر."
+            }
+          ]
+        },
+        {
+          "id": "chapter_tiny_test",
+          "title": "ماذا يثبت الاختبار؟",
+          "summary": "اربط توحيد صيغة الوسوم والتخزين باختبار سلوكي يمكن تكراره.",
+          "diagrams": [
+            {
+              "id": "diagram_tiny_verification",
+              "title": "اختبار يستخدم المدخل العام نفسه",
+              "nodeLabels": {
+                "node_tiny_setup": "withService",
+                "node_tiny_test_open": "openNotes",
+                "node_tiny_test_tags": "التحقق من الوسوم والبحث"
+              }
+            }
+          ],
+          "beats": [
+            {
+              "id": "beat_tiny_test_01",
+              "title": "فتح مخزن حقيقي في مجلد مؤقت",
+              "narration": "تستدعي دالة الاختبار المساعدة openNotes بمسار داخل مجلد مؤقت. اقرأ الوسائط إلى جانب تهيئة الفصل الأول. يحدّد الاختبار طريقةً تعطي معرّفات وأوقاتًا متوقّعةً، ويستخدم المستودع ومخزن JSON اللذين تستخدمهما واجهتا الأوامر وHTTP. يقرأ الاختبار ملف JSON حقيقيًا ويكتب إليه. تحذف كتلة finally المجلد المؤقت حتى عند فشل أحد التحقّقات."
+            },
+            {
+              "id": "beat_tiny_test_02",
+              "title": "ربط عمليات التحقّق بالشيفرة",
+              "narration": "يضيف الاختبار ملاحظة بوسم Work ووسم آخر بالكلمة نفسها بحروف صغيرة ومسافات حولها، وبوسم Ideas. يتوقّع ظهور الوسمين ideas وwork من دون تكرار. ثم يستدعي search ويتحقّق من أن أحدث ملاحظة تظهر أولاً. يختبر اختبار العنوان الفارغ الفرع الآخر من قاعدة الخدمة. هكذا تزوّد واجهتا الإدخال الخدمة بالمسوّدات، وتطبّق add القواعد، ويعيد المستودع قراءة الملاحظات المحفوظة في مخزن JSON."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

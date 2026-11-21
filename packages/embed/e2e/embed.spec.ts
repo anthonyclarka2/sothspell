@@ -131,7 +131,7 @@ test.describe('custom element', () => {
     });
     await expect
       .poll(async () =>
-        page.evaluate(() => localStorage.getItem('sothspell:embed:tour_bunbun_golden')),
+        page.evaluate(() => localStorage.getItem('sothspell:embed:tour_tiny_notes_golden')),
       )
       .not.toBeNull();
 

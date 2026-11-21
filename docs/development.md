@@ -13,7 +13,8 @@ packages/player           @sothspell/player — framework-free playback engine
 packages/authoring        @sothspell/authoring — GuideModel, context, authoring pipeline
 packages/narration        Phase 5 placeholder
 packages/harness          Phase 7 placeholder
-examples/bunbun-tour      checked-in golden tour (Bunbun 9fef24d)
+examples/tiny-notes-tour  default golden tour, source manifest, and translations
+examples/bunbun-tour      historical golden tour (Bunbun 9fef24d)
 scripts/                  golden-tour build and toolchain guard
 plans/                    roadmap and phase plans
 ```
@@ -25,8 +26,8 @@ Package names use the ASCII `sothspell` slug; the product name is **Sóþspell**
 - Node.js 26 or newer.
 - pnpm 12.14.0 (`packageManager` in the root `package.json`).
 - Google Chrome for the Playwright browser tier (`channel: 'chrome'`).
-- The Bunbun checkout at `/Users/ajc/Projects/codegens/bunbun` for the golden
-  tour build and the read-only regression test.
+- Optional Bunbun checkout at `/Users/ajc/Projects/codegens/bunbun` for the
+  historical tour build and live read-only regression tests.
 
 ## Commands
 
@@ -41,7 +42,8 @@ pnpm test:a11y        # axe-core accessibility tests
 pnpm build            # production web build
 pnpm check:toolchain  # TypeScript 7 and no classic compiler API packages
 pnpm schema:json      # regenerate packages/core/schema/sothspell.schema.json
-pnpm tour:build       # regenerate examples/bunbun-tour/tour.json
+pnpm tour:build:tiny-notes  # regenerate the default tour and its source hashes
+pnpm tour:build             # regenerate examples/bunbun-tour/tour.json
 pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --brief
 pnpm sothspell analyze /Users/ajc/Projects/codegens/bunbun --save
 pnpm sothspell author /Users/ajc/Projects/codegens/bunbun --model fixture --out /tmp/bunbun-tour
@@ -56,6 +58,15 @@ The dev server ports are `127.0.0.1:4319` (API) and `127.0.0.1:5173` (web). The
 web dev server proxies `/api` to the API.
 
 ## Golden tour workflow
+
+The default Tiny Notes tour is built from the commit named in
+[`examples/tiny-notes-tour/tour.source.json`](../examples/tiny-notes-tour/tour.source.json).
+See the [regeneration instructions](../examples/tiny-notes-tour/README.md).
+The home page plays the checked-in artifact. To author another tour of Tiny
+Notes, run `pnpm example:tiny-notes` to set up the disposable example checkout
+used by **New tour**.
+
+### Historical Bunbun tour
 
 `examples/bunbun-tour/tour.source.json` is the editable source: chapters, beats,
 narration, diagram instructions, and anchors with line ranges. The anchors carry

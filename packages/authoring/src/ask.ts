@@ -26,7 +26,7 @@ export interface AskQuestionInput {
   beatId: string;
   /** Optional when the tour carries its own anchor excerpts. */
   snapshot?: ProjectSnapshot;
-  sourceRoot: string;
+  sourceRoot: string | null;
   model: GuideModel;
   history?: AskHistoryEntry[];
   signal?: AbortSignal;
@@ -98,11 +98,11 @@ function collectCandidates(
 
 async function fillExcerpts(
   candidates: AnchorCandidate[],
-  sourceRoot: string,
+  sourceRoot: string | null,
 ): Promise<AnchorCandidate[]> {
   const filled: AnchorCandidate[] = [];
   for (const candidate of candidates) {
-    if (candidate.excerpt.length > 0) {
+    if (sourceRoot === null || candidate.excerpt.length > 0) {
       filled.push(candidate);
       continue;
     }

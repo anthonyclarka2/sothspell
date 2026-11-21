@@ -1,5 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
+import { createTourAccess } from '@sothspell/api/app';
 import {
   createFileTourSource,
   createReviewService,
@@ -50,15 +51,15 @@ function sothspellHome(): string {
 }
 
 function defaultService(): ReviewService {
+  const home = sothspellHome();
+  const tours = createTourAccess({
+    home,
+    bunbunRoot: process.env.SOTHSPELL_PROJECT_ROOT ?? null,
+  });
   return createReviewService({
-    store: createReviewStore(path.join(sothspellHome(), 'sothspell.db')),
-    tours: createFileTourSource({
-      homeDirectory: sothspellHome(),
-      goldenTourPath: new URL('../../../examples/bunbun-tour/tour.json', import.meta.url)
-        .pathname,
-      goldenTourIds: ['tour_bunbun_golden', 'bunbun-golden'],
-    }),
-    sourceRoot: process.env.SOTHSPELL_PROJECT_ROOT ?? null,
+    store: createReviewStore(path.join(home, 'sothspell.db')),
+    tours: createFileTourSource({ homeDirectory: home, resolvePath: tours.resolvePath }),
+    resolveSourceRoot: tours.resolveRoot,
     // The CLI does not regenerate beats; that is the review UI's job.
     resolveModel: async () => null,
   });

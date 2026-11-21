@@ -8,8 +8,8 @@ no provider keys, and no repository access.
 
 ```bash
 pnpm build:embed            # builds packages/embed/dist
-pnpm sothspell export examples/bunbun-tour/tour.json \
-  --embed --out examples/embed-docs/dist
+pnpm sothspell export examples/tiny-notes-tour/tour.json \
+  --embed --out examples/embed-docs/dist/sothspell
 ```
 
 The export compiles the tour, embeds anchor excerpts, copies the player assets,
@@ -86,7 +86,7 @@ locale is shown.
 
 ## Docs fixture
 
-`examples/embed-docs/` embeds the golden Bunbun tour with both the custom
+`examples/embed-docs/` embeds the golden Tiny Notes tour with both the custom
 element and the iframe, includes a hostile host stylesheet, and is covered by
 `pnpm test:browser:embed` (20 tests: play, pause, seek, progress, teardown, no
 network, opt-out, iframe relay, and axe at 0 critical/serious on desktop and
