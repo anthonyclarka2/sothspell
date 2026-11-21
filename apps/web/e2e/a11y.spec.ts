@@ -1,5 +1,5 @@
-import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expectNoWcagViolations } from './axe.js';
+import { expect, test } from '@playwright/test';
 import { installFakeSettings, makeProfile } from './settings-fake.js';
 import { installFakeReview } from './review-fake.js';
 import { installTranslatedTours } from './locale-fake.js';
@@ -15,31 +15,22 @@ const pages = [
   '/t/tour_bunbun_golden/beat_purpose_01',
   '/t/tour_bunbun_golden/beat_purpose_01?view=stage',
   '/p/bunbun/source/apps/api/src/main.ts?anchor=anchor_main_bootstrap&beat=beat_request_01',
+  '/t/tour_bunbun_golden/beat_purpose_01?view=reader',
+  '/p/bunbun/source/README.md?anchor=anchor_readme_overview&beat=beat_purpose_01&tourId=tour_bunbun_golden&view=reader',
   '/import',
   '/new',
 ];
 
 for (const path of pages) {
-  test(`has no critical or serious axe violations: ${path}`, async ({ page }) => {
+  test(`has no WCAG axe violations: ${path}`, async ({ page }) => {
     await page.goto(path);
     await page.waitForLoadState('networkidle');
 
-    const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-      .analyze();
-
-    const blocking = results.violations.filter(
-      (violation) => violation.impact === 'critical' || violation.impact === 'serious',
-    );
-
-    expect(
-      blocking,
-      blocking.map((violation) => `${violation.id}: ${violation.help}`).join('\n'),
-    ).toEqual([]);
+    await expectNoWcagViolations(page);
   });
 }
 
-test('listen and ask player states have no blocking axe violations', async ({ page }) => {
+test('listen and ask player states have no WCAG axe violations', async ({ page }) => {
   await page.addInitScript(() => {
     class FakeUtterance {
       text: string;
@@ -73,45 +64,20 @@ test('listen and ask player states have no blocking axe violations', async ({ pa
   await page.getByRole('button', { name: 'Ask about this beat' }).click();
   await page.waitForLoadState('networkidle');
 
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    .analyze();
-  const blocking = results.violations.filter(
-    (violation) => violation.impact === 'critical' || violation.impact === 'serious',
-  );
-
-  expect(
-    blocking,
-    blocking.map((violation) => `${violation.id}: ${violation.help}`).join('\n'),
-  ).toEqual([]);
+  await expectNoWcagViolations(page);
 });
 
-async function expectNoBlockingViolations(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    .analyze();
-  const blocking = results.violations.filter(
-    (violation) => violation.impact === 'critical' || violation.impact === 'serious',
-  );
-  expect(
-    blocking,
-    blocking.map((violation) => `${violation.id}: ${violation.help}`).join('\n'),
-  ).toEqual([]);
-}
-
-test('translated player has no blocking axe violations: Spanish', async ({ page }) => {
+test('translated player has no WCAG axe violations: Spanish', async ({ page }) => {
   installTranslatedTours(page);
   await page.goto('/t/tour_bunbun_golden/beat_purpose_01');
   await page.getByLabel('Language').selectOption('es');
   await expect(page.locator('.narration-copy')).toContainText('«es»');
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('translated player has no blocking axe violations: Arabic (RTL)', async ({
-  page,
-}) => {
+test('translated player has no WCAG axe violations: Arabic (RTL)', async ({ page }) => {
   installTranslatedTours(page);
   await page.goto('/t/tour_bunbun_golden/beat_purpose_01');
   await page.getByLabel('Language').selectOption('ar');
@@ -119,18 +85,18 @@ test('translated player has no blocking axe violations: Arabic (RTL)', async ({
   await expect(page.locator('.narration-copy')).toContainText('«ar»');
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('settings page has no blocking axe violations: empty state', async ({ page }) => {
+test('settings page has no WCAG axe violations: empty state', async ({ page }) => {
   await installFakeSettings(page);
   await page.goto('/settings');
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('settings page has no blocking axe violations: filled state', async ({ page }) => {
+test('settings page has no WCAG axe violations: filled state', async ({ page }) => {
   await installFakeSettings(page, {
     profiles: [
       makeProfile(),
@@ -162,10 +128,10 @@ test('settings page has no blocking axe violations: filled state', async ({ page
   await page.goto('/settings');
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('settings page has no blocking axe violations: error state', async ({ page }) => {
+test('settings page has no WCAG axe violations: error state', async ({ page }) => {
   await installFakeSettings(page, {
     profiles: [makeProfile()],
     testStatus: 502,
@@ -186,10 +152,10 @@ test('settings page has no blocking axe violations: error state', async ({ page 
   await expect(page.getByText('Name is required.')).toBeVisible();
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('signed-in account state has no blocking axe violations', async ({ page }) => {
+test('signed-in account state has no WCAG axe violations', async ({ page }) => {
   await page.route('**/api/auth/session', (route) =>
     route.fulfill({
       status: 200,
@@ -239,10 +205,10 @@ test('signed-in account state has no blocking axe violations', async ({ page }) 
   await page.goto('/account');
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('account error state has no blocking axe violations', async ({ page }) => {
+test('account error state has no WCAG axe violations', async ({ page }) => {
   await page.route('**/api/auth/session', (route) =>
     route.fulfill({
       status: 500,
@@ -254,10 +220,10 @@ test('account error state has no blocking axe violations', async ({ page }) => {
   await page.goto('/account');
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('canvas with evidence, two diagrams, and the outline has no blocking axe violations', async ({
+test('canvas with evidence, two diagrams, and the outline has no WCAG axe violations', async ({
   page,
 }) => {
   await page.goto('/t/tour_bunbun_golden/beat_purpose_01?view=canvas');
@@ -266,20 +232,20 @@ test('canvas with evidence, two diagrams, and the outline has no blocking axe vi
   await page.getByRole('button', { name: 'Show outline' }).click();
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('canvas shortcut sheet has no blocking axe violations', async ({ page }) => {
+test('canvas shortcut sheet has no WCAG axe violations', async ({ page }) => {
   await page.goto('/t/tour_bunbun_golden/beat_purpose_01?view=canvas');
   await page.getByTestId('canvas-view').focus();
   await page.keyboard.press('?');
   await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible();
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('canvas relation containers and toggles have no blocking axe violations', async ({
+test('canvas relation containers and toggles have no WCAG axe violations', async ({
   page,
 }) => {
   installCanvasSymbolTargets(page, {
@@ -297,12 +263,10 @@ test('canvas relation containers and toggles have no blocking axe violations', a
   ).toHaveCount(3);
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('canvas unavailable relation state has no blocking axe violations', async ({
-  page,
-}) => {
+test('canvas unavailable relation state has no WCAG axe violations', async ({ page }) => {
   installCanvasSymbolTargets(page, {
     anchors: { anchor_comments_create: CANVAS_SYMBOLS.service },
   });
@@ -321,28 +285,28 @@ test('canvas unavailable relation state has no blocking axe violations', async (
   await expect(page.getByTestId('canvas-relation-status')).toBeVisible();
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('canvas display menu has no blocking axe violations', async ({ page }) => {
+test('canvas display menu has no WCAG axe violations', async ({ page }) => {
   await page.goto('/t/tour_bunbun_golden/beat_purpose_01?view=canvas');
   await page.getByRole('button', { name: 'Canvas appearance' }).click();
   await expect(page.getByTestId('canvas-display-panel')).toBeVisible();
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('compact canvas has no blocking axe violations at 375 px', async ({ page }) => {
+test('compact canvas has no WCAG axe violations at 375 px', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 900 });
   await page.goto('/t/tour_bunbun_golden/beat_purpose_01?view=canvas');
   await expect(page.getByTestId('canvas-compact')).toBeVisible();
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('canvas preferences modes have no blocking axe violations', async ({ page }) => {
+test('canvas preferences modes have no WCAG axe violations', async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem(
       'sothspell:canvas-preferences:v1',
@@ -364,10 +328,10 @@ test('canvas preferences modes have no blocking axe violations', async ({ page }
   await page.getByTestId('canvas-object').filter({ hasText: 'ATProto PDS' }).click();
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('canvas auto-arrange notice has no blocking axe violations', async ({ page }) => {
+test('canvas auto-arrange notice has no WCAG axe violations', async ({ page }) => {
   installCanvasSymbolTargets(page, {
     anchors: { anchor_comments_create: CANVAS_SYMBOLS.service },
   });
@@ -382,21 +346,21 @@ test('canvas auto-arrange notice has no blocking axe violations', async ({ page 
   await expect(page.getByTestId('canvas-notice')).toBeVisible();
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
 /* Phase 15 review (merged) */
 
-test('review page has no blocking axe violations: reading state', async ({ page }) => {
+test('review page has no WCAG axe violations: reading state', async ({ page }) => {
   await installFakeReview(page);
   await page.goto('/review/tour_review_fixture');
   await expect(page.getByRole('heading', { name: 'The overview' })).toBeVisible();
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('review page has no blocking axe violations: editing state', async ({ page }) => {
+test('review page has no WCAG axe violations: editing state', async ({ page }) => {
   await installFakeReview(page);
   await page.goto('/review/tour_review_fixture');
   await page.getByRole('button', { name: 'Edit beat' }).click();
@@ -407,10 +371,10 @@ test('review page has no blocking axe violations: editing state', async ({ page 
   await expect(page.getByText('Narration needs at least 20 characters.')).toBeVisible();
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });
 
-test('review page has no blocking axe violations: decision state', async ({ page }) => {
+test('review page has no WCAG axe violations: decision state', async ({ page }) => {
   await installFakeReview(page);
   await page.goto('/review/tour_review_fixture');
   await page.getByRole('button', { name: 'Approve review' }).click();
@@ -418,5 +382,5 @@ test('review page has no blocking axe violations: decision state', async ({ page
   await expect(page.locator('.review-decision-list')).toContainText('approved');
   await page.waitForLoadState('networkidle');
 
-  await expectNoBlockingViolations(page);
+  await expectNoWcagViolations(page);
 });

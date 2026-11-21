@@ -1,3 +1,4 @@
+import { CardPlacement } from './CardPlacement.js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   FocusEvent as ReactFocusEvent,
@@ -163,6 +164,8 @@ function withoutClosedContainers(
 }
 
 export interface CanvasViewProps {
+  characterShortcuts: boolean;
+  reading: boolean;
   tour: CompiledTour;
   chapter: CompiledChapter;
   beat: CompiledBeat;
@@ -181,6 +184,8 @@ export function CanvasView(props: CanvasViewProps) {
 }
 
 function CanvasBoard({
+  characterShortcuts,
+  reading,
   tour,
   chapter,
   beat,
@@ -193,7 +198,7 @@ function CanvasBoard({
   const boardRef = useRef<HTMLDivElement>(null);
   const flow = useReactFlow<CanvasFlowNode, CanvasFlowEdge>();
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  const compact = useMediaQuery('(max-width: 767px)');
+  const compact = useMediaQuery('(max-width: 767px)') || reading;
   const preferenceStore = useMemo(() => createCanvasPreferenceStore(), []);
   const [preferences, setPreferences] = useState<CanvasPreferences>(() =>
     preferenceStore.get(),
@@ -235,6 +240,7 @@ function CanvasBoard({
   const [fullscreenPulse, setFullscreenPulse] = useState(false);
   const wasFullscreen = useRef(false);
   const wasFullscreenFit = useRef(false);
+  const outlineReturnFocus = useRef<HTMLElement | null>(null);
   const shortcutsReturnFocus = useRef<HTMLElement | null>(null);
   const [arranged, setArranged] = useState(false);
   const arrangeTimeout = useRef<number | undefined>(undefined);
@@ -1497,6 +1503,14 @@ function CanvasBoard({
 
   const toggleOutline = useCallback(() => {
     const next = !outlineOpen;
+    if (next) {
+      outlineReturnFocus.current = document.activeElement as HTMLElement | null;
+      requestAnimationFrame(() =>
+        rootRef.current
+          ?.querySelector<HTMLButtonElement>('.canvas-outline-header button')
+          ?.focus(),
+      );
+    }
     setOutlineOpen(next);
     announce(next ? t('canvas.announce.outlineOn') : t('canvas.announce.outlineOff'));
   }, [announce, outlineOpen, t]);
@@ -1533,6 +1547,7 @@ function CanvasBoard({
 
   const closeOutline = useCallback(() => {
     setOutlineOpen(false);
+    outlineReturnFocus.current?.focus();
     announce(t('canvas.announce.outlineOff'));
   }, [announce, t]);
 
@@ -1545,7 +1560,8 @@ function CanvasBoard({
   const closeShortcuts = useCallback(() => {
     setShortcutsOpen(false);
     announce(t('canvas.announce.shortcutsOff'));
-    shortcutsReturnFocus.current?.focus();
+    const trigger = shortcutsReturnFocus.current;
+    requestAnimationFrame(() => trigger?.focus());
     shortcutsReturnFocus.current = null;
   }, [announce, t]);
 
@@ -1554,7 +1570,13 @@ function CanvasBoard({
       if (event.defaultPrevented) {
         return;
       }
-      if (event.metaKey || event.ctrlKey || event.altKey) {
+      if (
+        (!characterShortcuts && event.key.length === 1 && event.key !== ' ') ||
+        event.nativeEvent.isComposing ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey
+      ) {
         return;
       }
       const target = event.target as HTMLElement | null;
@@ -1804,6 +1826,7 @@ function CanvasBoard({
       autoArrange,
       closeOutline,
       closeShortcuts,
+      characterShortcuts,
       diagramItemElements,
       enterContainer,
       enterDiagramItems,
@@ -2317,6 +2340,7 @@ function CanvasBoard({
           {announcement}
         </p>
         <CanvasCompact
+          reading={reading}
           tour={tour}
           chapter={chapter}
           beat={beat}
@@ -2406,6 +2430,7 @@ function CanvasBoard({
             minZoom={MIN_ZOOM}
             maxZoom={MAX_ZOOM}
             nodesDraggable
+            panActivationKeyCode={null}
             nodesConnectable={false}
             nodesFocusable={false}
             edgesFocusable={false}
@@ -2501,6 +2526,26 @@ function CanvasBoard({
 
       {outlineOpen ? (
         <CanvasOutline
+          placement={(id, title, kind) => {
+            const key = kind === 'diagram' ? diagramCardKey(id) : codeContainerKey(id);
+            const item = layout.items[key];
+            if (!item) return null;
+            return (
+              <CardPlacement
+                title={title}
+                resizable={kind === 'code'}
+                rect={{ ...item, ...manualPositions[key], ...manualSizes[key] }}
+                onApply={(rect) => {
+                  setManualPositions((previous) => ({
+                    ...previous,
+                    [key]: { x: rect.x, y: rect.y },
+                  }));
+                  if (kind === 'code') resizeContainer(id, rect);
+                  announce(t('canvas.placed', { title }));
+                }}
+              />
+            );
+          }}
           scene={scene}
           chapterDiagrams={chapter.diagrams}
           projectSlug={tour.project.slug}
