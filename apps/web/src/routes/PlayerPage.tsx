@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { createPlayback, type PlaybackSnapshot } from '@sothspell/player';
 import type { CompiledBeat, CompiledTour } from '@sothspell/core';
@@ -22,8 +22,10 @@ import { StageView } from '../components/StageView.js';
 import { CanvasView } from '../components/canvas/index.js';
 import { Transport } from '../components/Transport.js';
 import { AskPanel } from '../components/AskPanel.js';
+import { LearningCheckDialog } from '../components/LearningCheckDialog.js';
 import { useNarration, type NarrationProviderChoice } from '../lib/use-narration.js';
 import { useFullscreen } from '../lib/use-fullscreen.js';
+import { useLearningChecks } from '../lib/use-learning-checks.js';
 import { resolvePlayerView, type PlayerView } from '../lib/player-view.js';
 
 interface PlayerParams {
@@ -147,9 +149,34 @@ export function PlayerPage() {
     provider: narrationProvider,
     speed: snapshot?.speed ?? 1,
     locale,
-    onBeatEnd: () => playback?.next(),
+    onBeatEnd: () => {
+      const beatId = playback?.getSnapshot().beatId;
+      if (!openCheck && beatId && !offer(beatId, 'listen-end')) {
+        playback?.next();
+      }
+    },
     onProgress: (offsetMs) => playback?.seekOffset(offsetMs),
   });
+
+  const {
+    active: openCheck,
+    available,
+    automatic,
+    setAutomatic,
+    offer,
+    finish,
+  } = useLearningChecks({
+    tour,
+    currentBeatId: snapshot?.beatId,
+    playback,
+    narration,
+    narrationMode,
+    askOpen,
+    pageRef,
+  });
+  const pauseReadAtCheck = useEffectEvent(
+    (beatId: string) => narrationMode === 'read' && offer(beatId, 'read-end'),
+  );
 
   useEffect(() => {
     if (!playback) {
@@ -167,7 +194,7 @@ export function PlayerPage() {
       }
       setSnapshot(event.snapshot);
     });
-    const timer = window.setInterval(() => playback.tick(250), 250);
+    const timer = window.setInterval(() => playback.tick(250, pauseReadAtCheck), 250);
 
     return () => {
       unsubscribe();
@@ -245,7 +272,7 @@ export function PlayerPage() {
       clientId,
       tourId: params.tourId,
       beatId: snapshot.beatId,
-      offsetMs: playback.getSnapshot().offsetMs,
+      offsetMs: Math.round(playback.getSnapshot().offsetMs),
       completedBeatIds,
       mode: narrationMode,
       speed: snapshot.speed,
@@ -258,6 +285,7 @@ export function PlayerPage() {
     completedBeatIds,
     hasResumed,
     narrationMode,
+    openCheck,
     params.tourId,
     playback,
     snapshot?.beatId,
@@ -579,8 +607,44 @@ export function PlayerPage() {
             onProviderChange={setNarrationProvider}
             onAsk={openAsk}
           />
+          {available ? (
+            <div className="learning-check-controls">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={automatic}
+                  onChange={(event) => setAutomatic(event.target.checked)}
+                />
+                {t('check.automatic')}
+              </label>
+              {beat.learningCheck ? (
+                <button
+                  type="button"
+                  className="secondary-action"
+                  onClick={() => offer(beat.id, 'manual')}
+                  disabled={
+                    askOpen ||
+                    (narrationMode === 'listen' && narration.status === 'loading')
+                  }
+                >
+                  {t('check.title')}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
+
+      {openCheck && beat.learningCheck ? (
+        <LearningCheckDialog
+          key={beat.learningCheck.id}
+          beat={{ ...beat, learningCheck: beat.learningCheck }}
+          projectSlug={tour.project.slug}
+          tourId={tour.id}
+          view={playerView}
+          onContinue={finish}
+        />
+      ) : null}
 
       {askOpen ? (
         <AskPanel

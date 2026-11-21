@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LearningCheckSchema } from '@sothspell/core';
 import { DiagramInstructionSchema } from '@sothspell/diagram';
 
 export const AudienceSchema = z.enum([
@@ -29,6 +30,7 @@ export const BeatDraftSchema = z.object({
   anchorIds: z.array(z.string().min(1)).min(1).max(3),
   nodeIds: z.array(z.string().min(1)).max(16).optional(),
   edgeIds: z.array(z.string().min(1)).max(24).optional(),
+  learningCheck: LearningCheckSchema.omit({ id: true }).optional(),
   suggestedQuestions: z.array(z.string().min(4).max(240)).max(3).optional(),
 });
 

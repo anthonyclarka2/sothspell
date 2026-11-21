@@ -15,7 +15,8 @@ import { wordCount, NARRATION_WORD_MAX, NARRATION_WORD_MIN } from './validate.js
  * so the change can be diffed or reverted.
  */
 
-export const REGENERATION_PROMPT_VERSION = '1.0.0';
+export const REGENERATION_PROMPT_VERSION = '1.1.0';
+const RegeneratedBeatSchema = BeatDraftSchema.omit({ learningCheck: true });
 
 export interface RegenerationInput {
   document: SothspellDocument;
@@ -106,12 +107,12 @@ export async function generateBeatRegeneration(
   }
 
   const result = await input.model.generateObject({
-    schema: BeatDraftSchema,
+    schema: RegeneratedBeatSchema,
     schemaName: 'BeatDraft',
     system: loadPrompt('system'),
     prompt,
   });
-  const draft = BeatDraftSchema.parse(result.value);
+  const draft = RegeneratedBeatSchema.parse(result.value);
 
   if (input.cache && cacheKey) {
     input.cache.set(cacheKey, draft);

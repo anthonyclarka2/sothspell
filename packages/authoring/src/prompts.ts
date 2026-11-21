@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-export const PROMPT_VERSION = '1.0.0';
+export const PROMPT_VERSION = '1.1.0';
 
 const cache = new Map<string, string>();
 

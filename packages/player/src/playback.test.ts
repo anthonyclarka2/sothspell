@@ -66,6 +66,33 @@ describe('playback engine', () => {
     expect(started).toEqual(['beat_one', 'beat_two', 'beat_three']);
   });
 
+  it('holds at the exact end of one beat until the learner continues', () => {
+    const playback = createPlayback(tour);
+    playback.play();
+    playback.tick(9_950);
+    playback.tick(250, (beatId) => beatId === 'beat_one');
+
+    expect(playback.getSnapshot()).toMatchObject({
+      beatId: 'beat_one',
+      offsetMs: 10_000,
+      status: 'paused',
+    });
+    playback.tick(1000);
+    expect(playback.getSnapshot().offsetMs).toBe(10_000);
+
+    playback.play();
+    expect(playback.getSnapshot()).toMatchObject({
+      beatId: 'beat_one',
+      offsetMs: 10_000,
+    });
+    playback.tick(250, () => true);
+    expect(playback.getSnapshot()).toMatchObject({
+      beatId: 'beat_two',
+      offsetMs: 250,
+      status: 'playing',
+    });
+  });
+
   it('completes after the final beat and restarts on play', () => {
     const playback = createPlayback(tour);
     const completed: string[] = [];

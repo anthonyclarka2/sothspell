@@ -2,6 +2,7 @@ import path from 'node:path';
 import { z } from 'zod';
 import {
   applyTranslation,
+  TranslationBeatSchema,
   hashText,
   parseSothspell,
   sourceLocaleOf,
@@ -32,7 +33,7 @@ import {
  * model, and strict validation refuses any answer that drops evidence.
  */
 
-export const TRANSLATION_PROMPT_VERSION = '1.0.0';
+export const TRANSLATION_PROMPT_VERSION = '1.1.0';
 
 export interface TranslationProgress {
   stage: 'tour' | 'chapter' | 'diagram' | 'beat' | 'repair' | 'assembled' | 'done';
@@ -106,12 +107,7 @@ export const DiagramTranslationUnitSchema = z.object({
   edgeLabels: z.record(z.string().min(1), z.string().min(1).max(32)).optional(),
 });
 
-export const BeatTranslationUnitSchema = z.object({
-  id: z.string().min(1),
-  title: z.string().min(1).max(96),
-  narration: z.string().min(20).max(1200),
-  suggestedQuestions: z.array(z.string().min(4).max(240)).max(3).optional(),
-});
+export const BeatTranslationUnitSchema = TranslationBeatSchema;
 
 export type TourTranslationUnit = z.infer<typeof TourTranslationUnitSchema>;
 export type ChapterTranslationUnit = z.infer<typeof ChapterTranslationUnitSchema>;
@@ -482,6 +478,19 @@ export function validateTranslation(
         );
       }
 
+      if (sourceBeat.learningCheck && translatedBeat.learningCheck) {
+        requireSpans(
+          sourceBeat.learningCheck.prompt,
+          translatedBeat.learningCheck.prompt,
+          `beat ${sourceBeat.id} learning check prompt`,
+        );
+        requireSpans(
+          sourceBeat.learningCheck.explanation,
+          translatedBeat.learningCheck.explanation,
+          `beat ${sourceBeat.id} learning check explanation`,
+        );
+      }
+
       if (JSON.stringify(sourceBeat.anchors) !== JSON.stringify(renderedBeat.anchors)) {
         issues.push(`beat ${sourceBeat.id} changed its anchors`);
       }
@@ -620,6 +629,15 @@ export async function translateTour(input: {
             ...(beat.suggestedQuestions === undefined
               ? {}
               : { suggestedQuestions: beat.suggestedQuestions }),
+            ...(beat.learningCheck
+              ? {
+                  learningCheck: {
+                    id: beat.learningCheck.id,
+                    prompt: beat.learningCheck.prompt,
+                    explanation: beat.learningCheck.explanation,
+                  },
+                }
+              : {}),
           },
           vocabulary,
           requiredIds: { id: beat.id },
@@ -636,6 +654,7 @@ export async function translateTour(input: {
         ...(beatValue.suggestedQuestions === undefined
           ? {}
           : { suggestedQuestions: beatValue.suggestedQuestions }),
+        ...(beatValue.learningCheck ? { learningCheck: beatValue.learningCheck } : {}),
       });
     }
 

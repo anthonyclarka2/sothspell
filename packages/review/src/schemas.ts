@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LearningCheckSchema } from '@sothspell/core';
 
 /**
  * The review domain shapes. A review session is the audit trail for one
@@ -25,12 +26,19 @@ export const DiagramFocusSchema = z.object({
 });
 export type DiagramFocus = z.infer<typeof DiagramFocusSchema>;
 
+// Review edits own the words. Existing beat anchors and the check ID stay fixed.
+const LearningCheckEditSchema = LearningCheckSchema.omit({ id: true, anchorIds: true })
+  .strict()
+  .nullable()
+  .optional();
+
 /** The strict shape of an edited beat; semantic rules live in `validate.ts`. */
 export const BeatEditInputSchema = z.object({
   title: z.string().min(1).max(96),
   narration: z.string().min(20).max(1200),
   suggestedQuestions: z.array(z.string().min(4).max(240)).max(3),
   diagramFocus: DiagramFocusSchema,
+  learningCheck: LearningCheckEditSchema,
 });
 export type BeatEditInput = z.infer<typeof BeatEditInputSchema>;
 
@@ -44,6 +52,7 @@ export const BeatEditPatchSchema = z.object({
   narration: z.string().optional(),
   suggestedQuestions: z.array(z.string()).max(8).optional(),
   diagramFocus: DiagramFocusSchema.optional(),
+  learningCheck: LearningCheckEditSchema,
 });
 export type BeatEditPatch = z.infer<typeof BeatEditPatchSchema>;
 
@@ -62,6 +71,7 @@ export const BeatSnapshotSchema = z.object({
   narration: z.string(),
   suggestedQuestions: z.array(z.string()),
   diagramFocus: DiagramFocusSchema,
+  learningCheck: LearningCheckEditSchema,
 });
 export type BeatSnapshot = z.infer<typeof BeatSnapshotSchema>;
 

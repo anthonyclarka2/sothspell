@@ -15,6 +15,8 @@ const FIELD_LIMITS: Record<string, number> = {
   summary: 400,
   narration: 1200,
   suggestedQuestions: 240,
+  prompt: 240,
+  explanation: 640,
   nodeLabels: 48,
   edgeLabels: 32,
 };

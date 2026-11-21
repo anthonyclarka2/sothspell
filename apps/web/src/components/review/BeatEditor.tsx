@@ -17,6 +17,7 @@ interface FieldErrors {
   narration?: string;
   questions?: string;
   focus?: string;
+  learningCheck?: string;
 }
 
 function validate(input: {
@@ -84,6 +85,11 @@ export function BeatEditor({
   const [questions, setQuestions] = useState<string[]>(
     beat.suggestedQuestions.length > 0 ? beat.suggestedQuestions : [''],
   );
+  const [learningCheck, setLearningCheck] = useState(
+    beat.learningCheck
+      ? { prompt: beat.learningCheck.prompt, explanation: beat.learningCheck.explanation }
+      : null,
+  );
   const [diagramId, setDiagramId] = useState<string | null>(beat.stage.diagramId ?? null);
   const [nodeIds, setNodeIds] = useState<string[]>([...beat.stage.nodeIds]);
   const [edgeIds, setEdgeIds] = useState<string[]>([...beat.stage.edgeIds]);
@@ -110,11 +116,20 @@ export function BeatEditor({
       chapter,
       beatId: beat.id,
     });
+    if (
+      learningCheck &&
+      (learningCheck.prompt.trim().length < 4 ||
+        learningCheck.explanation.trim().length < 10)
+    ) {
+      next.learningCheck =
+        'Enter a prompt of at least 4 characters and an explanation of at least 10 characters.';
+    }
     setErrors(next);
     if (Object.keys(next).length > 0) {
       return;
     }
     onSave({
+      ...(beat.learningCheck ? { learningCheck } : {}),
       title: title.trim(),
       narration: narration.trim(),
       suggestedQuestions: questions.map((question) => question.trim()).filter(Boolean),
@@ -220,6 +235,61 @@ export function BeatEditor({
         )}
         {questionsError && <p className="field-error">{questionsError}</p>}
       </fieldset>
+
+      {beat.learningCheck ? (
+        <fieldset className="review-fieldset">
+          <legend>Learning check</legend>
+          <label className="review-check">
+            <input
+              type="checkbox"
+              checked={learningCheck !== null}
+              onChange={(event) =>
+                setLearningCheck(
+                  event.target.checked && beat.learningCheck
+                    ? {
+                        prompt: beat.learningCheck.prompt,
+                        explanation: beat.learningCheck.explanation,
+                      }
+                    : null,
+                )
+              }
+            />
+            Include the learning check
+          </label>
+          {learningCheck ? (
+            <>
+              <label className="field">
+                <span>Prompt</span>
+                <textarea
+                  rows={2}
+                  maxLength={240}
+                  value={learningCheck.prompt}
+                  onChange={(event) =>
+                    setLearningCheck({ ...learningCheck, prompt: event.target.value })
+                  }
+                />
+              </label>
+              <label className="field">
+                <span>Explanation</span>
+                <textarea
+                  rows={4}
+                  maxLength={640}
+                  value={learningCheck.explanation}
+                  onChange={(event) =>
+                    setLearningCheck({
+                      ...learningCheck,
+                      explanation: event.target.value,
+                    })
+                  }
+                />
+              </label>
+            </>
+          ) : null}
+          {errors.learningCheck ? (
+            <p className="field-error">{errors.learningCheck}</p>
+          ) : null}
+        </fieldset>
+      ) : null}
 
       <fieldset className="review-fieldset">
         <legend>Diagram focus</legend>

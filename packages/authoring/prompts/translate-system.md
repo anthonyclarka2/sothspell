@@ -5,7 +5,7 @@ cites.
 Rules:
 
 - Translate only human-facing text: titles, narration, summaries, suggested
-  questions, and diagram labels.
+  questions, learning check prompts and explanations, and diagram labels.
 - Copy every placeholder exactly once and exactly as written. Placeholders are
   tokens shaped like `__SS_P0__`; they stand for identifiers, file paths, symbol
   names, and code excerpts and must survive unchanged.

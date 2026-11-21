@@ -261,8 +261,15 @@ export function createReviewService(options: ReviewServiceOptions): ReviewServic
         narration: input.narration ?? current.narration,
         suggestedQuestions: input.suggestedQuestions ?? current.suggestedQuestions,
         diagramFocus: input.diagramFocus ?? current.diagramFocus,
+        learningCheck:
+          input.learningCheck !== undefined
+            ? input.learningCheck
+            : (current.learningCheck ?? (located.beat.learningCheck ? null : undefined)),
       };
 
+      if (input.learningCheck && !located.beat.learningCheck) {
+        throw new ReviewError('invalid_input', 'the beat has no learning check to edit');
+      }
       const validation = validateBeatEdit(next, {
         document: tour.document,
         chapter: located.chapter,
@@ -348,10 +355,14 @@ export function createReviewService(options: ReviewServiceOptions): ReviewServic
 
       const timestamp = now();
       const previous = snapshotFromBeat(current);
+      if (!current.learningCheck && located.beat.learningCheck) {
+        previous.learningCheck = null;
+      }
       const generated: BeatSnapshot = {
         title: draft.title,
         narration: draft.narration,
         suggestedQuestions: [...(draft.suggestedQuestions ?? [])],
+        learningCheck: previous.learningCheck,
         diagramFocus: {
           diagramId: current.stage.diagramId ?? null,
           nodeIds: [...(draft.nodeIds ?? [])],

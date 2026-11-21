@@ -66,6 +66,9 @@ export function ReviewPanel({
     () => anchors.filter((check) => check.status !== 'verified'),
     [anchors],
   );
+  const learningCheck = tour.chapters.some((chapter) =>
+    chapter.beats.some((beat) => beat.id === currentBeatId && beat.learningCheck),
+  );
   const latestDecision = session.decisions.at(-1) ?? null;
   const decided = session.state === 'approved' || session.state === 'rejected';
 
@@ -228,9 +231,20 @@ export function ReviewPanel({
         </div>
         <div className="field">
           <label htmlFor="review-comment-body">Comment</label>
+          {learningCheck && commentTarget === 'beat' ? (
+            <p className="field-hint" id="review-check-observation">
+              Record whether a first-time learner explained the feature and located the
+              responsible module. Keep the learner’s answer private.
+            </p>
+          ) : null}
           <textarea
             id="review-comment-body"
             ref={commentRef}
+            aria-describedby={
+              learningCheck && commentTarget === 'beat'
+                ? 'review-check-observation'
+                : undefined
+            }
             rows={3}
             value={commentBody}
             onChange={(event) => setCommentBody(event.target.value)}

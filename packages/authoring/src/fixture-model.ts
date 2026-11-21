@@ -36,6 +36,7 @@ function chapterDraft(
   const nodeB = `node_${index}_b`;
   const edge = `edge_${index}`;
   const label = shortLabel;
+  const explanation = `${label(second)} is declared in ${second.path}.`;
 
   return {
     title: chapter.title,
@@ -83,6 +84,15 @@ function chapterDraft(
         nodeIds: [nodeB],
         edgeIds: [edge],
         suggestedQuestions: [`Why is ${label(second)} separate?`],
+        ...(explanation.length <= 640
+          ? {
+              learningCheck: {
+                prompt: `Which file declares ${label(second)}?`,
+                explanation,
+                anchorIds: [second.id],
+              },
+            }
+          : {}),
       },
     ],
   };

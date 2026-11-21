@@ -120,8 +120,27 @@ export function assembleDocument(input: {
         diagram.edges.some((edge) => edge.id === edgeId),
       );
 
+      const check = beat.learningCheck;
       return {
         id: beatId,
+        ...(check
+          ? {
+              learningCheck: {
+                id: `check_${beatId}`,
+                prompt: check.prompt,
+                explanation: check.explanation,
+                anchorIds: check.anchorIds.map((candidateId) => {
+                  const anchor = anchors[beat.anchorIds.indexOf(candidateId)];
+                  if (!anchor) {
+                    throw new Error(
+                      `unknown learning check anchor ${candidateId} while assembling ${beat.title}`,
+                    );
+                  }
+                  return anchor.id;
+                }),
+              },
+            }
+          : {}),
         title: beat.title,
         narration: beat.narration,
         durationMs: beat.durationMs ?? estimateDurationMs(beat.narration),
