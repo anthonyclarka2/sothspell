@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -57,6 +57,47 @@ describe('API', () => {
     expect(body.id).toBe('tour_bunbun_golden');
     expect(body.chapters.length).toBe(6);
     expect(body.chapters[0]?.beats[0]?.anchors[0]?.id).toBe('anchor_readme_overview');
+  });
+
+  it('serves a replacement tour at the same path without restarting the app', async () => {
+    const root = await makeProjectRoot();
+    const tourJsonPath = path.join(root, 'tour.json');
+    const tour = JSON.parse(
+      await readFile(
+        new URL('../../../examples/bunbun-tour/tour.json', import.meta.url),
+        'utf8',
+      ),
+    ) as { title: string };
+    await writeFile(tourJsonPath, JSON.stringify({ ...tour, title: 'First tour' }));
+    const app = createApp({ databasePath: ':memory:', projectRoot: null, tourJsonPath });
+    const firstResponse = await app.request('/api/tours/tour_bunbun_golden');
+    expect(firstResponse.status).toBe(200);
+    await expect(firstResponse.json()).resolves.toMatchObject({ title: 'First tour' });
+
+    const replacement = path.join(root, 'replacement.json');
+    await writeFile(replacement, JSON.stringify({ ...tour, title: 'Revised tour' }));
+    await rename(replacement, tourJsonPath);
+
+    const secondResponse = await app.request('/api/tours/tour_bunbun_golden');
+    expect(secondResponse.status).toBe(200);
+    await expect(secondResponse.json()).resolves.toMatchObject({ title: 'Revised tour' });
+  });
+
+  it('recovers after the tour file becomes available', async () => {
+    const root = await makeProjectRoot();
+    const tourJsonPath = path.join(root, 'tour.json');
+    const app = createApp({ databasePath: ':memory:', projectRoot: null, tourJsonPath });
+    app.onError((_error, context) => context.text('Unable to load tour', 500));
+    expect((await app.request('/api/tours/tour_bunbun_golden')).status).toBe(500);
+
+    const tour = await readFile(
+      new URL('../../../examples/bunbun-tour/tour.json', import.meta.url),
+    );
+    await writeFile(tourJsonPath, tour);
+
+    const response = await app.request('/api/tours/tour_bunbun_golden');
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ id: 'tour_bunbun_golden' });
   });
 
   it('rejects a traversal-shaped tour id instead of reading outside projects', async () => {
