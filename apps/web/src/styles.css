@@ -559,6 +559,9 @@ pre,
 }
 
 .sequence-actors {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
@@ -594,7 +597,7 @@ pre,
 
 .sequence-messages li {
   display: grid;
-  grid-template-columns: minmax(120px, 0.5fr) 1fr;
+  grid-template-columns: 1fr;
   gap: 14px;
   padding: 8px 10px;
   border-inline-start: 2px solid var(--line-strong);
@@ -2794,6 +2797,7 @@ pre,
 
 .player-viewbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   padding: 7px 14px;
@@ -3762,19 +3766,17 @@ pre,
   }
 }
 
-.canvas-shortcuts-backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 9;
-  display: grid;
-  place-items: center;
-  padding: 24px;
+.canvas-shortcuts::backdrop {
   background: color-mix(in srgb, var(--bg) 72%, transparent);
 }
 
 .canvas-shortcuts {
-  width: min(420px, 100%);
-  max-height: min(560px, 100%);
+  position: fixed;
+  margin: auto;
+  width: min(420px, calc(100% - 2rem));
+  max-height: min(560px, calc(100dvh - 2rem));
+  padding: 0;
+  color: var(--ink);
   overflow: auto;
   border: 1px solid var(--line-strong);
   border-radius: 12px;
@@ -4142,8 +4144,8 @@ pre,
 }
 
 .canvas-display-check input {
-  inline-size: 16px;
-  block-size: 16px;
+  inline-size: 24px;
+  block-size: 24px;
   accent-color: var(--accent);
 }
 
@@ -4200,6 +4202,14 @@ pre,
 
 .canvas-notice-dismiss:hover {
   background: var(--accent-soft);
+}
+
+/* Desktop playback keeps transport in view. The linear evidence column scrolls
+   independently inside the fixed-height player. */
+@media (min-width: 1081px) {
+  .stage-column > .canvas-root--compact {
+    overflow-y: auto;
+  }
 }
 
 /* Compact canvas ---------------------------------------------------------- */
@@ -5244,4 +5254,61 @@ body:has(.player-page--fullscreen),
   .canvas-export-panel {
     width: calc(100vw - 28px);
   }
+}
+
+.skip-link {
+  position: fixed;
+  inset-block-start: 0.25rem;
+  inset-inline-start: 0.25rem;
+  z-index: 1000;
+  padding: 0.5rem 1rem;
+  background: var(--panel);
+  color: var(--ink);
+}
+.skip-link:not(:focus) {
+  clip-path: inset(50%);
+}
+.player-character-shortcuts {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 24px;
+  font-size: 0.875rem;
+}
+.source-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+.source-pages {
+  min-width: 0;
+  padding-block: 0.5rem;
+}
+.source-pages .code-line {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.card-placement {
+  width: 100%;
+  margin-block: 0.3rem;
+}
+.card-placement summary {
+  cursor: pointer;
+  min-height: 24px;
+}
+.card-placement form {
+  display: grid;
+  gap: 0.3rem;
+}
+.card-placement label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.card-placement input {
+  width: 5rem;
+  min-height: 24px;
+  border: 1px solid var(--line-strong);
 }

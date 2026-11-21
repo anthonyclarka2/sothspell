@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowLeft, Code, Warning } from '@phosphor-icons/react';
@@ -78,6 +78,105 @@ function VirtualCode({ lines, startLine }: { lines: AnchorLine[]; startLine: num
   );
 }
 
+const SOURCE_PAGE_SIZE = 100;
+
+function SourceLines({
+  lines,
+  startLine,
+  reading,
+}: {
+  lines: AnchorLine[];
+  startLine: number;
+  reading: boolean;
+}) {
+  const { t } = useLocale();
+  const [paged, setPaged] = useState(reading);
+  const citedIndex = Math.max(
+    0,
+    lines.findIndex((line) => line.number >= startLine),
+  );
+  const citedPage = Math.floor(citedIndex / SOURCE_PAGE_SIZE);
+  const [page, setPage] = useState(citedPage);
+  const source = useRef<HTMLElement>(null);
+  const start = page * SOURCE_PAGE_SIZE;
+
+  const goToPage = (next: number) => {
+    setPage(next);
+    source.current?.focus();
+  };
+
+  return (
+    <>
+      <div className="source-navigation">
+        <button
+          type="button"
+          className="secondary-action"
+          onClick={() => setPaged(!paged)}
+        >
+          {t(paged ? 'code.scroll' : 'code.paged')}
+        </button>
+        {paged && (
+          <>
+            <button
+              type="button"
+              className="secondary-action"
+              disabled={page === 0}
+              onClick={() => goToPage(page - 1)}
+            >
+              {t('code.previousLines')}
+            </button>
+            <button
+              type="button"
+              className="secondary-action"
+              disabled={start + SOURCE_PAGE_SIZE >= lines.length}
+              onClick={() => goToPage(page + 1)}
+            >
+              {t('code.nextLines')}
+            </button>
+            <button
+              type="button"
+              className="secondary-action"
+              onClick={() => goToPage(citedPage)}
+            >
+              {t('code.citedLines')}
+            </button>
+          </>
+        )}
+      </div>
+      {paged ? (
+        <section
+          ref={source}
+          className="source-pages"
+          tabIndex={-1}
+          aria-label={t('code.sourceLines')}
+        >
+          {lines.slice(start, start + SOURCE_PAGE_SIZE).map((line) => (
+            <div
+              key={line.number}
+              className={`code-line${line.focus ? ' code-line--focus' : ''}`}
+              data-line={line.number}
+            >
+              <span className="visually-hidden">
+                {t(line.focus ? 'code.citedLine' : 'code.line', { number: line.number })}
+                .{' '}
+              </span>
+              <span className="code-line-number" aria-hidden="true">
+                {line.number}
+              </span>
+              <code
+                className="code-line-content"
+                dangerouslySetInnerHTML={{ __html: line.html || '&nbsp;' }}
+              />
+            </div>
+          ))}
+        </section>
+      ) : (
+        <VirtualCode lines={lines} startLine={startLine} />
+      )}
+    </>
+  );
+}
+
 function BackToBeat({
   tourId,
   beatId,
@@ -137,11 +236,7 @@ export function CodePage() {
           <strong>{t('code.loadError')}</strong> {anchor.error?.message}
         </div>
         {search.beat && search.tourId ? (
-          <BackToBeat
-            tourId={search.tourId}
-            beatId={search.beat}
-            view={search.view}
-          />
+          <BackToBeat tourId={search.tourId} beatId={search.beat} view={search.view} />
         ) : null}
       </div>
     );
@@ -179,11 +274,7 @@ export function CodePage() {
             </span>
           )}
           {search.beat ? (
-            <BackToBeat
-              tourId={data.tourId}
-              beatId={search.beat}
-              view={search.view}
-            />
+            <BackToBeat tourId={data.tourId} beatId={search.beat} view={search.view} />
           ) : null}
         </div>
       </header>
@@ -200,6 +291,9 @@ export function CodePage() {
                   <button
                     type="button"
                     data-active={entry.anchorId === data.anchorId}
+                    aria-current={
+                      entry.anchorId === data.anchorId ? 'location' : undefined
+                    }
                     onClick={() =>
                       void navigate({
                         to: '/p/$projectId/source/$',
@@ -231,7 +325,12 @@ export function CodePage() {
               {data.contentHash.slice(0, 19)}… · {data.totalLines} lines
             </span>
           </div>
-          <VirtualCode lines={data.lines} startLine={data.startLine} />
+          <SourceLines
+            key={data.anchorId}
+            lines={data.lines}
+            startLine={data.startLine}
+            reading={search.view === 'reader'}
+          />
         </section>
       </div>
 

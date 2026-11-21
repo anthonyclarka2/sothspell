@@ -146,6 +146,7 @@ export function DiagramStage({ chapter, beat, onOpenAnchor }: DiagramStageProps)
       edges={edges}
       nodeTypes={nodeTypes}
       nodesDraggable={false}
+      panActivationKeyCode={null}
       nodesConnectable={false}
       elementsSelectable={false}
       onInit={(instance) => {
