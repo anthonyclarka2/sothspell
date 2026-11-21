@@ -196,9 +196,9 @@ the publisher is the local user; the authoring pipeline is their tool.
 
 ### Golden tour
 
-A checked-in sóþspell used as a demo and regression fixture. The first golden tour
-explains Bunbun at commit `9fef24d`. It is pinned, attributed, and never written
-back into the Bunbun tree.
+A checked-in sóþspell used as a demo and regression fixture. The default golden
+tour explains the pinned Tiny Notes project. The historical golden tour explains
+Bunbun at commit `9fef24d`. Both are pinned to read-only source.
 
 ### Stale tour
 

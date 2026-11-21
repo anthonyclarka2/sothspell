@@ -125,3 +125,17 @@ test('opens the bundled demo in Spanish and Arabic', async ({ page }) => {
     page.getByRole('heading', { name: 'واجهتا إدخال وخدمة واحدة' }),
   ).toBeVisible();
 });
+
+test('traces the demo relationship and pinned line in Reading view', async ({ page }) => {
+  await page.goto(openingURL);
+  await page.getByRole('button', { name: 'Reading view' }).click();
+  const reading = page.getByTestId('canvas-compact');
+  await expect(reading.getByText(/CLI main calls openNotes/)).toBeVisible();
+  await reading.locator(cliAnchor).getByRole('link', { name: 'Open code page' }).click();
+  const source = page.getByRole('region', { name: 'Source lines' });
+  await expect(source).toContainText('Line 125, cited');
+  await expect(source).toContainText('openNotes({ filePath })');
+  await page.getByRole('link', { name: 'Back to the beat' }).click();
+  await expect(page).toHaveURL(/beat_tiny_entry_01\?view=reader/);
+  await expect(reading).toBeVisible();
+});

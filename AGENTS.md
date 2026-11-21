@@ -17,11 +17,13 @@
   `plans/archive/v2/`. The canvas era is complete: Phases 17–20 shipped, and
   Phase 22 made Canvas the web player default. Manual VoiceOver/NVDA and real
   Save-as-PDF checks remain owner-gated. The roadmap and phase plans remain in
-  `plans/ROADMAP.md` and `plans/PHASE-17.md` through `plans/PHASE-22.md`.
-- **Example project:** Bunbun at `/Users/ajc/Projects/codegens/bunbun`, pinned to
-  commit `9fef24d`. It is **read-only**. No command may create, modify, or delete
-  anything inside that tree. All snapshots, tours, audio, logs, and runs live
-  under `SOTHSPELL_HOME` (default `~/.sothspell`).
+  `plans/ROADMAP.md`. Read `plans/PHASE-23.md` for the demo, Reading view,
+  learning checks, and audit follow-ups.
+- **Default demo:** `examples/tiny-notes-tour/` plays the pinned
+  `examples/tiny-notes/` project. Read its README when changing the demo.
+- **Historical Bunbun fixture:** `/Users/ajc/Projects/codegens/bunbun` at `9fef24d`
+  is strictly **read-only**. All generated artifacts, audio, logs, and runs
+  live under `SOTHSPELL_HOME` (default `~/.sothspell`).
 - **Language:** TypeScript 7.0.2. The compiler has no programmatic compiler API
   in 7.0; do not add `ts-morph`, `typescript-estree`, `vite-tsconfig-paths`, or
   any package that imports the classic `typescript` compiler API at runtime.
@@ -175,8 +177,7 @@ Do not claim completion without fresh verification output.
 - `docs/` — development, architecture, analysis, authoring, player, narration,
   guide, plugin, self-hosting, releasing, privacy, accessibility, and
   troubleshooting.
-- `plans/` — the current roadmap and phase plans (canvas era, Phases 17–20, and
-  the Phase 22 promotion).
+- `plans/` — the current roadmap and phase plans.
 - `plans/archive/v1/` — the v1 roadmap and Phases 1–8.
 - `plans/archive/v2/` — the next-stage roadmap and Phases 9–16.
 - `plans/archive/README.md` — the archive index and binding constraints.
@@ -239,8 +240,8 @@ or "chat" for these concepts in code, tests, or docs.
 
 - Read `plans/CANVAS-FEATURES.md`, `plans/ROADMAP.md`, and the active
   `plans/PHASE-*.md` before changing canvas code.
-- Canvas is the default web player view. The Stage remains available from the
-  view switch and at `?view=stage`, and `packages/embed` stays on the Stage.
+- Canvas is the default web player view. Keep Stage (`?view=stage`) and the
+  linear Reading view (`?view=reader`) reachable. The embed uses Stage.
 - `packages/canvas` is pure TypeScript: scene, layout, selection, preferences,
   and export model. It imports no React and touches no DOM.
 - The canvas never reads project files. Relations come from the bounded API
@@ -262,13 +263,13 @@ or "chat" for these concepts in code, tests, or docs.
   Phases 18 and 19 are sequential, so shared canvas files are owned by one phase
   at a time.
 
-## Bunbun demo rules
+## Bunbun fixture rules
 
 - Read-only. No `.sothspell/` directory, no generated files, no lockfile changes,
   no edits inside `/Users/ajc/Projects/codegens/bunbun`.
 - The checked-in golden tour stores small attributed excerpts and hashes; it is
   not a copy of the repository.
-- The app resolves the Bunbun path only when the user opens the demo. Tests skip
+- The app resolves the Bunbun path only for the historical tour. Tests skip
   cleanly when the checkout is absent and never fail into a write.
 - Use Bunbun commit `9fef24d` for the first golden tour. Regenerating the tour
   requires a new commit pin and a review note.
